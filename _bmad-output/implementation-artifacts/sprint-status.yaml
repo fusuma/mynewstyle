@@ -1,0 +1,162 @@
+# generated: 2026-03-01
+# project: mynewstyle
+# project_key: NOKEY
+# tracking_system: file-system
+# story_location: _bmad-output/implementation-artifacts
+
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status:
+#   - backlog: Epic not yet started
+#   - in-progress: Epic actively being worked on
+#   - done: All stories in epic completed
+#
+# Epic Status Transitions:
+#   - backlog → in-progress: Automatically when first story is created (via create-story)
+#   - in-progress → done: Manually when all stories reach 'done' status
+#
+# Story Status:
+#   - backlog: Story only exists in epic file
+#   - ready-for-dev: Story file created in stories folder
+#   - in-progress: Developer actively working on implementation
+#   - review: Ready for code review (via Dev's code-review workflow)
+#   - done: Story completed
+#
+# Retrospective Status:
+#   - optional: Can be completed but not required
+#   - done: Retrospective has been completed
+#
+# WORKFLOW NOTES:
+# ===============
+# - Epic transitions to 'in-progress' automatically when first story is created
+# - Stories can be worked in parallel if team capacity allows
+# - SM typically creates next story after previous one is 'done' to incorporate learnings
+# - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
+
+generated: 2026-03-01
+project: mynewstyle
+project_key: NOKEY
+tracking_system: file-system
+story_location: _bmad-output/implementation-artifacts
+
+development_status:
+  # E1: Landing Page & Design System (Sprint 1)
+  epic-1: in-progress
+  1-1-design-system-setup: ready-for-dev
+  1-2-landing-page-hero-section: backlog
+  1-3-how-it-works-section: backlog
+  1-4-trust-and-privacy-section: backlog
+  1-5-interactive-demo: backlog
+  1-6-footer-and-legal-pages: backlog
+  epic-1-retrospective: optional
+
+  # E2: Photo Capture & Validation (Sprint 1-2)
+  epic-2: backlog
+  2-1-camera-capture-with-guidance: backlog
+  2-2-gallery-upload-alternative: backlog
+  2-3-client-side-photo-compression: backlog
+  2-4-real-time-photo-validation: backlog
+  2-5-photo-review-screen: backlog
+  2-6-photo-upload-to-storage: backlog
+  2-7-photo-persistence-for-session-recovery: backlog
+  epic-2-retrospective: optional
+
+  # E3: Questionnaire Flow (Sprint 2)
+  epic-3: backlog
+  3-1-questionnaire-engine: backlog
+  3-2-male-questionnaire-content: backlog
+  3-3-female-questionnaire-content: backlog
+  3-4-question-card-components: backlog
+  3-5-progress-bar-and-conversational-tone: backlog
+  3-6-questionnaire-completion-and-data-submission: backlog
+  epic-3-retrospective: optional
+
+  # E4: AI Pipeline - Analysis + Consultation (Sprint 2-3)
+  epic-4: backlog
+  4-1-ai-provider-abstraction-layer: backlog
+  4-2-prompt-management-system: backlog
+  4-3-face-analysis: backlog
+  4-4-instant-face-shape-reveal: backlog
+  4-5-consultation-generation: backlog
+  4-6-ai-output-validation-and-quality-gate: backlog
+  4-7-ai-cost-tracking: backlog
+  4-8-deterministic-results: backlog
+  epic-4-retrospective: optional
+
+  # E5: Payment Integration (Sprint 3)
+  epic-5: backlog
+  5-1-stripe-setup-and-configuration: backlog
+  5-2-payment-intent-creation: backlog
+  5-3-paywall-ui: backlog
+  5-4-payment-processing-and-unlock: backlog
+  5-5-stripe-webhook-handler: backlog
+  5-6-receipt-and-refund-flow: backlog
+  epic-5-retrospective: optional
+
+  # E6: Results Page (Sprint 3-4)
+  epic-6: backlog
+  6-1-face-shape-analysis-section: backlog
+  6-2-hero-recommendation-card: backlog
+  6-3-alternative-recommendation-cards: backlog
+  6-4-styles-to-avoid-section: backlog
+  6-5-grooming-tips-section: backlog
+  6-6-styling-tips-parsed-and-structured: backlog
+  6-7-results-actions-footer: backlog
+  6-8-results-page-animated-reveal: backlog
+  epic-6-retrospective: optional
+
+  # E7: AI Preview Generation - Nano Banana 2 (Sprint 4)
+  epic-7: backlog
+  7-1-kie-ai-integration: backlog
+  7-2-kie-ai-webhook-handler: backlog
+  7-3-face-similarity-check: backlog
+  7-4-preview-loading-ux: backlog
+  7-5-preview-display-and-before-after: backlog
+  7-6-preview-fallback-gemini-pro-direct: backlog
+  7-7-barber-reference-card: backlog
+  epic-7-retrospective: optional
+
+  # E8: Auth & User Profile (Sprint 4-5)
+  epic-8: backlog
+  8-1-supabase-auth-setup: backlog
+  8-2-registration-page: backlog
+  8-3-login-page: backlog
+  8-4-guest-session-management: backlog
+  8-5-guest-to-auth-migration: backlog
+  8-6-user-profile-and-history: backlog
+  epic-8-retrospective: optional
+
+  # E9: Sharing & Virality (Sprint 5)
+  epic-9: backlog
+  9-1-share-card-generator-story-format: backlog
+  9-2-share-card-generator-square-format: backlog
+  9-3-native-share-integration: backlog
+  9-4-standalone-preview-share: backlog
+  9-5-referral-link: backlog
+  epic-9-retrospective: optional
+
+  # E10: Observability & Analytics (Sprint 5)
+  epic-10: backlog
+  10-1-analytics-event-system: backlog
+  10-2-ai-pipeline-monitoring-dashboard: backlog
+  10-3-cost-and-quality-alerts: backlog
+  10-4-funnel-analytics: backlog
+  10-5-post-consultation-rating: backlog
+  epic-10-retrospective: optional
+
+  # E11: LGPD Compliance (Sprint 3 parallel)
+  epic-11: backlog
+  11-1-privacy-policy-lgpd-compliant: backlog
+  11-2-consent-flow: backlog
+  11-3-right-to-deletion: backlog
+  11-4-data-export-right-to-access: backlog
+  11-5-rls-audit-in-ci-cd: backlog
+  epic-11-retrospective: optional
+
+  # E12: Future Add-ons - Post-MVP
+  epic-12: backlog
+  12-1-paleta-de-cores-color-analysis: backlog
+  12-2-estilo-completo-bundle: backlog
+  12-3-re-consultation-express-flow: backlog
+  12-4-style-evolution-tracking: backlog
+  epic-12-retrospective: optional
