@@ -3,6 +3,7 @@ import { HeroSection } from "@/components/landing/HeroSection";
 import { HowItWorksSection } from "@/components/landing/HowItWorksSection";
 import { TrustPrivacySection } from "@/components/landing/TrustPrivacySection";
 import { InteractiveDemoSection } from "@/components/landing/InteractiveDemoSection";
+import { Footer } from "@/components/layout/Footer";
 
 export const metadata: Metadata = {
   title: "MyNewStyle - Consultoria de Visagismo com IA",
@@ -33,11 +34,14 @@ export const metadata: Metadata = {
 
 export default function Home() {
   return (
-    <main>
-      <HeroSection />
-      <HowItWorksSection />
-      <TrustPrivacySection />
-      <InteractiveDemoSection />
-    </main>
+    <>
+      <main>
+        <HeroSection />
+        <HowItWorksSection />
+        <TrustPrivacySection />
+        <InteractiveDemoSection />
+      </main>
+      <Footer />
+    </>
   );
 }
