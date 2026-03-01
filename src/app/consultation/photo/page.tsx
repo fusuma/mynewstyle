@@ -1,13 +1,22 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { PhotoCapture } from "@/components/consultation/PhotoCapture";
 import { GalleryUpload } from "@/components/consultation/GalleryUpload";
+import { PhotoValidation } from "@/components/consultation/PhotoValidation";
 import { compressPhoto } from "@/lib/photo/compress";
+import { destroyFaceDetector } from "@/lib/photo/validate";
+import type { PhotoValidationResult } from "@/lib/photo/validate";
 import { Loader2 } from "lucide-react";
 
 type PhotoMode = "camera" | "gallery";
 type CompressionState = "idle" | "compressing" | "done" | "error";
+type ValidationState =
+  | "pending"
+  | "validating"
+  | "valid"
+  | "invalid"
+  | "overridden";
 
 /**
  * Photo capture page route: /consultation/photo
@@ -18,6 +27,10 @@ type CompressionState = "idle" | "compressing" | "done" | "error";
  * After capture/upload, photos are compressed client-side before storing.
  * Compression uses Canvas API to resize to max 800px width, JPEG 85% quality, <500KB.
  *
+ * After compression, photos are validated for face detection using MediaPipe.
+ * Validation checks: face presence, face size (>30%), lighting quality.
+ * Users get 3 retry attempts before a manual override option appears.
+ *
  * In future stories, this will navigate to photo review (Story 2.5).
  */
 export default function PhotoPage() {
@@ -26,6 +39,16 @@ export default function PhotoPage() {
   const [compressionState, setCompressionState] =
     useState<CompressionState>("idle");
   const [rawBlob, setRawBlob] = useState<Blob | null>(null);
+  const [validationState, setValidationState] =
+    useState<ValidationState>("pending");
+  const [validationRetryCount, setValidationRetryCount] = useState(0);
+
+  // Clean up face detector when leaving the page
+  useEffect(() => {
+    return () => {
+      destroyFaceDetector();
+    };
+  }, []);
 
   const handleCompressAndStore = useCallback(async (blob: Blob) => {
     setRawBlob(blob);
@@ -46,6 +69,8 @@ export default function PhotoPage() {
 
       setCapturedPhoto(result.blob);
       setCompressionState("done");
+      // Trigger validation automatically after compression
+      setValidationState("validating");
     } catch {
       setCompressionState("error");
     }
@@ -55,6 +80,7 @@ export default function PhotoPage() {
     setCompressionState("idle");
     setCapturedPhoto(null);
     setRawBlob(null);
+    setValidationState("pending");
   }, []);
 
   const handleRetryCompression = useCallback(() => {
@@ -71,6 +97,31 @@ export default function PhotoPage() {
 
   const handleSwitchToCamera = useCallback(() => {
     setMode("camera");
+  }, []);
+
+  const handleValidationComplete = useCallback(
+    (result: PhotoValidationResult) => {
+      if (result.valid) {
+        setValidationState("valid");
+      } else {
+        setValidationState("invalid");
+        setValidationRetryCount((prev) => prev + 1);
+      }
+    },
+    []
+  );
+
+  const handleValidationRetake = useCallback(() => {
+    // Reset compression and validation state to go back to capture/upload
+    setCompressionState("idle");
+    setCapturedPhoto(null);
+    setRawBlob(null);
+    setValidationState("pending");
+    // Do NOT reset retry count -- it persists across retakes
+  }, []);
+
+  const handleValidationOverride = useCallback(() => {
+    setValidationState("overridden");
   }, []);
 
   // Compression loading state
@@ -100,13 +151,30 @@ export default function PhotoPage() {
     );
   }
 
-  if (capturedPhoto) {
-    // Placeholder: In Story 2.5, this will show the photo review screen
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-background px-6 text-center">
-        <p className="text-foreground">Foto capturada com sucesso!</p>
-      </div>
-    );
+  // Validation states (after compression is done)
+  if (capturedPhoto && compressionState === "done") {
+    // Validating or invalid: show PhotoValidation component
+    if (validationState === "validating" || validationState === "invalid") {
+      return (
+        <PhotoValidation
+          photo={capturedPhoto}
+          onValidationComplete={handleValidationComplete}
+          onRetake={handleValidationRetake}
+          onOverride={handleValidationOverride}
+          retryCount={validationRetryCount}
+        />
+      );
+    }
+
+    // Valid or overridden: show success state
+    if (validationState === "valid" || validationState === "overridden") {
+      // Placeholder: In Story 2.5, this will show the photo review screen
+      return (
+        <div className="flex min-h-screen flex-col items-center justify-center bg-background px-6 text-center">
+          <p className="text-foreground">Foto capturada com sucesso!</p>
+        </div>
+      );
+    }
   }
 
   if (mode === "gallery") {

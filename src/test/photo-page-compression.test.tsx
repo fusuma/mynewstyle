@@ -20,6 +20,17 @@ vi.mock("@/lib/photo/exif", () => ({
     .mockResolvedValue(new Blob(["corrected"], { type: "image/jpeg" })),
 }));
 
+vi.mock("@/lib/photo/validate", () => ({
+  validatePhoto: vi.fn().mockResolvedValue({
+    valid: true,
+    status: "valid",
+    faces: [],
+    message: "Rosto detectado com sucesso!",
+    details: { faceCount: 1, faceAreaPercent: 33, confidenceScore: 0.95 },
+  }),
+  destroyFaceDetector: vi.fn(),
+}));
+
 // Mock navigator for camera tests
 const mockGetUserMedia = vi.fn();
 const mockEnumerateDevices = vi.fn();

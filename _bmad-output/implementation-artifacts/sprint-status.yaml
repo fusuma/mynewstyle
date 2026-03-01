@@ -55,7 +55,7 @@ development_status:
   2-1-camera-capture-with-guidance: done
   2-2-gallery-upload-alternative: done
   2-3-client-side-photo-compression: done
-  2-4-real-time-photo-validation: backlog
+  2-4-real-time-photo-validation: done
   2-5-photo-review-screen: backlog
   2-6-photo-upload-to-storage: backlog
   2-7-photo-persistence-for-session-recovery: backlog
