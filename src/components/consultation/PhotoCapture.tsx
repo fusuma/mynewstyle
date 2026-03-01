@@ -19,6 +19,7 @@ type CaptureState =
 
 interface PhotoCaptureProps {
   onCapture?: (blob: Blob) => void;
+  onSwitchToGallery?: () => void;
 }
 
 /**
@@ -46,7 +47,7 @@ function getErrorMessage(error: CameraError): string {
  * Handles camera lifecycle, WebView detection, permission prompts,
  * face oval overlay, guidance tips, and photo capture.
  */
-export function PhotoCapture({ onCapture }: PhotoCaptureProps) {
+export function PhotoCapture({ onCapture, onSwitchToGallery }: PhotoCaptureProps) {
   const prefersReducedMotion = useReducedMotion();
   const {
     stream,
@@ -145,7 +146,10 @@ export function PhotoCapture({ onCapture }: PhotoCaptureProps) {
 
   if (captureState === "pre-permission") {
     return (
-      <CameraPermissionPrompt onRequestPermission={handleRequestPermission} />
+      <CameraPermissionPrompt
+        onRequestPermission={handleRequestPermission}
+        onUploadFromGallery={onSwitchToGallery}
+      />
     );
   }
 
