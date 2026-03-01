@@ -28,6 +28,14 @@ vi.mock("@/lib/photo/exif", () => ({
     .mockResolvedValue(new Blob(["corrected"], { type: "image/jpeg" })),
 }));
 
+vi.mock("@/lib/photo/upload", () => ({
+  uploadPhoto: vi.fn().mockResolvedValue({
+    success: true,
+    signedUrl: "https://storage.supabase.co/signed/test",
+    storagePath: "session/consult/original.jpg",
+  }),
+}));
+
 vi.mock("framer-motion", () => ({
   motion: {
     div: ({
@@ -186,6 +194,30 @@ beforeEach(() => {
   // Mock URL.createObjectURL and revokeObjectURL
   globalThis.URL.createObjectURL = vi.fn().mockReturnValue("blob:test-url");
   globalThis.URL.revokeObjectURL = vi.fn();
+
+  // Mock localStorage for guest session ID (Story 2.6)
+  Object.defineProperty(window, "localStorage", {
+    value: {
+      getItem: vi.fn().mockReturnValue(null),
+      setItem: vi.fn(),
+      removeItem: vi.fn(),
+      clear: vi.fn(),
+      length: 0,
+      key: vi.fn(),
+    },
+    writable: true,
+    configurable: true,
+  });
+
+  // Mock crypto.randomUUID (Story 2.6)
+  Object.defineProperty(globalThis, "crypto", {
+    value: {
+      randomUUID: vi.fn().mockReturnValue("mock-uuid-12345"),
+      getRandomValues: vi.fn(),
+    },
+    writable: true,
+    configurable: true,
+  });
 });
 
 afterEach(() => {

@@ -1,14 +1,17 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { PhotoCapture } from "@/components/consultation/PhotoCapture";
 import { GalleryUpload } from "@/components/consultation/GalleryUpload";
 import { PhotoValidation } from "@/components/consultation/PhotoValidation";
 import { compressPhoto } from "@/lib/photo/compress";
 import { destroyFaceDetector } from "@/lib/photo/validate";
 import type { PhotoValidationResult } from "@/lib/photo/validate";
+import { uploadPhoto } from "@/lib/photo/upload";
+import type { PhotoUploadResult } from "@/lib/photo/upload";
 import { Loader2, CheckCircle2 } from "lucide-react";
 import { PhotoReview } from "@/components/consultation/PhotoReview";
+import { PhotoUpload } from "@/components/consultation/PhotoUpload";
 
 type PhotoMode = "camera" | "gallery";
 type CompressionState = "idle" | "compressing" | "done" | "error";
@@ -18,6 +21,21 @@ type ValidationState =
   | "valid"
   | "invalid"
   | "overridden";
+type UploadState = "idle" | "uploading" | "done" | "error";
+
+const GUEST_SESSION_STORAGE_KEY = "mynewstyle_guest_session_id";
+
+/**
+ * Get or create a guest session ID persisted in localStorage.
+ * Reused across page refreshes and for session recovery (Story 2.7).
+ */
+function getOrCreateGuestSessionId(): string {
+  const existing = localStorage.getItem(GUEST_SESSION_STORAGE_KEY);
+  if (existing) return existing;
+  const id = crypto.randomUUID();
+  localStorage.setItem(GUEST_SESSION_STORAGE_KEY, id);
+  return id;
+}
 
 /**
  * Photo capture page route: /consultation/photo
@@ -33,6 +51,7 @@ type ValidationState =
  * Users get 3 retry attempts before a manual override option appears.
  *
  * After validation, the photo review screen lets the user confirm or retake.
+ * After confirmation, the photo is uploaded to Supabase Storage.
  */
 export default function PhotoPage() {
   const [capturedPhoto, setCapturedPhoto] = useState<Blob | null>(null);
@@ -46,6 +65,13 @@ export default function PhotoPage() {
   const [validationResult, setValidationResult] =
     useState<PhotoValidationResult | null>(null);
   const [isConfirmed, setIsConfirmed] = useState(false);
+
+  // Upload state
+  const [uploadState, setUploadState] = useState<UploadState>("idle");
+  const [uploadResult, setUploadResult] = useState<PhotoUploadResult | null>(
+    null
+  );
+  const consultationIdRef = useRef<string | null>(null);
 
   // Clean up face detector when leaving the page
   useEffect(() => {
@@ -85,6 +111,8 @@ export default function PhotoPage() {
     setCapturedPhoto(null);
     setRawBlob(null);
     setValidationState("pending");
+    setUploadState("idle");
+    setUploadResult(null);
   }, []);
 
   const handleRetryCompression = useCallback(() => {
@@ -116,9 +144,39 @@ export default function PhotoPage() {
     []
   );
 
+  const performUpload = useCallback(async () => {
+    if (!capturedPhoto) return;
+
+    setUploadState("uploading");
+    const sessionId = getOrCreateGuestSessionId();
+    const consId = consultationIdRef.current || crypto.randomUUID();
+    if (!consultationIdRef.current) {
+      consultationIdRef.current = consId;
+    }
+
+    const result = await uploadPhoto(capturedPhoto, sessionId, consId);
+    setUploadResult(result);
+
+    if (result.success) {
+      setUploadState("done");
+      setIsConfirmed(true);
+    } else {
+      setUploadState("error");
+    }
+  }, [capturedPhoto]);
+
   const handlePhotoConfirm = useCallback(() => {
-    setIsConfirmed(true);
-    // Future: Navigate to questionnaire (Story 3.x)
+    performUpload();
+  }, [performUpload]);
+
+  const handleUploadRetry = useCallback(() => {
+    performUpload();
+  }, [performUpload]);
+
+  const handleUploadCancel = useCallback(() => {
+    // Return to review screen
+    setUploadState("idle");
+    setUploadResult(null);
   }, []);
 
   const handleValidationRetake = useCallback(() => {
@@ -127,6 +185,8 @@ export default function PhotoPage() {
     setCapturedPhoto(null);
     setRawBlob(null);
     setValidationState("pending");
+    setUploadState("idle");
+    setUploadResult(null);
     // Do NOT reset retry count -- it persists across retakes
   }, []);
 
@@ -176,8 +236,32 @@ export default function PhotoPage() {
       );
     }
 
-    // Valid or overridden: show photo review or confirmed state
+    // Valid or overridden: show upload, review, or confirmed state
     if (validationState === "valid" || validationState === "overridden") {
+      // Upload in progress
+      if (uploadState === "uploading") {
+        return (
+          <PhotoUpload
+            isUploading={true}
+            onRetry={handleUploadRetry}
+            onCancel={handleUploadCancel}
+          />
+        );
+      }
+
+      // Upload error
+      if (uploadState === "error") {
+        return (
+          <PhotoUpload
+            isUploading={false}
+            error={uploadResult?.error}
+            onRetry={handleUploadRetry}
+            onCancel={handleUploadCancel}
+          />
+        );
+      }
+
+      // Upload done / confirmed
       if (isConfirmed) {
         return (
           <div className="flex min-h-screen flex-col items-center justify-center bg-background px-6 text-center">

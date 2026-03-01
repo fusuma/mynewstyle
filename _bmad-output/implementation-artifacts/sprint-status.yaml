@@ -57,7 +57,7 @@ development_status:
   2-3-client-side-photo-compression: done
   2-4-real-time-photo-validation: done
   2-5-photo-review-screen: done
-  2-6-photo-upload-to-storage: backlog
+  2-6-photo-upload-to-storage: done
   2-7-photo-persistence-for-session-recovery: backlog
   epic-2-retrospective: optional
 

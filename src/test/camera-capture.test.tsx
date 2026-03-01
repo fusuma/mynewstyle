@@ -6,6 +6,15 @@ import { FaceOvalOverlay } from "@/components/consultation/FaceOvalOverlay";
 import { CameraGuidanceTips } from "@/components/consultation/CameraGuidanceTips";
 import { PhotoCapture } from "@/components/consultation/PhotoCapture";
 
+// Mock upload module to prevent Supabase client initialization (Story 2.6)
+vi.mock("@/lib/photo/upload", () => ({
+  uploadPhoto: vi.fn().mockResolvedValue({
+    success: true,
+    signedUrl: "https://storage.supabase.co/signed/test",
+    storagePath: "session/consult/original.jpg",
+  }),
+}));
+
 // ============================================================
 // Mock navigator.mediaDevices
 // ============================================================

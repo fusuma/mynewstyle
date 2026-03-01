@@ -27,6 +27,14 @@ vi.mock("@/lib/photo/exif", () => ({
     .mockResolvedValue(new Blob(["corrected"], { type: "image/jpeg" })),
 }));
 
+vi.mock("@/lib/photo/upload", () => ({
+  uploadPhoto: vi.fn().mockResolvedValue({
+    success: true,
+    signedUrl: "https://storage.supabase.co/signed/test",
+    storagePath: "session/consult/original.jpg",
+  }),
+}));
+
 // Mock navigator for camera tests
 const mockGetUserMedia = vi.fn();
 const mockEnumerateDevices = vi.fn();
