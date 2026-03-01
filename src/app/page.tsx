@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { HeroSection } from "@/components/landing/HeroSection";
+import { HowItWorksSection } from "@/components/landing/HowItWorksSection";
 
 export const metadata: Metadata = {
   title: "MyNewStyle - Consultoria de Visagismo com IA",
@@ -32,6 +33,7 @@ export default function Home() {
   return (
     <main>
       <HeroSection />
+      <HowItWorksSection />
     </main>
   );
 }

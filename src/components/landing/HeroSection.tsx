@@ -43,6 +43,14 @@ export function HeroSection() {
         <p className="mt-6 text-sm text-muted-foreground md:mt-8">
           Ja ajudamos X pessoas a encontrar o seu estilo
         </p>
+
+        {/* Secondary link — scroll to How It Works */}
+        <a
+          href="#how-it-works"
+          className="mt-4 text-sm text-muted-foreground underline underline-offset-4 transition-colors hover:text-foreground"
+        >
+          Como funciona?
+        </a>
       </div>
 
       {/* Bottom spacer — provides bottom padding */}
