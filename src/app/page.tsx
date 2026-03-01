@@ -1,10 +1,37 @@
+import type { Metadata } from "next";
+import { HeroSection } from "@/components/landing/HeroSection";
+
+export const metadata: Metadata = {
+  title: "MyNewStyle - Consultoria de Visagismo com IA",
+  description:
+    "Descubra o corte de cabelo perfeito para o formato do seu rosto. Consultoria de visagismo personalizada com inteligencia artificial em apenas 3 minutos.",
+  openGraph: {
+    title: "MyNewStyle - Consultoria de Visagismo com IA",
+    description:
+      "Descubra o corte de cabelo perfeito para o formato do seu rosto. Consultoria personalizada com IA em 3 minutos.",
+    type: "website",
+    locale: "pt_BR",
+    siteName: "MyNewStyle",
+  },
+  keywords: [
+    "visagismo",
+    "corte de cabelo",
+    "formato do rosto",
+    "consultoria capilar",
+    "inteligencia artificial",
+    "hairstyle",
+    "face shape",
+  ],
+  robots: {
+    index: true,
+    follow: true,
+  },
+};
+
 export default function Home() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-8">
-      <h1 className="font-display text-4xl font-bold text-foreground">MyNewStyle</h1>
-      <p className="mt-4 font-body text-lg text-muted-foreground">
-        AI-Powered Hairstyle Consultation
-      </p>
+    <main>
+      <HeroSection />
     </main>
   );
 }

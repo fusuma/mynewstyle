@@ -43,7 +43,7 @@ development_status:
   # E1: Landing Page & Design System (Sprint 1)
   epic-1: in-progress
   1-1-design-system-setup: done
-  1-2-landing-page-hero-section: backlog
+  1-2-landing-page-hero-section: done
   1-3-how-it-works-section: backlog
   1-4-trust-and-privacy-section: backlog
   1-5-interactive-demo: backlog

@@ -1,0 +1,35 @@
+/* Hero section gradient animation
+   Uses theme CSS variables for theming support.
+   Pure CSS animation — zero JS overhead. */
+
+@keyframes hero-gradient-shift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.hero-gradient {
+  background: linear-gradient(
+    135deg,
+    var(--background) 0%,
+    var(--muted) 35%,
+    var(--background) 65%,
+    color-mix(in srgb, var(--accent) 15%, var(--background)) 100%
+  );
+  background-size: 300% 300%;
+  animation: hero-gradient-shift 10s ease-in-out infinite;
+}
+
+/* Respect prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  .hero-gradient {
+    animation: none;
+    background-position: 0% 50%;
+  }
+}
