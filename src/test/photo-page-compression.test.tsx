@@ -229,10 +229,10 @@ describe("Photo Page Compression Integration", () => {
     });
     fireEvent.change(input, { target: { files: [file] } });
 
-    // Should show success state (compression completed)
+    // Should show photo review screen (compression completed, Story 2.5)
     await waitFor(() => {
       expect(
-        screen.getByText("Foto capturada com sucesso!")
+        screen.getByTestId("photo-review")
       ).toBeInTheDocument();
     });
 

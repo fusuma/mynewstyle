@@ -215,10 +215,10 @@ describe("Photo Page Integration", () => {
     );
     fireEvent.change(input, { target: { files: [file] } });
 
-    // Should show success message
+    // Should show photo review screen (replaced placeholder in Story 2.5)
     await waitFor(() => {
       expect(
-        screen.getByText("Foto capturada com sucesso!")
+        screen.getByTestId("photo-review")
       ).toBeInTheDocument();
     });
   });

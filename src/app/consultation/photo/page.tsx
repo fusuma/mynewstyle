@@ -7,7 +7,8 @@ import { PhotoValidation } from "@/components/consultation/PhotoValidation";
 import { compressPhoto } from "@/lib/photo/compress";
 import { destroyFaceDetector } from "@/lib/photo/validate";
 import type { PhotoValidationResult } from "@/lib/photo/validate";
-import { Loader2 } from "lucide-react";
+import { Loader2, CheckCircle2 } from "lucide-react";
+import { PhotoReview } from "@/components/consultation/PhotoReview";
 
 type PhotoMode = "camera" | "gallery";
 type CompressionState = "idle" | "compressing" | "done" | "error";
@@ -31,7 +32,7 @@ type ValidationState =
  * Validation checks: face presence, face size (>30%), lighting quality.
  * Users get 3 retry attempts before a manual override option appears.
  *
- * In future stories, this will navigate to photo review (Story 2.5).
+ * After validation, the photo review screen lets the user confirm or retake.
  */
 export default function PhotoPage() {
   const [capturedPhoto, setCapturedPhoto] = useState<Blob | null>(null);
@@ -42,6 +43,9 @@ export default function PhotoPage() {
   const [validationState, setValidationState] =
     useState<ValidationState>("pending");
   const [validationRetryCount, setValidationRetryCount] = useState(0);
+  const [validationResult, setValidationResult] =
+    useState<PhotoValidationResult | null>(null);
+  const [isConfirmed, setIsConfirmed] = useState(false);
 
   // Clean up face detector when leaving the page
   useEffect(() => {
@@ -101,6 +105,7 @@ export default function PhotoPage() {
 
   const handleValidationComplete = useCallback(
     (result: PhotoValidationResult) => {
+      setValidationResult(result);
       if (result.valid) {
         setValidationState("valid");
       } else {
@@ -110,6 +115,11 @@ export default function PhotoPage() {
     },
     []
   );
+
+  const handlePhotoConfirm = useCallback(() => {
+    setIsConfirmed(true);
+    // Future: Navigate to questionnaire (Story 3.x)
+  }, []);
 
   const handleValidationRetake = useCallback(() => {
     // Reset compression and validation state to go back to capture/upload
@@ -166,13 +176,28 @@ export default function PhotoPage() {
       );
     }
 
-    // Valid or overridden: show success state
+    // Valid or overridden: show photo review or confirmed state
     if (validationState === "valid" || validationState === "overridden") {
-      // Placeholder: In Story 2.5, this will show the photo review screen
+      if (isConfirmed) {
+        return (
+          <div className="flex min-h-screen flex-col items-center justify-center bg-background px-6 text-center">
+            <CheckCircle2 className="mb-4 h-12 w-12 text-green-500" />
+            <p className="text-lg font-semibold text-foreground">Pronto!</p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Foto selecionada com sucesso.
+            </p>
+          </div>
+        );
+      }
+
       return (
-        <div className="flex min-h-screen flex-col items-center justify-center bg-background px-6 text-center">
-          <p className="text-foreground">Foto capturada com sucesso!</p>
-        </div>
+        <PhotoReview
+          photo={capturedPhoto}
+          validationResult={validationResult}
+          isOverridden={validationState === "overridden"}
+          onConfirm={handlePhotoConfirm}
+          onRetake={handleRetry}
+        />
       );
     }
   }

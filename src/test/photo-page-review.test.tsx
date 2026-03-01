@@ -14,7 +14,8 @@ vi.mock("@/lib/photo/compress", () => ({
 
 vi.mock("@/lib/photo/validate", () => ({
   validatePhoto: (...args: unknown[]) => mockValidatePhoto(...args),
-  destroyFaceDetector: (...args: unknown[]) => mockDestroyFaceDetector(...args),
+  destroyFaceDetector: (...args: unknown[]) =>
+    mockDestroyFaceDetector(...args),
 }));
 
 vi.mock("@/lib/photo/validate-file", () => ({
@@ -25,6 +26,25 @@ vi.mock("@/lib/photo/exif", () => ({
   correctExifOrientation: vi
     .fn()
     .mockResolvedValue(new Blob(["corrected"], { type: "image/jpeg" })),
+}));
+
+vi.mock("framer-motion", () => ({
+  motion: {
+    div: ({
+      children,
+      ...props
+    }: React.PropsWithChildren<Record<string, unknown>>) => {
+      const {
+        initial,
+        animate,
+        transition,
+        whileTap,
+        ...htmlProps
+      } = props;
+      return <div {...htmlProps}>{children}</div>;
+    },
+  },
+  useReducedMotion: () => false,
 }));
 
 // Mock navigator for camera tests
@@ -70,7 +90,7 @@ function createInvalidValidationResult() {
 }
 
 async function switchToGalleryAndUpload() {
-  // Switch to gallery mode (only works from camera mode)
+  // Switch to gallery mode
   fireEvent.click(
     screen.getByText("Prefiro enviar uma foto da galeria")
   );
@@ -85,7 +105,6 @@ async function switchToGalleryAndUpload() {
 }
 
 async function uploadInGalleryMode() {
-  // Ensure we're in gallery mode
   await waitFor(() => {
     expect(
       screen.getByText("Escolher foto da galeria")
@@ -176,28 +195,12 @@ afterEach(() => {
 // ============================================================
 // Tests
 // ============================================================
-describe("Photo Page Validation Integration", () => {
-  // ----------------------------------------------------------
-  // AC9: Validation triggered automatically after compression
-  // ----------------------------------------------------------
-  it("triggers validation automatically after compression completes", async () => {
-    const { default: PhotoPage } = await import(
-      "@/app/consultation/photo/page"
-    );
-    render(<PhotoPage />);
 
-    await switchToGalleryAndUpload();
-
-    // Wait for validation to be called
-    await waitFor(() => {
-      expect(mockValidatePhoto).toHaveBeenCalledTimes(1);
-    });
-  });
-
+describe("Photo Page Review Integration", () => {
   // ----------------------------------------------------------
-  // Valid photo shows success state
+  // AC11: After validation success, PhotoReview is rendered
   // ----------------------------------------------------------
-  it("shows success state when photo validates successfully", async () => {
+  it("renders PhotoReview component after validation success", async () => {
     mockValidatePhoto.mockResolvedValue(createValidValidationResult());
 
     const { default: PhotoPage } = await import(
@@ -207,18 +210,24 @@ describe("Photo Page Validation Integration", () => {
 
     await switchToGalleryAndUpload();
 
-    // Should show photo review screen (replaced placeholder in Story 2.5)
+    // Should show the PhotoReview component (not the old placeholder)
     await waitFor(() => {
-      expect(
-        screen.getByTestId("photo-review")
-      ).toBeInTheDocument();
+      expect(screen.getByTestId("photo-review")).toBeInTheDocument();
     });
+
+    // Should show primary and secondary buttons
+    expect(
+      screen.getByRole("button", { name: /Usar esta foto/i })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Tirar outra/i })
+    ).toBeInTheDocument();
   });
 
   // ----------------------------------------------------------
-  // Invalid photo shows PhotoValidation component
+  // AC12: After validation override, PhotoReview with warning
   // ----------------------------------------------------------
-  it("shows PhotoValidation component when photo fails validation", async () => {
+  it("renders PhotoReview with warning badge after validation override", async () => {
     mockValidatePhoto.mockResolvedValue(createInvalidValidationResult());
 
     const { default: PhotoPage } = await import(
@@ -226,70 +235,14 @@ describe("Photo Page Validation Integration", () => {
     );
     render(<PhotoPage />);
 
-    await switchToGalleryAndUpload();
-
-    await waitFor(() => {
-      expect(
-        screen.getByText(
-          "N\u00e3o conseguimos detectar um rosto. Tente novamente."
-        )
-      ).toBeInTheDocument();
-    });
-
-    // Should show retry button
-    expect(screen.getByText("Tentar novamente")).toBeInTheDocument();
-  });
-
-  // ----------------------------------------------------------
-  // Retake resets to camera/gallery mode
-  // ----------------------------------------------------------
-  it("retake resets to camera/gallery mode", async () => {
-    mockValidatePhoto.mockResolvedValue(createInvalidValidationResult());
-
-    const { default: PhotoPage } = await import(
-      "@/app/consultation/photo/page"
-    );
-    render(<PhotoPage />);
-
-    await switchToGalleryAndUpload();
-
-    // Wait for validation failure
-    await waitFor(() => {
-      expect(screen.getByText("Tentar novamente")).toBeInTheDocument();
-    });
-
-    // Click retry
-    fireEvent.click(screen.getByText("Tentar novamente"));
-
-    // Should go back to gallery mode (the last mode used)
-    await waitFor(() => {
-      expect(
-        screen.queryByText(
-          "N\u00e3o conseguimos detectar um rosto. Tente novamente."
-        )
-      ).not.toBeInTheDocument();
-    });
-  });
-
-  // ----------------------------------------------------------
-  // Override proceeds to success state
-  // ----------------------------------------------------------
-  it("override proceeds to success state after 3 retries", async () => {
-    mockValidatePhoto.mockResolvedValue(createInvalidValidationResult());
-
-    const { default: PhotoPage } = await import(
-      "@/app/consultation/photo/page"
-    );
-    render(<PhotoPage />);
-
-    // First upload (switches from camera to gallery)
+    // Upload, fail 3 times, then override
     await switchToGalleryAndUpload();
 
     await waitFor(() => {
       expect(screen.getByText("Tentar novamente")).toBeInTheDocument();
     });
 
-    // Retry #1: after retake, we're back in gallery mode
+    // Retry #1
     fireEvent.click(screen.getByText("Tentar novamente"));
     await uploadInGalleryMode();
 
@@ -305,11 +258,10 @@ describe("Photo Page Validation Integration", () => {
       expect(screen.getByText("Tentar novamente")).toBeInTheDocument();
     });
 
-    // Retry #3
+    // Retry #3 -- override button should now appear
     fireEvent.click(screen.getByText("Tentar novamente"));
     await uploadInGalleryMode();
 
-    // After 3 failures (retryCount >= 3), should show override button
     await waitFor(() => {
       expect(screen.getByText("Usar mesmo assim")).toBeInTheDocument();
     });
@@ -317,20 +269,21 @@ describe("Photo Page Validation Integration", () => {
     // Click override
     fireEvent.click(screen.getByText("Usar mesmo assim"));
 
-    // Should proceed to photo review screen (replaced placeholder in Story 2.5)
+    // PhotoReview should render with override warning
     await waitFor(() => {
-      expect(
-        screen.getByTestId("photo-review")
-      ).toBeInTheDocument();
+      expect(screen.getByTestId("photo-review")).toBeInTheDocument();
     });
+
+    expect(
+      screen.getByText("Valida\u00e7\u00e3o ignorada")
+    ).toBeInTheDocument();
   });
 
   // ----------------------------------------------------------
-  // Shows validation loading state
+  // AC2: Confirm action shows confirmed state
   // ----------------------------------------------------------
-  it("shows validation loading state after compression", async () => {
-    // Make validation hang
-    mockValidatePhoto.mockReturnValue(new Promise(() => {}));
+  it("shows confirmed state when user clicks Usar esta foto", async () => {
+    mockValidatePhoto.mockResolvedValue(createValidValidationResult());
 
     const { default: PhotoPage } = await import(
       "@/app/consultation/photo/page"
@@ -341,30 +294,30 @@ describe("Photo Page Validation Integration", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText("A verificar a foto...")
+        screen.getByRole("button", { name: /Usar esta foto/i })
       ).toBeInTheDocument();
     });
+
+    // Click confirm
+    fireEvent.click(
+      screen.getByRole("button", { name: /Usar esta foto/i })
+    );
+
+    // Should show confirmed state
+    await waitFor(() => {
+      expect(screen.getByText("Pronto!")).toBeInTheDocument();
+    });
+
+    expect(
+      screen.getByText("Foto selecionada com sucesso.")
+    ).toBeInTheDocument();
   });
 
   // ----------------------------------------------------------
-  // Validation passes the compressed blob (not raw)
+  // AC3: Retake action returns to camera/gallery mode
   // ----------------------------------------------------------
-  it("passes the compressed blob to validatePhoto", async () => {
-    const compressedBlob = new Blob(["compressed-photo"], {
-      type: "image/jpeg",
-    });
-    mockCompressPhoto.mockResolvedValue({
-      blob: compressedBlob,
-      metadata: {
-        originalSizeBytes: 5000000,
-        compressedSizeBytes: 200000,
-        compressionRatio: 0.04,
-        originalWidth: 1600,
-        originalHeight: 1200,
-        outputWidth: 800,
-        outputHeight: 600,
-      },
-    });
+  it("returns to capture mode when user clicks Tirar outra", async () => {
+    mockValidatePhoto.mockResolvedValue(createValidValidationResult());
 
     const { default: PhotoPage } = await import(
       "@/app/consultation/photo/page"
@@ -374,38 +327,41 @@ describe("Photo Page Validation Integration", () => {
     await switchToGalleryAndUpload();
 
     await waitFor(() => {
-      expect(mockValidatePhoto).toHaveBeenCalledTimes(1);
+      expect(
+        screen.getByRole("button", { name: /Tirar outra/i })
+      ).toBeInTheDocument();
     });
 
-    // Verify the compressed blob was passed (not the raw file)
-    const callArg = mockValidatePhoto.mock.calls[0][0];
-    expect(callArg).toBeInstanceOf(Blob);
+    // Click retake
+    fireEvent.click(
+      screen.getByRole("button", { name: /Tirar outra/i })
+    );
+
+    // Should go back to gallery/camera mode
+    await waitFor(() => {
+      expect(screen.queryByTestId("photo-review")).not.toBeInTheDocument();
+    });
   });
 
   // ----------------------------------------------------------
-  // Retry count tracks correctly across attempts
+  // Validation result with details is passed to PhotoReview
   // ----------------------------------------------------------
-  it("tracks retry count across validation attempts", async () => {
-    mockValidatePhoto.mockResolvedValue(createInvalidValidationResult());
+  it("passes validation result with quality indicator to PhotoReview", async () => {
+    const resultWithHighConfidence = createValidValidationResult();
+    mockValidatePhoto.mockResolvedValue(resultWithHighConfidence);
 
     const { default: PhotoPage } = await import(
       "@/app/consultation/photo/page"
     );
     render(<PhotoPage />);
 
-    // First upload (switches from camera to gallery, retryCount becomes 1 after failure)
     await switchToGalleryAndUpload();
 
+    // Should show validation badge and quality indicator
     await waitFor(() => {
-      expect(screen.getByText("Tentar novamente")).toBeInTheDocument();
+      expect(screen.getByText("Rosto detectado")).toBeInTheDocument();
     });
 
-    // Retry and upload again (already in gallery mode after retake)
-    fireEvent.click(screen.getByText("Tentar novamente"));
-    await uploadInGalleryMode();
-
-    await waitFor(() => {
-      expect(screen.getByText("Tentativa 2 de 3")).toBeInTheDocument();
-    });
+    expect(screen.getByText(/Qualidade: Alta/)).toBeInTheDocument();
   });
 });
