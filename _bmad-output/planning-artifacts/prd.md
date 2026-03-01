@@ -483,3 +483,64 @@ mynewstyle is a mobile-first Single Page Application (SPA) with server-side AI p
 - NFR24: AI processing failure rate below 2% of total consultations
 - NFR25: Zero data loss for completed consultations — results persisted before display
 - NFR26: Automated health checks for AI provider connectivity with alerting on degradation
+
+---
+
+## Business & Monetization Model
+
+### Revenue Model: Pay-Per-Consultation
+
+| Tier | Price | What's Included |
+|------|-------|----------------|
+| **Free** | €0 | Face shape detection + basic explanation only |
+| **First Consultation** | €5.99 | Full analysis, 2-3 recommendations, AI previews ("Ver como fico"), styles to avoid, barber reference card, styling tips, saved to history |
+| **Repeat Consultation** | €2.99 | Same as above — new photo, fresh analysis |
+
+**Rationale:**
+- €5.99 anchor for first "wow" experience (12x margin on ~€0.50 AI cost)
+- €2.99 repeat removes friction for returning (kills "one-time problem" objection)
+- No subscription — male audience buys transactions, not commitments
+- One-tap mobile payment (Apple Pay / Google Pay)
+
+### Free Tier Strategy
+
+Free face shape detection proves AI competence, creates desire (knowing your shape without knowing what to DO is incomplete), and requires no payment info.
+
+### Future Add-ons (À La Carte)
+
+| Feature | Price | Description |
+|---------|-------|-------------|
+| 🎨 Paleta de Cores | €3.99 | Color analysis — hair and clothing colors that suit skin tone + face shape |
+| 👔 Estilo Completo | €9.99 | Full image consulting: hair + beard + glasses + clothing style |
+| 📊 Evolução | €2.99 | Compare consultations over time — style evolution tracking |
+
+### B2B2C — Barber/Salon SaaS (Phase 2)
+
+Barbershops pay €29-49/month for branded integration: custom link, client pre-consultation data, booking CTA, trending styles dashboard. Positions mynewstyle as "barber's best friend" — helps clients communicate, doesn't replace barbers.
+
+### Affiliate Revenue (Passive Layer)
+
+Post-consultation product recommendations based on hair type + style. 5-15% affiliate commission. Natural, non-intrusive.
+
+### Unit Economics
+
+| Metric | Value |
+|--------|-------|
+| AI cost per consultation | ~€0.50 |
+| Gross margin (first consultation) | 91.7% |
+| Gross margin (repeat) | 83.3% |
+| Break-even (covering €100/month infra) | ~20 consultations |
+
+### Monetization Timeline
+
+| Phase | Period | Action |
+|-------|--------|--------|
+| Validation | Month 1-2 | 100% free, validate PMF |
+| Soft Launch | Month 3 | Introduce €5.99/€2.99 pricing |
+| Upsells | Month 4-6 | Paleta de cores, estilo completo |
+| Affiliate | Month 3+ | Product recommendations |
+| B2B | Month 6-12 | Barber/salon SaaS |
+
+### Payment Infrastructure
+
+Stripe (EUR, BRL, global). Apple Pay + Google Pay. Pay after free face shape, before full consultation. Auto-refund on AI processing failure.
