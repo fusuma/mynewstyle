@@ -1,0 +1,218 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* ============================================
+   Neutral / Default Theme (before gender selection)
+   ============================================ */
+:root {
+  --radius: 0.625rem;
+  --background: #f5f5f5;
+  --foreground: #1a1a2e;
+  --accent: #6b7280;
+  --accent-foreground: #1a1a2e;
+  --muted: #e5e7eb;
+  --muted-foreground: #6b7280;
+  --card: #ffffff;
+  --card-foreground: #1a1a2e;
+  --popover: #ffffff;
+  --popover-foreground: #1a1a2e;
+  --primary: #6b7280;
+  --primary-foreground: #ffffff;
+  --secondary: #e5e7eb;
+  --secondary-foreground: #1a1a2e;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --border: #d1d5db;
+  --input: #d1d5db;
+  --ring: #6b7280;
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+  --sidebar: #f5f5f5;
+  --sidebar-foreground: #1a1a2e;
+  --sidebar-primary: #6b7280;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #e5e7eb;
+  --sidebar-accent-foreground: #1a1a2e;
+  --sidebar-border: #d1d5db;
+  --sidebar-ring: #6b7280;
+}
+
+/* ============================================
+   Male Theme — Dark Mode (charcoal, amber, cream)
+   ============================================ */
+[data-theme="male"] {
+  --background: #1a1a2e;
+  --foreground: #faf3e0;
+  --accent: #f5a623;
+  --accent-foreground: #1a1a2e;
+  --muted: #2d2d3a;
+  --muted-foreground: #a0a0b0;
+  --card: #2d2d3a;
+  --card-foreground: #faf3e0;
+  --popover: #2d2d3a;
+  --popover-foreground: #faf3e0;
+  --primary: #f5a623;
+  --primary-foreground: #1a1a2e;
+  --secondary: #2d2d3a;
+  --secondary-foreground: #faf3e0;
+  --destructive: #ef4444;
+  --destructive-foreground: #faf3e0;
+  --border: #3d3d4e;
+  --input: #3d3d4e;
+  --ring: #f5a623;
+  --sidebar: #1a1a2e;
+  --sidebar-foreground: #faf3e0;
+  --sidebar-primary: #f5a623;
+  --sidebar-primary-foreground: #1a1a2e;
+  --sidebar-accent: #2d2d3a;
+  --sidebar-accent-foreground: #faf3e0;
+  --sidebar-border: #3d3d4e;
+  --sidebar-ring: #f5a623;
+}
+
+/* ============================================
+   Female Theme — Light Mode (warm white, dusty rose, charcoal)
+   ============================================ */
+[data-theme="female"] {
+  --background: #fff8f0;
+  --foreground: #2d2d3a;
+  --accent: #a85c60;
+  --accent-foreground: #ffffff;
+  --muted: #f5e6d3;
+  --muted-foreground: #6b5e53;
+  --card: #ffffff;
+  --card-foreground: #2d2d3a;
+  --popover: #ffffff;
+  --popover-foreground: #2d2d3a;
+  --primary: #a85c60;
+  --primary-foreground: #ffffff;
+  --secondary: #f5e6d3;
+  --secondary-foreground: #2d2d3a;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --border: #e8d5c4;
+  --input: #e8d5c4;
+  --ring: #a85c60;
+  --sidebar: #fff8f0;
+  --sidebar-foreground: #2d2d3a;
+  --sidebar-primary: #a85c60;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f5e6d3;
+  --sidebar-accent-foreground: #2d2d3a;
+  --sidebar-border: #e8d5c4;
+  --sidebar-ring: #a85c60;
+}
+
+/* ============================================
+   Tailwind v4 @theme inline — expose CSS vars to Tailwind utilities
+   ============================================ */
+@theme inline {
+  /* Colors mapped to Tailwind utilities */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Fonts */
+  --font-display: var(--font-space-grotesk);
+  --font-body: var(--font-inter);
+
+  /* Spacing (4px base unit scale) */
+  --spacing-1: 4px;
+  --spacing-2: 8px;
+  --spacing-3: 12px;
+  --spacing-4: 16px;
+  --spacing-6: 24px;
+  --spacing-8: 32px;
+  --spacing-12: 48px;
+  --spacing-16: 64px;
+  --spacing-24: 96px;
+
+  /* Border Radius */
+  --radius-card: 16px;
+  --radius-button: 12px;
+  --radius-badge: 8px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px);
+
+  /* Shadows */
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.06);
+  --shadow-elevated: 0 8px 24px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08);
+  --shadow-preview-image: 0 4px 16px rgba(0, 0, 0, 0.15), 0 2px 4px rgba(0, 0, 0, 0.1);
+
+  /* Motion durations */
+  --duration-micro: 200ms;
+  --duration-page: 350ms;
+  --duration-loading: 1500ms;
+}
+
+/* ============================================
+   Base styles
+   ============================================ */
+body {
+  font-family: var(--font-body), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ============================================
+   Reduced motion support
+   ============================================ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}

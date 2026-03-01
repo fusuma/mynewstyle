@@ -42,7 +42,7 @@ story_location: _bmad-output/implementation-artifacts
 development_status:
   # E1: Landing Page & Design System (Sprint 1)
   epic-1: in-progress
-  1-1-design-system-setup: ready-for-dev
+  1-1-design-system-setup: done
   1-2-landing-page-hero-section: backlog
   1-3-how-it-works-section: backlog
   1-4-trust-and-privacy-section: backlog
