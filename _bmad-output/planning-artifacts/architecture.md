@@ -68,7 +68,7 @@ author: Fusuma
 |------|---------|----------|-------|--------|
 | Facial Analysis | Gemini 2.5 Flash (Vision) | GPT-4o | Photo (base64) | Face shape, proportions, hair assessment (JSON) |
 | Consultation Gen | Gemini 2.5 Flash | GPT-4o | Analysis JSON + questionnaire | 2-3 recommendations + justifications + tips (JSON) |
-| Preview Generation | Gemini 3 Pro Image | FLUX 1.1 Pro (via Replicate) | Photo + style description | User with recommended style applied (image) |
+| Preview Generation | Nano Banana 2 (Gemini 3.1 Flash via Kie.ai) | Gemini 3 Pro Image (direct) | Photo + style description | User with recommended style applied (image) |
 
 ### 2.4 Infrastructure
 
@@ -77,6 +77,7 @@ author: Fusuma
 | Hosting + Serverless | Vercel Pro | €20/month |
 | Database + Auth + Storage | Supabase Pro | €25/month |
 | AI (Gemini) | Google AI | ~€0.50/consultation |
+| AI Preview (Kie.ai) | Kie.ai (Nano Banana 2) | ~€0.02-0.05/image |
 | AI Fallback (OpenAI) | OpenAI | ~€0.80/consultation (only on fallback) |
 | Payments | Stripe | 1.4% + €0.25 per transaction (EU) |
 | Domain | mynewstyle.com | ~€15/year |
@@ -205,9 +206,9 @@ REVOKE ALL ON ALL TABLES IN SCHEMA public FROM anon, authenticated;
 │ Upload  │     │ Face Analysis│     │ Recommendations│     │ Preview Gen  │
 │         │     │ (5-10s)      │     │ (10-15s)       │     │ (30-60s)     │
 └─────────┘     └──────────────┘     └───────────────┘     └──────────────┘
-                 Gemini Vision        Gemini Text            Gemini Image
+                 Gemini Vision        Gemini Text            Nano Banana 2 (Kie.ai)
                  ↓ fallback           ↓ fallback             ↓ fallback
-                 GPT-4o               GPT-4o                 FLUX/Replicate
+                 GPT-4o               GPT-4o                 Gemini 3 Pro (direct)
                  
                  Returns:             Returns:               Returns:
                  - face_shape         - 2-3 styles           - user with
@@ -804,3 +805,175 @@ Face analysis: Must-Have. Consultation gen: Must-Have. Preview gen: Performance 
 8. **Analytics from day 1** — retrofitting analytics never works
 9. **Cost tracking per AI call** — circuit breaker if average exceeds threshold
 10. **RLS audit in CI/CD** — automated check that every table has policies
+
+---
+
+## 14. Kie.ai Integration (Nano Banana 2)
+
+### Why Nano Banana 2
+
+- **Model:** Gemini 3.1 Flash Image via Kie.ai proxy
+- **Speed:** Faster than Gemini 3 Pro Image (Flash vs Pro)
+- **Quality:** 4K output, strong character consistency, image editing support
+- **Cost:** Significantly cheaper than direct Gemini Pro Image API
+- **API:** Async job model with webhook callback — perfect for preview generation
+
+### API Integration
+
+```typescript
+// lib/ai/kie.ts
+const KIE_API_URL = 'https://api.kie.ai/api/v1/jobs/createTask';
+
+interface KieJobRequest {
+  model: 'nano-banana-2';
+  callBackUrl: string;
+  input: {
+    prompt: string;
+    aspect_ratio?: '1:1' | '3:4' | '4:3' | '9:16' | '16:9' | 'auto';
+    resolution?: '1K' | '2K' | '4K';
+    output_format?: 'jpg' | 'png';
+    google_search?: boolean;
+    image_input?: string[]; // URLs of input images for editing
+  };
+}
+
+async function generatePreview(
+  photoUrl: string,
+  stylePrompt: string,
+  callbackUrl: string
+): Promise<{ taskId: string }> {
+  const response = await fetch(KIE_API_URL, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${process.env.KIE_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'nano-banana-2',
+      callBackUrl: callbackUrl,
+      input: {
+        prompt: `Edit this person's hairstyle to show them with a ${stylePrompt}. 
+                 Keep the person's face, skin tone, facial features, and expression 
+                 exactly the same. Only change the hairstyle. Photorealistic result.`,
+        aspect_ratio: '3:4',
+        resolution: '2K',
+        output_format: 'jpg',
+        google_search: false,
+        image_input: [photoUrl],
+      },
+    }),
+  });
+  
+  const data = await response.json();
+  return { taskId: data.taskId };
+}
+```
+
+### Async Callback Flow
+
+```
+User taps "Ver como fico"
+  → POST /api/preview/generate
+    → Creates Kie.ai job with callBackUrl = /api/webhook/kie
+    → Stores taskId in recommendations.preview_generation_params
+    → Returns { status: 'generating' }
+
+Client polls GET /api/preview/:id/status every 5s
+
+Kie.ai completes generation
+  → POST /api/webhook/kie (callback)
+    → Downloads generated image
+    → Uploads to Supabase Storage
+    → Updates recommendation.preview_url + preview_status = 'ready'
+
+Client poll detects status = 'ready'
+  → Displays preview with crossfade animation
+```
+
+### Callback Webhook
+
+```typescript
+// app/api/webhook/kie/route.ts
+export async function POST(req: Request) {
+  const payload = await req.json();
+  
+  // Verify webhook signature (Kie.ai webhook verification)
+  if (!verifyKieWebhook(req, payload)) {
+    return Response.json({ error: 'Invalid signature' }, { status: 401 });
+  }
+  
+  const { taskId, status, output } = payload;
+  
+  if (status === 'completed' && output?.image_url) {
+    // Download image from Kie.ai CDN
+    const imageBuffer = await downloadImage(output.image_url);
+    
+    // Face similarity check
+    const similarity = await compareFaces(originalPhoto, imageBuffer);
+    if (similarity < 0.7) {
+      await updatePreviewStatus(taskId, 'unavailable', 'quality_gate');
+      return Response.json({ ok: true });
+    }
+    
+    // Upload to Supabase Storage
+    const storagePath = await uploadPreview(taskId, imageBuffer);
+    
+    // Update recommendation record
+    await updatePreviewStatus(taskId, 'ready', storagePath);
+  } else if (status === 'failed') {
+    await updatePreviewStatus(taskId, 'failed', payload.error);
+  }
+  
+  return Response.json({ ok: true });
+}
+```
+
+### Updated Provider Abstraction
+
+```typescript
+// lib/ai/provider.ts — updated for Kie.ai
+interface PreviewProvider {
+  generatePreview(photoUrl: string, style: string, callbackUrl: string): Promise<{ taskId: string }>;
+}
+
+class KieNanoBanana2 implements PreviewProvider {
+  // Primary: Nano Banana 2 (Gemini 3.1 Flash) via Kie.ai
+  // Fast, cheap, 4K, character-consistent
+}
+
+class GeminiProImage implements PreviewProvider {
+  // Fallback: Gemini 3 Pro Image (direct Google API)
+  // Slower, more expensive, highest quality
+}
+
+class AIRouter {
+  private previewPrimary: PreviewProvider = new KieNanoBanana2();
+  private previewFallback: PreviewProvider = new GeminiProImage();
+  
+  // Facial analysis + consultation still use Gemini Flash / GPT-4o directly
+  // Only preview generation goes through Kie.ai
+}
+```
+
+### Cost Comparison
+
+| Provider | Model | Cost/Image | Speed | Quality |
+|----------|-------|-----------|-------|---------|
+| **Kie.ai (Nano Banana 2)** | Gemini 3.1 Flash | ~€0.02-0.05 | Fast (~15-30s) | High (4K) |
+| Google Direct (Gemini 3 Pro) | Gemini 3 Pro Image | ~€0.06-0.10 | Slower (~30-60s) | Highest |
+| Replicate (FLUX) | FLUX 1.1 Pro | ~€0.05-0.08 | Medium (~20-40s) | High |
+
+**Nano Banana 2 wins on:** cost (cheapest), speed (fastest), and character consistency (critical for "keep my face" previews).
+
+### Updated Unit Economics
+
+| Component | Cost |
+|-----------|------|
+| Face analysis (Gemini Flash) | ~€0.01 |
+| Consultation gen (Gemini Flash) | ~€0.02 |
+| Preview gen × 3 (Nano Banana 2) | ~€0.06-0.15 |
+| **Total per consultation** | **~€0.10-0.18** |
+| Revenue (first consultation) | €5.99 |
+| **Gross margin** | **97%** |
+
+Switching from Gemini 3 Pro Image to Nano Banana 2 cuts preview costs by 60-70% and improves margins from 91% to 97%.
