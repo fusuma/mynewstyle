@@ -14,6 +14,21 @@ vi.mock("@/lib/photo/exif", () => ({
     .mockResolvedValue(new Blob(["corrected"], { type: "image/jpeg" })),
 }));
 
+vi.mock("@/lib/photo/compress", () => ({
+  compressPhoto: vi.fn().mockResolvedValue({
+    blob: new Blob(["compressed"], { type: "image/jpeg" }),
+    metadata: {
+      originalSizeBytes: 1024,
+      compressedSizeBytes: 512,
+      compressionRatio: 0.5,
+      originalWidth: 800,
+      originalHeight: 600,
+      outputWidth: 800,
+      outputHeight: 600,
+    },
+  }),
+}));
+
 // Mock navigator for camera tests
 const mockGetUserMedia = vi.fn();
 const mockEnumerateDevices = vi.fn();
