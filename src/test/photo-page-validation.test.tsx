@@ -35,6 +35,12 @@ vi.mock("@/lib/photo/upload", () => ({
   }),
 }));
 
+vi.mock("@/lib/persistence/session-db", () => ({
+  loadSessionData: vi.fn().mockResolvedValue(null),
+  saveSessionData: vi.fn().mockResolvedValue(undefined),
+  clearSessionData: vi.fn().mockResolvedValue(undefined),
+}));
+
 // Mock navigator for camera tests
 const mockGetUserMedia = vi.fn();
 const mockEnumerateDevices = vi.fn();
@@ -78,6 +84,13 @@ function createInvalidValidationResult() {
 }
 
 async function switchToGalleryAndUpload() {
+  // Wait for session recovery check to complete first
+  await waitFor(() => {
+    expect(
+      screen.getByText("Prefiro enviar uma foto da galeria")
+    ).toBeInTheDocument();
+  });
+
   // Switch to gallery mode (only works from camera mode)
   fireEvent.click(
     screen.getByText("Prefiro enviar uma foto da galeria")

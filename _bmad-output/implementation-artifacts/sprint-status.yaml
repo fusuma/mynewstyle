@@ -51,14 +51,14 @@ development_status:
   epic-1-retrospective: optional
 
   # E2: Photo Capture & Validation (Sprint 1-2)
-  epic-2: in-progress
+  epic-2: done
   2-1-camera-capture-with-guidance: done
   2-2-gallery-upload-alternative: done
   2-3-client-side-photo-compression: done
   2-4-real-time-photo-validation: done
   2-5-photo-review-screen: done
   2-6-photo-upload-to-storage: done
-  2-7-photo-persistence-for-session-recovery: backlog
+  2-7-photo-persistence-for-session-recovery: done
   epic-2-retrospective: optional
 
   # E3: Questionnaire Flow (Sprint 2)

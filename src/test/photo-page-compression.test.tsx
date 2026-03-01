@@ -39,6 +39,12 @@ vi.mock("@/lib/photo/upload", () => ({
   }),
 }));
 
+vi.mock("@/lib/persistence/session-db", () => ({
+  loadSessionData: vi.fn().mockResolvedValue(null),
+  saveSessionData: vi.fn().mockResolvedValue(undefined),
+  clearSessionData: vi.fn().mockResolvedValue(undefined),
+}));
+
 // Mock navigator for camera tests
 const mockGetUserMedia = vi.fn();
 const mockEnumerateDevices = vi.fn();
@@ -112,7 +118,10 @@ describe("Photo Page Compression Integration", () => {
     );
     render(<PhotoPage />);
 
-    // Switch to gallery mode
+    // Wait for session recovery check to complete, then switch to gallery mode
+    await waitFor(() => {
+      expect(screen.getByText("Prefiro enviar uma foto da galeria")).toBeInTheDocument();
+    });
     fireEvent.click(
       screen.getByText("Prefiro enviar uma foto da galeria")
     );
@@ -157,7 +166,10 @@ describe("Photo Page Compression Integration", () => {
     );
     render(<PhotoPage />);
 
-    // Switch to gallery mode
+    // Wait for session recovery check to complete, then switch to gallery mode
+    await waitFor(() => {
+      expect(screen.getByText("Prefiro enviar uma foto da galeria")).toBeInTheDocument();
+    });
     fireEvent.click(
       screen.getByText("Prefiro enviar uma foto da galeria")
     );
@@ -213,7 +225,10 @@ describe("Photo Page Compression Integration", () => {
     );
     render(<PhotoPage />);
 
-    // Switch to gallery mode
+    // Wait for session recovery check to complete, then switch to gallery mode
+    await waitFor(() => {
+      expect(screen.getByText("Prefiro enviar uma foto da galeria")).toBeInTheDocument();
+    });
     fireEvent.click(
       screen.getByText("Prefiro enviar uma foto da galeria")
     );
@@ -259,7 +274,10 @@ describe("Photo Page Compression Integration", () => {
     );
     render(<PhotoPage />);
 
-    // Switch to gallery mode
+    // Wait for session recovery check to complete, then switch to gallery mode
+    await waitFor(() => {
+      expect(screen.getByText("Prefiro enviar uma foto da galeria")).toBeInTheDocument();
+    });
     fireEvent.click(
       screen.getByText("Prefiro enviar uma foto da galeria")
     );
@@ -302,7 +320,10 @@ describe("Photo Page Compression Integration", () => {
     );
     render(<PhotoPage />);
 
-    // Switch to gallery mode
+    // Wait for session recovery check to complete, then switch to gallery mode
+    await waitFor(() => {
+      expect(screen.getByText("Prefiro enviar uma foto da galeria")).toBeInTheDocument();
+    });
     fireEvent.click(
       screen.getByText("Prefiro enviar uma foto da galeria")
     );
@@ -345,7 +366,10 @@ describe("Photo Page Compression Integration", () => {
     );
     render(<PhotoPage />);
 
-    // Switch to gallery mode
+    // Wait for session recovery check to complete, then switch to gallery mode
+    await waitFor(() => {
+      expect(screen.getByText("Prefiro enviar uma foto da galeria")).toBeInTheDocument();
+    });
     fireEvent.click(
       screen.getByText("Prefiro enviar uma foto da galeria")
     );
@@ -398,7 +422,10 @@ describe("Photo Page Compression Integration", () => {
     );
     render(<PhotoPage />);
 
-    // Switch to gallery mode
+    // Wait for session recovery check to complete, then switch to gallery mode
+    await waitFor(() => {
+      expect(screen.getByText("Prefiro enviar uma foto da galeria")).toBeInTheDocument();
+    });
     fireEvent.click(
       screen.getByText("Prefiro enviar uma foto da galeria")
     );
@@ -440,7 +467,10 @@ describe("Photo Page Compression Integration", () => {
     );
     render(<PhotoPage />);
 
-    // Switch to gallery mode
+    // Wait for session recovery check to complete, then switch to gallery mode
+    await waitFor(() => {
+      expect(screen.getByText("Prefiro enviar uma foto da galeria")).toBeInTheDocument();
+    });
     fireEvent.click(
       screen.getByText("Prefiro enviar uma foto da galeria")
     );

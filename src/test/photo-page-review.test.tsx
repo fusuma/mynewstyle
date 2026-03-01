@@ -36,6 +36,12 @@ vi.mock("@/lib/photo/upload", () => ({
   }),
 }));
 
+vi.mock("@/lib/persistence/session-db", () => ({
+  loadSessionData: vi.fn().mockResolvedValue(null),
+  saveSessionData: vi.fn().mockResolvedValue(undefined),
+  clearSessionData: vi.fn().mockResolvedValue(undefined),
+}));
+
 vi.mock("framer-motion", () => ({
   motion: {
     div: ({
@@ -98,6 +104,13 @@ function createInvalidValidationResult() {
 }
 
 async function switchToGalleryAndUpload() {
+  // Wait for session recovery check to complete first
+  await waitFor(() => {
+    expect(
+      screen.getByText("Prefiro enviar uma foto da galeria")
+    ).toBeInTheDocument();
+  });
+
   // Switch to gallery mode
   fireEvent.click(
     screen.getByText("Prefiro enviar uma foto da galeria")

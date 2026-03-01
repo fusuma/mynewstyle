@@ -48,6 +48,12 @@ vi.mock("@/lib/photo/upload", () => ({
   }),
 }));
 
+vi.mock("@/lib/persistence/session-db", () => ({
+  loadSessionData: vi.fn().mockResolvedValue(null),
+  saveSessionData: vi.fn().mockResolvedValue(undefined),
+  clearSessionData: vi.fn().mockResolvedValue(undefined),
+}));
+
 // Mock navigator for camera tests
 const mockGetUserMedia = vi.fn();
 const mockEnumerateDevices = vi.fn();
@@ -98,7 +104,9 @@ describe("Photo Page Integration", () => {
       "@/app/consultation/photo/page"
     );
     render(<PhotoPage />);
-    expect(screen.getByText(/Precisamos da sua câmera/)).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText(/Precisamos da sua câmera/)).toBeInTheDocument();
+    });
   });
 
   it('switches to gallery mode when "Prefiro enviar uma foto da galeria" clicked', async () => {
@@ -106,6 +114,11 @@ describe("Photo Page Integration", () => {
       "@/app/consultation/photo/page"
     );
     render(<PhotoPage />);
+
+    // Wait for session recovery check to complete
+    await waitFor(() => {
+      expect(screen.getByText("Prefiro enviar uma foto da galeria")).toBeInTheDocument();
+    });
 
     // Click the gallery link in CameraPermissionPrompt
     const galleryLink = screen.getByText(
@@ -131,6 +144,11 @@ describe("Photo Page Integration", () => {
       "@/app/consultation/photo/page"
     );
     render(<PhotoPage />);
+
+    // Wait for session recovery check to complete
+    await waitFor(() => {
+      expect(screen.getByText("Prefiro enviar uma foto da galeria")).toBeInTheDocument();
+    });
 
     // Switch to gallery mode
     fireEvent.click(
@@ -159,6 +177,11 @@ describe("Photo Page Integration", () => {
     );
     render(<PhotoPage />);
 
+    // Wait for session recovery check to complete
+    await waitFor(() => {
+      expect(screen.getByText("Prefiro enviar uma foto da galeria")).toBeInTheDocument();
+    });
+
     // Switch to gallery mode
     fireEvent.click(
       screen.getByText("Prefiro enviar uma foto da galeria")
@@ -183,6 +206,11 @@ describe("Photo Page Integration", () => {
     );
     render(<PhotoPage />);
 
+    // Wait for session recovery check to complete
+    await waitFor(() => {
+      expect(screen.getByText("Prefiro enviar uma foto da galeria")).toBeInTheDocument();
+    });
+
     const galleryLink = screen.getByText(
       "Prefiro enviar uma foto da galeria"
     );
@@ -194,6 +222,11 @@ describe("Photo Page Integration", () => {
       "@/app/consultation/photo/page"
     );
     render(<PhotoPage />);
+
+    // Wait for session recovery check to complete
+    await waitFor(() => {
+      expect(screen.getByText("Prefiro enviar uma foto da galeria")).toBeInTheDocument();
+    });
 
     // Switch to gallery
     fireEvent.click(

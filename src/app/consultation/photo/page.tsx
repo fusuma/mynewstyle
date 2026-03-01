@@ -12,15 +12,13 @@ import type { PhotoUploadResult } from "@/lib/photo/upload";
 import { Loader2, CheckCircle2 } from "lucide-react";
 import { PhotoReview } from "@/components/consultation/PhotoReview";
 import { PhotoUpload } from "@/components/consultation/PhotoUpload";
+import { useSessionRecovery } from "@/hooks/useSessionRecovery";
+import { saveSessionData, clearSessionData } from "@/lib/persistence/session-db";
+import { SessionRecoveryBanner } from "@/components/consultation/SessionRecoveryBanner";
 
 type PhotoMode = "camera" | "gallery";
 type CompressionState = "idle" | "compressing" | "done" | "error";
-type ValidationState =
-  | "pending"
-  | "validating"
-  | "valid"
-  | "invalid"
-  | "overridden";
+type ValidationState = "pending" | "validating" | "valid" | "invalid" | "overridden";
 type UploadState = "idle" | "uploading" | "done" | "error";
 
 const GUEST_SESSION_STORAGE_KEY = "mynewstyle_guest_session_id";
@@ -52,26 +50,39 @@ function getOrCreateGuestSessionId(): string {
  *
  * After validation, the photo review screen lets the user confirm or retake.
  * After confirmation, the photo is uploaded to Supabase Storage.
+ *
+ * Session Recovery (Story 2.7):
+ * On mount, checks IndexedDB for a previously persisted session.
+ * If found, shows recovery banner allowing user to continue or retake.
+ * On photo confirm, saves session data to IndexedDB (fire-and-forget).
+ * On successful upload + navigation, clears IndexedDB.
  */
 export default function PhotoPage() {
   const [capturedPhoto, setCapturedPhoto] = useState<Blob | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [mode, setMode] = useState<PhotoMode>("camera");
-  const [compressionState, setCompressionState] =
-    useState<CompressionState>("idle");
+  const [compressionState, setCompressionState] = useState<CompressionState>("idle");
   const [rawBlob, setRawBlob] = useState<Blob | null>(null);
-  const [validationState, setValidationState] =
-    useState<ValidationState>("pending");
+  const [validationState, setValidationState] = useState<ValidationState>("pending");
   const [validationRetryCount, setValidationRetryCount] = useState(0);
-  const [validationResult, setValidationResult] =
-    useState<PhotoValidationResult | null>(null);
+  const [validationResult, setValidationResult] = useState<PhotoValidationResult | null>(null);
   const [isConfirmed, setIsConfirmed] = useState(false);
 
   // Upload state
   const [uploadState, setUploadState] = useState<UploadState>("idle");
-  const [uploadResult, setUploadResult] = useState<PhotoUploadResult | null>(
-    null
-  );
+  const [uploadResult, setUploadResult] = useState<PhotoUploadResult | null>(null);
   const consultationIdRef = useRef<string | null>(null);
+
+  // Session recovery state (Story 2.7)
+  const { recoveredSession, isChecking, clearRecovery } = useSessionRecovery();
+  const [showRecoveryBanner, setShowRecoveryBanner] = useState(false);
+
+  // Show recovery banner when a session is found
+  useEffect(() => {
+    if (recoveredSession && !isChecking) {
+      setShowRecoveryBanner(true);
+    }
+  }, [recoveredSession, isChecking]);
 
   // Clean up face detector when leaving the page
   useEffect(() => {
@@ -109,6 +120,7 @@ export default function PhotoPage() {
   const handleRetry = useCallback(() => {
     setCompressionState("idle");
     setCapturedPhoto(null);
+    setPhotoPreview(null);
     setRawBlob(null);
     setValidationState("pending");
     setUploadState("idle");
@@ -131,18 +143,15 @@ export default function PhotoPage() {
     setMode("camera");
   }, []);
 
-  const handleValidationComplete = useCallback(
-    (result: PhotoValidationResult) => {
-      setValidationResult(result);
-      if (result.valid) {
-        setValidationState("valid");
-      } else {
-        setValidationState("invalid");
-        setValidationRetryCount((prev) => prev + 1);
-      }
-    },
-    []
-  );
+  const handleValidationComplete = useCallback((result: PhotoValidationResult) => {
+    setValidationResult(result);
+    if (result.valid) {
+      setValidationState("valid");
+    } else {
+      setValidationState("invalid");
+      setValidationRetryCount((prev) => prev + 1);
+    }
+  }, []);
 
   const performUpload = useCallback(async () => {
     if (!capturedPhoto) return;
@@ -154,16 +163,50 @@ export default function PhotoPage() {
       consultationIdRef.current = consId;
     }
 
+    // Save session data to IndexedDB (fire-and-forget, non-blocking).
+    // Generate a base64 data URL for the preview so it survives page reloads
+    // (object URLs are revoked on navigation and cannot be recovered).
+    const persistPreview = (blob: Blob): Promise<string> =>
+      new Promise((resolve) => {
+        if (photoPreview && photoPreview.startsWith("data:")) {
+          resolve(photoPreview);
+          return;
+        }
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = () => resolve(""); // Best-effort
+        reader.readAsDataURL(blob);
+      });
+
+    persistPreview(capturedPhoto)
+      .then((dataUrl) =>
+        saveSessionData({
+          photo: capturedPhoto,
+          photoPreview: dataUrl,
+          gender: "male", // Default; will be extended in Epic 3 with gender selection
+          guestSessionId: sessionId,
+          consultationId: consId,
+          savedAt: Date.now(),
+        })
+      )
+      .catch(() => {
+        // Silently fail -- persistence is best-effort
+      });
+
     const result = await uploadPhoto(capturedPhoto, sessionId, consId);
     setUploadResult(result);
 
     if (result.success) {
       setUploadState("done");
       setIsConfirmed(true);
+      // Clear session data from IndexedDB after successful upload
+      clearSessionData().catch(() => {
+        // Silently fail
+      });
     } else {
       setUploadState("error");
     }
-  }, [capturedPhoto]);
+  }, [capturedPhoto, photoPreview]);
 
   const handlePhotoConfirm = useCallback(() => {
     performUpload();
@@ -183,6 +226,7 @@ export default function PhotoPage() {
     // Reset compression and validation state to go back to capture/upload
     setCompressionState("idle");
     setCapturedPhoto(null);
+    setPhotoPreview(null);
     setRawBlob(null);
     setValidationState("pending");
     setUploadState("idle");
@@ -193,6 +237,57 @@ export default function PhotoPage() {
   const handleValidationOverride = useCallback(() => {
     setValidationState("overridden");
   }, []);
+
+  // --- Session Recovery Handlers (Story 2.7) ---
+
+  const handleRecoveryContinue = useCallback(() => {
+    if (!recoveredSession) return;
+
+    // Set recovered photo into the page state
+    setCapturedPhoto(recoveredSession.photo);
+    setPhotoPreview(recoveredSession.photoPreview);
+    setCompressionState("done");
+    setValidationState("valid"); // Skip validation -- already validated before save
+    setShowRecoveryBanner(false);
+
+    // Restore consultation context
+    if (recoveredSession.guestSessionId) {
+      // Ensure localStorage also has the session ID
+      localStorage.setItem(GUEST_SESSION_STORAGE_KEY, recoveredSession.guestSessionId);
+    }
+    if (recoveredSession.consultationId) {
+      consultationIdRef.current = recoveredSession.consultationId;
+    }
+  }, [recoveredSession]);
+
+  const handleRecoveryRetake = useCallback(async () => {
+    await clearRecovery();
+    setShowRecoveryBanner(false);
+    // Reset to capture mode
+    handleRetry();
+  }, [clearRecovery, handleRetry]);
+
+  // --- Recovery banner ---
+  if (showRecoveryBanner && recoveredSession) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-background px-6">
+        <SessionRecoveryBanner
+          onUseRecovered={handleRecoveryContinue}
+          onRetake={handleRecoveryRetake}
+        />
+      </div>
+    );
+  }
+
+  // --- Loading state while checking IndexedDB ---
+  if (isChecking) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-background px-6 text-center">
+        <Loader2 className="mb-4 h-8 w-8 animate-spin text-accent" />
+        <p className="text-muted-foreground">A verificar sess\u00e3o anterior...</p>
+      </div>
+    );
+  }
 
   // Compression loading state
   if (compressionState === "compressing") {
@@ -208,9 +303,7 @@ export default function PhotoPage() {
   if (compressionState === "error") {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-background px-6 text-center">
-        <p className="mb-4 text-foreground">
-          Erro ao processar a foto. Tente novamente.
-        </p>
+        <p className="mb-4 text-foreground">Erro ao processar a foto. Tente novamente.</p>
         <button
           onClick={handleRetryCompression}
           className="rounded-lg bg-accent px-6 py-3 text-sm font-medium text-accent-foreground transition-colors hover:bg-accent/90"
@@ -267,9 +360,7 @@ export default function PhotoPage() {
           <div className="flex min-h-screen flex-col items-center justify-center bg-background px-6 text-center">
             <CheckCircle2 className="mb-4 h-12 w-12 text-green-500" />
             <p className="text-lg font-semibold text-foreground">Pronto!</p>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Foto selecionada com sucesso.
-            </p>
+            <p className="mt-2 text-sm text-muted-foreground">Foto selecionada com sucesso.</p>
           </div>
         );
       }
@@ -288,17 +379,11 @@ export default function PhotoPage() {
 
   if (mode === "gallery") {
     return (
-      <GalleryUpload
-        onUpload={handleCompressAndStore}
-        onSwitchToCamera={handleSwitchToCamera}
-      />
+      <GalleryUpload onUpload={handleCompressAndStore} onSwitchToCamera={handleSwitchToCamera} />
     );
   }
 
   return (
-    <PhotoCapture
-      onCapture={handleCompressAndStore}
-      onSwitchToGallery={handleSwitchToGallery}
-    />
+    <PhotoCapture onCapture={handleCompressAndStore} onSwitchToGallery={handleSwitchToGallery} />
   );
 }

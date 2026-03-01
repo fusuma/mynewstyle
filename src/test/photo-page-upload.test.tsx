@@ -23,6 +23,12 @@ vi.mock('@/lib/photo/upload', () => ({
   uploadPhoto: (...args: unknown[]) => mockUploadPhoto(...args),
 }));
 
+vi.mock('@/lib/persistence/session-db', () => ({
+  loadSessionData: vi.fn().mockResolvedValue(null),
+  saveSessionData: vi.fn().mockResolvedValue(undefined),
+  clearSessionData: vi.fn().mockResolvedValue(undefined),
+}));
+
 vi.mock('@/lib/photo/validate-file', () => ({
   validatePhotoFile: vi.fn().mockReturnValue({ valid: true }),
 }));
@@ -74,6 +80,11 @@ function createValidValidationResult() {
 }
 
 async function switchToGalleryAndUpload() {
+  // Wait for session recovery check to complete first
+  await waitFor(() => {
+    expect(screen.getByText('Prefiro enviar uma foto da galeria')).toBeInTheDocument();
+  });
+
   fireEvent.click(screen.getByText('Prefiro enviar uma foto da galeria'));
 
   await waitFor(() => {

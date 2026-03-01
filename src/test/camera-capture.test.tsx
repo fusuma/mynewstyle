@@ -15,6 +15,13 @@ vi.mock("@/lib/photo/upload", () => ({
   }),
 }));
 
+// Mock persistence module to prevent IndexedDB access (Story 2.7)
+vi.mock("@/lib/persistence/session-db", () => ({
+  loadSessionData: vi.fn().mockResolvedValue(null),
+  saveSessionData: vi.fn().mockResolvedValue(undefined),
+  clearSessionData: vi.fn().mockResolvedValue(undefined),
+}));
+
 // ============================================================
 // Mock navigator.mediaDevices
 // ============================================================
@@ -467,7 +474,9 @@ describe("PhotoPage", () => {
       "@/app/consultation/photo/page"
     );
     render(<PhotoPage />);
-    // Should show permission prompt initially
-    expect(screen.getByText(/Precisamos da sua câmera/)).toBeInTheDocument();
+    // Wait for session recovery check to complete, then check for camera prompt
+    await waitFor(() => {
+      expect(screen.getByText(/Precisamos da sua câmera/)).toBeInTheDocument();
+    });
   });
 });
