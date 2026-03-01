@@ -666,3 +666,87 @@ Social platforms compress images. WhatsApp strips metadata. Instagram stories ne
 8. **Conditional questionnaire logic** prevents tone-deaf questions (bald users asked about hair texture)
 9. **Female path needs genuinely different design identity** — not a color swap
 10. **Loading is an experience** — face mapping animation builds trust and anticipation
+
+---
+
+## 11. Payment Flow UX
+
+### 11.1 Paywall Placement
+
+The paywall sits **between the free face shape reveal and the full consultation.**
+
+```
+Photo → Questionnaire → Processing → Face Shape Reveal (FREE)
+                                        ↓
+                              "Quer ver os cortes ideais?"
+                                        ↓
+                              Payment (€5.99 / €2.99)
+                                        ↓
+                              Full Results + Previews
+```
+
+**Why here:** User has already invested time (photo + questionnaire) and received proof the AI works (face shape). Maximum motivation to unlock the rest. Sunk cost + demonstrated value = highest conversion point.
+
+### 11.2 Paywall Screen
+
+**Layout:** Face shape result visible at top (reward already earned). Blurred preview of recommendations below (tease).
+
+**Content:**
+- Face shape badge + explanation (already revealed, unblurred)
+- Blurred recommendation cards with visible style names but blurred details
+- Blurred "Ver como fico" previews
+- Clear CTA: "Desbloquear consultoria completa"
+
+**Pricing Display:**
+- First-time user: "€5.99 — Consultoria completa"
+- Returning user: "€2.99 — Nova consultoria"
+- Below CTA: "Inclui: 2-3 cortes recomendados • Visualização IA • Cartão para o barbeiro • Dicas de styling"
+- Trust badge: "Reembolso automático se a IA falhar"
+
+**Payment Methods (stacked buttons):**
+1. Apple Pay / Google Pay (one-tap, primary — largest button)
+2. Cartão de crédito/débito (Stripe checkout)
+
+**No account required to pay.** Guest can pay → see results → prompted to save after.
+
+### 11.3 Payment Success
+
+- No redirect to separate "thank you" page
+- Paywall dissolves with smooth animation (blur → clear, 500ms)
+- Results reveal with staggered animation (like Spotify Wrapped)
+- Subtle confetti or sparkle micro-animation on unlock
+
+### 11.4 Payment Failure
+
+- Inline error: "Pagamento não processado. Tente outro método."
+- Retry button stays visible
+- User's progress (photo, questionnaire, face shape) is NEVER lost
+
+### 11.5 Returning User Detection
+
+- If user is authenticated and has previous consultation → show €2.99 price
+- If guest → always €5.99 (can't verify history without account)
+- Soft nudge for guests: "Crie uma conta para pagar €2.99 nas próximas consultorias"
+
+### 11.6 Upsell Moments
+
+**Post-results upsell (paleta de cores):**
+- After viewing full results, subtle card at bottom:
+- "🎨 Descubra também as cores que combinam com o seu rosto — €3.99"
+- NOT aggressive — positioned as natural next step
+- One-tap purchase (payment method already on file)
+
+**Re-consultation nudge (push notification, future):**
+- 4-6 weeks after consultation: "Novo corte? Veja como ficaria com um estilo diferente — €2.99"
+
+### 11.7 Elicitation Applied
+
+**Pre-mortem:** "Users felt tricked — they invested 3 minutes and then hit a paywall." → **Mitigation:** Free face shape is a REAL result, not a teaser. Users got value before paying.
+
+**JTBD:** User hires the paywall to "confirm this is worth my money." → **Mitigation:** Blurred results show ENOUGH to prove value (visible style names, blurred details).
+
+**Red Team:** "Someone screenshots the blurred results, zooms in, reads through the blur." → **Mitigation:** Server-side gating — blurred results are placeholder images, not CSS blur on real content.
+
+**First Principles:** The minimum paywall shows: (1) what you already got for free, (2) what you'll get for paying, (3) one button. → **Mitigation:** Three elements only. No walls of text.
+
+**Chaos Monkey:** "Stripe goes down during peak." → **Mitigation:** Queue the consultation generation anyway, show "payment pending" state, process when Stripe recovers. Never lose the user's data.
