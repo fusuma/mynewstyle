@@ -140,4 +140,32 @@ describe('ConsultationStore', () => {
     const parsed = JSON.parse(stored!);
     expect(parsed.state.questionnaire).toEqual({ q1: 'test' });
   });
+
+  it('setPaymentStatus updates paymentStatus to pending', () => {
+    useConsultationStore.getState().setPaymentStatus('pending');
+    expect(useConsultationStore.getState().paymentStatus).toBe('pending');
+  });
+
+  it('setPaymentStatus updates paymentStatus to paid', () => {
+    useConsultationStore.getState().setPaymentStatus('paid');
+    expect(useConsultationStore.getState().paymentStatus).toBe('paid');
+  });
+
+  it('setPaymentStatus updates paymentStatus to failed', () => {
+    useConsultationStore.getState().setPaymentStatus('failed');
+    expect(useConsultationStore.getState().paymentStatus).toBe('failed');
+  });
+
+  it('setPaymentStatus resets paymentStatus to none', () => {
+    useConsultationStore.getState().setPaymentStatus('pending');
+    useConsultationStore.getState().setPaymentStatus('none');
+    expect(useConsultationStore.getState().paymentStatus).toBe('none');
+  });
+
+  it('paymentStatus IS persisted to sessionStorage', () => {
+    useConsultationStore.getState().setPaymentStatus('pending');
+    const stored = sessionStorage.getItem('mynewstyle-consultation');
+    const parsed = JSON.parse(stored!);
+    expect(parsed.state.paymentStatus).toBe('pending');
+  });
 });
