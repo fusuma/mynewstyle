@@ -1,6 +1,7 @@
 import type { ConsultationStartPayload, ConsultationStartResponse } from '@/types';
 import { getGuestRequestHeaders } from '@/lib/api/headers';
 import { getGuestSessionId } from '@/lib/guest-session';
+import { getStoredReferralCode, clearReferralCode } from '@/lib/referral/capture';
 
 export class ConsultationSubmissionError extends Error {
   retryable: boolean;
@@ -53,9 +54,12 @@ export async function submitConsultation(
         // Attach x-guest-session-id header when unauthenticated (Story 8.4, AC #2)
         // Also include guestSessionId in body so the server can store it on the record
         const guestSessionId = getGuestSessionId();
-        const enrichedPayload: ConsultationStartPayload = guestSessionId
-          ? { ...payload, guestSessionId }
-          : payload;
+        // Include referral code from localStorage if present (Story 9.5, AC #4)
+        const referralCode = getStoredReferralCode() ?? undefined;
+
+        let enrichedPayload: ConsultationStartPayload = { ...payload };
+        if (guestSessionId) enrichedPayload = { ...enrichedPayload, guestSessionId };
+        if (referralCode) enrichedPayload = { ...enrichedPayload, referralCode };
 
         const response = await fetch('/api/consultation/start', {
           method: 'POST',
@@ -70,7 +74,11 @@ export async function submitConsultation(
           );
         }
 
-        return response.json() as Promise<ConsultationStartResponse>;
+        const result = await response.json() as ConsultationStartResponse;
+        // Clear referral attribution after successful consultation start (AC #2:
+        // "ref preserved until consultation is started or session ends")
+        clearReferralCode();
+        return result;
       },
       2,
       delayMs

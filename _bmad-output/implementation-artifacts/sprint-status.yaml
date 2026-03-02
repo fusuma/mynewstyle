@@ -132,7 +132,7 @@ development_status:
   9-2-share-card-generator-square-format: done
   9-3-native-share-integration: done
   9-4-standalone-preview-share: done
-  9-5-referral-link: ready-for-dev
+  9-5-referral-link: done
   epic-9-retrospective: optional
 
   # E10: Observability & Analytics (Sprint 5)

@@ -160,6 +160,55 @@ describe('submitConsultation', () => {
     expect(sentBody.questionnaire).toEqual(validPayload.questionnaire);
   });
 
+  it('clears referral code from localStorage after successful consultation start (AC #2)', async () => {
+    // Set a referral code in localStorage before submission
+    const existingReferral = { code: 'ABC1234', capturedAt: new Date().toISOString() };
+    localStorage.setItem('mynewstyle_ref', JSON.stringify(existingReferral));
+
+    global.fetch = vi.fn().mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ consultationId: 'test-uuid-referral-clear' }),
+    });
+
+    await submitConsultation(validPayload, fastRetry);
+
+    // Referral code should be cleared after successful submission
+    expect(localStorage.getItem('mynewstyle_ref')).toBeNull();
+  });
+
+  it('does NOT clear referral code when submission fails (preserves for retry)', async () => {
+    const existingReferral = { code: 'ABC1234', capturedAt: new Date().toISOString() };
+    localStorage.setItem('mynewstyle_ref', JSON.stringify(existingReferral));
+
+    global.fetch = vi.fn()
+      .mockRejectedValueOnce(new Error('Network error'))
+      .mockRejectedValueOnce(new Error('Network error'))
+      .mockRejectedValueOnce(new Error('Network error'));
+
+    await expect(submitConsultation(validPayload, fastRetry)).rejects.toThrow(
+      ConsultationSubmissionError
+    );
+
+    // Referral code should still be present after failure — not cleared
+    expect(localStorage.getItem('mynewstyle_ref')).not.toBeNull();
+  });
+
+  it('includes referral code in submission payload when present in localStorage (AC #4)', async () => {
+    const existingReferral = { code: 'XYZ7890', capturedAt: new Date().toISOString() };
+    localStorage.setItem('mynewstyle_ref', JSON.stringify(existingReferral));
+
+    global.fetch = vi.fn().mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ consultationId: 'test-id-with-ref' }),
+    });
+
+    await submitConsultation(validPayload, fastRetry);
+
+    const callArgs = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+    const sentBody = JSON.parse(callArgs[1].body);
+    expect(sentBody).toHaveProperty('referralCode', 'XYZ7890');
+  });
+
   it('uses 1-second delay between retries by default', async () => {
     // Verify the default delay parameter is used by checking timing
     const startTime = Date.now();

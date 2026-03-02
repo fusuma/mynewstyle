@@ -48,6 +48,9 @@ vi.mock('lucide-react', () => ({
   Image: ({ 'aria-hidden': ariaHidden }: React.SVGAttributes<SVGElement>) => (
     <svg data-testid="icon-image" aria-hidden={ariaHidden} />
   ),
+  UserPlus: ({ 'aria-hidden': ariaHidden }: React.SVGAttributes<SVGElement>) => (
+    <svg data-testid="icon-user-plus" aria-hidden={ariaHidden} />
+  ),
 }));
 
 // Mock sonner

@@ -21,6 +21,15 @@ const ConsultationStartSchema = z.object({
     .string()
     .regex(UUID_REGEX, 'guestSessionId must be a valid UUID')
     .optional(),
+  /**
+   * Optional referral code captured from ?ref= URL param (Story 9.5).
+   * 6-8 alphanumeric chars, URL-safe, case-insensitive.
+   */
+  referralCode: z
+    .string()
+    .max(8, 'referralCode must be at most 8 characters')
+    .regex(/^[A-Za-z0-9]+$/, 'referralCode must be alphanumeric')
+    .optional(),
 });
 
 // Refine to ensure questionnaire is non-empty
@@ -44,7 +53,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { gender, photoUrl, questionnaire, guestSessionId } = result.data;
+    const { gender, photoUrl, questionnaire, guestSessionId, referralCode } = result.data;
     const consultationId = crypto.randomUUID();
 
     const record: ConsultationRecord = {
@@ -55,6 +64,7 @@ export async function POST(request: NextRequest) {
       status: 'pending',
       createdAt: new Date().toISOString(),
       guest_session_id: guestSessionId ?? null,
+      referral_code: referralCode ?? null,
     };
 
     consultations.set(consultationId, record);

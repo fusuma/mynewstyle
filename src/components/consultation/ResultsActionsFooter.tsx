@@ -1,7 +1,7 @@
 'use client';
 
 import { motion, useReducedMotion } from 'framer-motion';
-import { Share2, Bookmark, PlusCircle, Home, Scissors, Loader2, Image } from 'lucide-react';
+import { Share2, Bookmark, PlusCircle, Home, Scissors, Loader2, Image, UserPlus } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { useConsultationStore } from '@/stores/consultation';
 import { useBarberCard } from '@/hooks/useBarberCard';
 import { useShareCard } from '@/hooks/useShareCard';
+import { getStoredReferralCode } from '@/lib/referral/capture';
 import { BarberCardRenderer } from '@/components/consultation/BarberCardRenderer';
 import { ShareCardStoryRenderer } from '@/components/share/ShareCardStoryRenderer';
 import { ShareCardSquareRenderer } from '@/components/share/ShareCardSquareRenderer';
@@ -79,6 +80,68 @@ export function ResultsActionsFooter({ consultationId }: ResultsActionsFooterPro
 
   const handleShareSquare = async () => {
     await generateShareCard('square');
+  };
+
+  const handleInviteFriends = async () => {
+    // Determine the referral link to share
+    // For authenticated users: fetch personalized link; for guests: use base URL
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://mynewstyle.com';
+    let shareUrl = siteUrl;
+
+    try {
+      // Try to get a personalized referral link via the API (authenticated users)
+      const storedCode = getStoredReferralCode();
+      if (storedCode) {
+        shareUrl = `${siteUrl}/?ref=${storedCode}`;
+      } else {
+        // Try fetching from the API (may return 401 for guests, which is fine)
+        try {
+          const response = await fetch('/api/referral/code');
+          if (response.ok) {
+            const data = await response.json() as { referralLink: string };
+            shareUrl = data.referralLink;
+          }
+        } catch {
+          // Guest or network error — use base URL
+        }
+      }
+    } catch {
+      // Use base URL as fallback
+    }
+
+    // Use Web Share API if available (AC #7)
+    if (typeof navigator !== 'undefined' && navigator.share) {
+      try {
+        await navigator.share({
+          title: 'mynewstyle',
+          text: 'Descubra o corte perfeito para o seu rosto!',
+          url: shareUrl,
+        });
+        return;
+      } catch (err) {
+        // User dismissed share sheet — don't fall through to clipboard
+        if ((err as Error).name === 'AbortError') return;
+      }
+    }
+
+    // Clipboard fallback (AC #7)
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(shareUrl);
+      } else {
+        const textarea = document.createElement('textarea');
+        textarea.value = shareUrl;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+      }
+      toast.success('Link copiado!');
+    } catch {
+      toast.error('Falha ao copiar o link.');
+    }
   };
 
   const handleSave = () => {
@@ -208,6 +271,17 @@ export function ResultsActionsFooter({ consultationId }: ResultsActionsFooterPro
             >
               <Bookmark aria-hidden="true" />
               Guardar
+            </Button>
+
+            {/* Secondary: Invite friends — referral link sharing (AC #7) */}
+            <Button
+              variant="secondary"
+              onClick={handleInviteFriends}
+              aria-label="Convidar amigos"
+              className="w-full md:w-auto"
+            >
+              <UserPlus aria-hidden="true" />
+              Convidar amigos
             </Button>
 
             {/* Secondary: New consultation */}

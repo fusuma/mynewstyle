@@ -39,6 +39,19 @@ vi.mock('lucide-react', () => ({
   ChevronRight: ({ className }: React.SVGAttributes<SVGElement>) => (
     <svg data-testid="icon-chevron-right" className={className} />
   ),
+  // Icons used by ReferralLinkCard (Story 9.5)
+  Copy: ({ className }: React.SVGAttributes<SVGElement>) => (
+    <svg data-testid="icon-copy" className={className} />
+  ),
+  Check: ({ className }: React.SVGAttributes<SVGElement>) => (
+    <svg data-testid="icon-check" className={className} />
+  ),
+  Link: ({ className }: React.SVGAttributes<SVGElement>) => (
+    <svg data-testid="icon-link" className={className} />
+  ),
+  AlertCircle: ({ className }: React.SVGAttributes<SVGElement>) => (
+    <svg data-testid="icon-alert-circle" className={className} />
+  ),
 }));
 
 // Mock face-shape-labels
@@ -58,6 +71,25 @@ vi.mock('@/lib/consultation/face-shape-labels', () => ({
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
 
+// Default referral code response (used by ReferralLinkCard)
+const mockReferralResponse = {
+  ok: true,
+  json: async () => ({ referralCode: 'ABC1234', referralLink: 'https://mynewstyle.com/?ref=ABC1234' }),
+};
+
+// Helper to create a URL-aware fetch mock
+function createUrlAwareFetch(consultationResponse = { consultations: [] as unknown[], favorites: [] as unknown[] }) {
+  return vi.fn().mockImplementation((url: string) => {
+    if (url.includes('/api/referral/code')) {
+      return Promise.resolve(mockReferralResponse);
+    }
+    return Promise.resolve({
+      ok: true,
+      json: async () => consultationResponse,
+    });
+  });
+}
+
 const mockUserProfile = {
   id: 'user-123',
   displayName: 'João Silva',
@@ -69,10 +101,7 @@ describe('ProfilePage - tab switching', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.resetModules();
-    mockFetch.mockResolvedValue({
-      ok: true,
-      json: async () => ({ consultations: [], favorites: [] }),
-    });
+    mockFetch.mockImplementation(createUrlAwareFetch());
   });
 
   it('renders "Consultorias" tab by default', async () => {
@@ -106,10 +135,7 @@ describe('ProfilePage - user display name', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.resetModules();
-    mockFetch.mockResolvedValue({
-      ok: true,
-      json: async () => ({ consultations: [], favorites: [] }),
-    });
+    mockFetch.mockImplementation(createUrlAwareFetch());
   });
 
   it('displays user displayName in header', async () => {
@@ -137,10 +163,7 @@ describe('ProfilePage - empty states', () => {
   });
 
   it('shows empty consultation state when no consultations', async () => {
-    mockFetch.mockResolvedValue({
-      ok: true,
-      json: async () => ({ consultations: [] }),
-    });
+    mockFetch.mockImplementation(createUrlAwareFetch({ consultations: [], favorites: [] }));
     const { ProfilePage } = await import('@/components/profile/ProfilePage');
     render(<ProfilePage userProfile={mockUserProfile} />);
     await waitFor(() => {
@@ -150,6 +173,9 @@ describe('ProfilePage - empty states', () => {
 
   it('renders Favoritos tab panel with correct role', async () => {
     mockFetch.mockImplementation((url: string) => {
+      if (url.includes('/api/referral/code')) {
+        return Promise.resolve(mockReferralResponse);
+      }
       if (url.includes('favorites')) {
         return Promise.resolve({
           ok: true,
@@ -172,10 +198,7 @@ describe('ProfilePage - empty states', () => {
   });
 
   it('shows CTA button for empty consultations state', async () => {
-    mockFetch.mockResolvedValue({
-      ok: true,
-      json: async () => ({ consultations: [] }),
-    });
+    mockFetch.mockImplementation(createUrlAwareFetch({ consultations: [], favorites: [] }));
     const { ProfilePage } = await import('@/components/profile/ProfilePage');
     render(<ProfilePage userProfile={mockUserProfile} />);
     await waitFor(() => {
@@ -204,10 +227,7 @@ describe('ProfilePage - gender theming', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.resetModules();
-    mockFetch.mockResolvedValue({
-      ok: true,
-      json: async () => ({ consultations: [], favorites: [] }),
-    });
+    mockFetch.mockImplementation(createUrlAwareFetch());
   });
 
   it('applies male theme class when genderPreference is male', async () => {

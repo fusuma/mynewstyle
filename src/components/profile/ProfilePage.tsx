@@ -6,6 +6,7 @@ import { User } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { ConsultationHistoryTab } from './ConsultationHistoryTab';
 import { FavoritesTab } from './FavoritesTab';
+import { ReferralLinkCard } from './ReferralLinkCard';
 import type { UserProfile } from '@/types';
 
 interface ProfilePageProps {
@@ -103,6 +104,11 @@ export function ProfilePage({ userProfile }: ProfilePageProps) {
             <FavoritesTab />
           </TabsContent>
         </Tabs>
+
+        {/* Story 9-5: Referral link card below the tabs (AC #6) */}
+        <div className="px-4 py-6">
+          <ReferralLinkCard />
+        </div>
       </main>
     </div>
   );

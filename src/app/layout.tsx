@@ -4,6 +4,7 @@ import { Space_Grotesk, Inter } from "next/font/google";
 import { ThemeProvider } from "@/components/layout/ThemeProvider";
 import { Toaster } from "@/components/ui/sonner";
 import GuestClaimHandler from "@/components/auth/GuestClaimHandler";
+import { ReferralCapture } from "@/components/referral/ReferralCapture";
 import "./globals.css";
 
 const spaceGrotesk = Space_Grotesk({
@@ -40,6 +41,10 @@ export default function RootLayout({
           {/* Story 8-5: Handles ?claim_guest=1 param after OAuth redirect to trigger guest migration */}
           <Suspense fallback={null}>
             <GuestClaimHandler />
+          </Suspense>
+          {/* Story 9-5: Captures ?ref=CODE URL param and stores in localStorage for referral attribution */}
+          <Suspense fallback={null}>
+            <ReferralCapture />
           </Suspense>
         </ThemeProvider>
       </body>

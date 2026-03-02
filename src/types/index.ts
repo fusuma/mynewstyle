@@ -68,6 +68,8 @@ export interface ConsultationStartPayload {
   questionnaire: Record<string, string | string[] | number>;
   /** Guest session UUID (Story 8.4). Omit for authenticated users. */
   guestSessionId?: string;
+  /** Referral code from localStorage (Story 9.5). Omit if not attributed. */
+  referralCode?: string;
 }
 
 export interface ConsultationStartResponse {
@@ -83,6 +85,8 @@ export interface ConsultationRecord {
   createdAt: string;
   /** Guest session UUID (null for authenticated users). Story 8.4 */
   guest_session_id: string | null;
+  /** Referral code captured from ?ref= param. Story 9.5 */
+  referral_code: string | null;
 }
 
 // AI Provider types (Story 4.1)
