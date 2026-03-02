@@ -2,10 +2,11 @@
 
 import { useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { AnimatePresence, motion, useReducedMotion, type Variants } from 'framer-motion';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useConsultationStore } from '@/stores/consultation';
 import { Paywall } from '@/components/consultation/Paywall';
 import { RefundBanner } from '@/components/consultation/RefundBanner';
+import { FaceShapeAnalysisSection } from '@/components/results/FaceShapeAnalysisSection';
 import { usePayment } from '@/hooks/usePayment';
 import { useConsultationStatus } from '@/hooks/useConsultationStatus';
 
@@ -47,54 +48,6 @@ function PaywallWrapper({
   );
 }
 
-/**
- * Paid results placeholder — shown after payment succeeds.
- * Full results display is Epic 6.
- * Uses staggered animation (150ms per element) consistent with UX spec.
- */
-function PaidResultsPlaceholder({ shouldReduceMotion }: { shouldReduceMotion: boolean | null }) {
-  const containerVariants = {
-    hidden: {},
-    visible: {
-      transition: {
-        staggerChildren: shouldReduceMotion ? 0 : 0.15,
-      },
-    },
-  };
-
-  const itemVariants: Variants = shouldReduceMotion
-    ? {
-        hidden: {},
-        visible: {},
-      }
-    : {
-        hidden: { opacity: 0, y: 20 },
-        visible: { opacity: 1, y: 0, transition: { duration: 0.4 } },
-      };
-
-  return (
-    <motion.div
-      className="flex min-h-screen flex-col items-center justify-center px-4 text-center"
-      variants={containerVariants}
-      initial="hidden"
-      animate="visible"
-    >
-      <motion.p
-        className="text-lg font-medium text-foreground"
-        variants={itemVariants}
-      >
-        Consultoria completa desbloqueada!
-      </motion.p>
-      <motion.p
-        className="mt-2 text-sm text-muted-foreground"
-        variants={itemVariants}
-      >
-        Resultados completos disponíveis em breve (Epic 6).
-      </motion.p>
-    </motion.div>
-  );
-}
-
 export default function ResultsPage() {
   const params = useParams();
   const router = useRouter();
@@ -103,6 +56,7 @@ export default function ResultsPage() {
 
   const consultationId = useConsultationStore((state) => state.consultationId);
   const faceAnalysis = useConsultationStore((state) => state.faceAnalysis);
+  const photoPreview = useConsultationStore((state) => state.photoPreview);
   const paymentStatus = useConsultationStore((state) => state.paymentStatus);
   const setPaymentStatus = useConsultationStore((state) => state.setPaymentStatus);
 
@@ -167,7 +121,10 @@ export default function ResultsPage() {
         </motion.div>
       ) : (
         <motion.div key="results" {...resultsEntranceVariants}>
-          <PaidResultsPlaceholder shouldReduceMotion={shouldReduceMotion} />
+          <FaceShapeAnalysisSection
+            faceAnalysis={faceAnalysis}
+            photoPreview={photoPreview}
+          />
         </motion.div>
       )}
     </AnimatePresence>

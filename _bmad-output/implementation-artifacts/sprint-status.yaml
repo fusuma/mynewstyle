@@ -94,15 +94,15 @@ development_status:
   epic-5-retrospective: optional
 
   # E6: Results Page (Sprint 3-4)
-  epic-6: backlog
-  6-1-face-shape-analysis-section: backlog
-  6-2-hero-recommendation-card: backlog
-  6-3-alternative-recommendation-cards: backlog
-  6-4-styles-to-avoid-section: backlog
-  6-5-grooming-tips-section: backlog
-  6-6-styling-tips-parsed-and-structured: backlog
-  6-7-results-actions-footer: backlog
-  6-8-results-page-animated-reveal: backlog
+  epic-6: in-progress
+  6-1-face-shape-analysis-section: review
+  6-2-hero-recommendation-card: ready-for-dev
+  6-3-alternative-recommendation-cards: ready-for-dev
+  6-4-styles-to-avoid-section: ready-for-dev
+  6-5-grooming-tips-section: ready-for-dev
+  6-6-styling-tips-parsed-and-structured: ready-for-dev
+  6-7-results-actions-footer: ready-for-dev
+  6-8-results-page-animated-reveal: ready-for-dev
   epic-6-retrospective: optional
 
   # E7: AI Preview Generation - Nano Banana 2 (Sprint 4)

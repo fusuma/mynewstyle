@@ -63,6 +63,13 @@ vi.mock('@/components/consultation/BlurredRecommendationCard', () => ({
   ),
 }));
 
+// Mock FaceShapeAnalysisSection (replaces PaidResultsPlaceholder in Epic 6)
+vi.mock('@/components/results/FaceShapeAnalysisSection', () => ({
+  FaceShapeAnalysisSection: () => (
+    <div data-testid="face-shape-analysis-section">Análise do formato do rosto</div>
+  ),
+}));
+
 // Mock stripe pricing
 vi.mock('@/lib/stripe/pricing', () => ({
   FIRST_CONSULTATION_PRICE: 599,
@@ -104,6 +111,7 @@ const mockStoreState = {
       currentStyle: 'short',
     },
   } as typeof mockStoreState['faceAnalysis'] | null,
+  photoPreview: null as string | null,
   paymentStatus: 'none' as 'none' | 'pending' | 'paid' | 'failed',
   setPaymentStatus: vi.fn(),
 };
@@ -160,14 +168,12 @@ describe('Results page payment transition', () => {
     expect(screen.getByText(/Desbloquear consultoria completa/i)).toBeDefined();
   });
 
-  it('renders paid placeholder when paymentStatus is "paid"', async () => {
+  it('renders FaceShapeAnalysisSection when paymentStatus is "paid"', async () => {
     mockStoreState.paymentStatus = 'paid';
     const ResultsPage = (await import('@/app/consultation/results/[id]/page'))
       .default;
     render(<ResultsPage />);
-    expect(
-      screen.getByText(/Consultoria completa desbloqueada!/i)
-    ).toBeDefined();
+    expect(screen.getByTestId('face-shape-analysis-section')).toBeDefined();
   });
 
   it('does NOT show Paywall unlock button when paymentStatus is "paid"', async () => {
@@ -197,12 +203,12 @@ describe('Results page payment transition', () => {
     expect(container).toBeDefined();
   });
 
-  it('paid results placeholder shows Epic 6 note', async () => {
+  it('paid results shows face shape analysis section', async () => {
     mockStoreState.paymentStatus = 'paid';
     const ResultsPage = (await import('@/app/consultation/results/[id]/page'))
       .default;
     render(<ResultsPage />);
-    expect(screen.getByText(/Epic 6/i)).toBeDefined();
+    expect(screen.getByTestId('face-shape-analysis-section')).toBeDefined();
   });
 
   it('renders PaymentForm when clientSecret is available and paymentStatus is not paid', async () => {
