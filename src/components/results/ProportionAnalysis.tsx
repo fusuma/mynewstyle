@@ -1,6 +1,6 @@
 'use client';
 
-import { motion, useReducedMotion, type Variants } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import type { FaceAnalysisOutput } from '@/lib/ai/schemas';
 
 interface ProportionAnalysisProps {
@@ -27,23 +27,11 @@ export function ProportionAnalysis({ proportions }: ProportionAnalysisProps) {
   const maxValue = Math.max(...values);
 
   return (
-    <div className="w-full space-y-3">
+    <div className="w-full space-y-3" aria-label="Análise das proporções faciais">
       {PROPORTION_KEYS.map((key, index) => {
         const value = proportions[key];
         const normalizedWidth = maxValue > 0 ? (value / maxValue) * 100 : 0;
         const percentage = Math.round(value * 100);
-
-        const barVariants: Variants = {
-          hidden: { scaleX: 0 },
-          visible: {
-            scaleX: 1,
-            transition: {
-              duration: 0.5,
-              ease: 'easeOut',
-              delay: index * 0.1,
-            },
-          },
-        };
 
         return (
           <div key={key} className="flex flex-col gap-1">
@@ -65,9 +53,15 @@ export function ProportionAnalysis({ proportions }: ProportionAnalysisProps) {
                 <motion.div
                   className="h-full origin-left rounded-full bg-primary"
                   style={{ width: `${normalizedWidth}%` }}
-                  variants={barVariants}
-                  initial="hidden"
-                  animate="visible"
+                  initial={{ scaleX: 0 }}
+                  animate={{
+                    scaleX: 1,
+                    transition: {
+                      duration: 0.5,
+                      ease: 'easeOut',
+                      delay: index * 0.1,
+                    },
+                  }}
                 />
               )}
             </div>

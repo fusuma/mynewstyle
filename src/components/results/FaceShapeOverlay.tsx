@@ -35,9 +35,8 @@ export function FaceShapeOverlay({ photoPreview, faceShape }: FaceShapeOverlayPr
         <div className="absolute inset-0 flex items-start justify-center pt-[5%]">
           <svg
             viewBox="0 0 100 100"
-            className="h-[80%] w-[70%]"
+            className="h-[80%] w-[70%] opacity-50"
             aria-hidden="true"
-            style={{ opacity: 0.5 }}
           >
             <path
               d={shapePath}

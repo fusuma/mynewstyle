@@ -48,12 +48,13 @@ vi.mock('@/hooks/usePayment', () => ({
 }));
 
 // Mock useConsultationStatus
-const mockUseConsultationStatus = vi.fn(() => ({
+const mockUseConsultationStatus = vi.fn((_consultationId: string, _enabled: boolean) => ({
   isPolling: false,
   consultationStatus: null,
 }));
 vi.mock('@/hooks/useConsultationStatus', () => ({
-  useConsultationStatus: (...args: unknown[]) => mockUseConsultationStatus(...args),
+  useConsultationStatus: (consultationId: string, enabled: boolean) =>
+    mockUseConsultationStatus(consultationId, enabled),
 }));
 
 // Mock Paywall

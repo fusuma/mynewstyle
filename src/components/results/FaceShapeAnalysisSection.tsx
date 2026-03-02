@@ -54,9 +54,9 @@ export function FaceShapeAnalysisSection({
       <div className="mx-auto max-w-lg space-y-6">
         {/* Heading */}
         <motion.div variants={itemVariants}>
-          <h2 className="text-center text-lg font-semibold text-muted-foreground">
+          <h1 className="text-center text-lg font-semibold text-muted-foreground">
             Formato do Rosto
-          </h2>
+          </h1>
         </motion.div>
 
         {/* Face shape badge */}

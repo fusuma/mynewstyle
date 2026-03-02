@@ -42,12 +42,13 @@ vi.mock('@/hooks/usePayment', () => ({
 }));
 
 // Mock useConsultationStatus hook
-const mockUseConsultationStatus = vi.fn(() => ({
+const mockUseConsultationStatus = vi.fn((_consultationId: string, _enabled: boolean) => ({
   isPolling: false,
   consultationStatus: null,
 }));
 vi.mock('@/hooks/useConsultationStatus', () => ({
-  useConsultationStatus: (...args: unknown[]) => mockUseConsultationStatus(...args),
+  useConsultationStatus: (consultationId: string, enabled: boolean) =>
+    mockUseConsultationStatus(consultationId, enabled),
 }));
 
 // Mock Paywall component
@@ -92,9 +93,18 @@ const validId = '550e8400-e29b-41d4-a716-446655440000';
 const mockFaceAnalysis = {
   faceShape: 'oval' as const,
   confidence: 0.93,
-  proportions: { widthToHeight: 0.75, jawToForehead: 0.85, cheekboneToJaw: 1.1 },
-  landmarks: { foreheadWidth: 150, cheekboneWidth: 155, jawWidth: 130, faceHeight: 200 },
-  detectedFeatures: { prominentJaw: false, wideCheekbones: true, narrowChin: true, highForehead: false },
+  proportions: {
+    foreheadRatio: 0.33,
+    cheekboneRatio: 0.35,
+    jawRatio: 0.32,
+    faceLength: 0.55,
+  },
+  hairAssessment: {
+    type: 'wavy',
+    texture: 'fine',
+    density: 'medium',
+    currentStyle: 'short',
+  },
 };
 
 // Store mock state that can be configured per test
