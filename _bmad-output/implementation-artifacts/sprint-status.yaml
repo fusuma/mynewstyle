@@ -127,7 +127,7 @@ development_status:
   epic-8-retrospective: optional
 
   # E9: Sharing & Virality (Sprint 5)
-  epic-9: in-progress
+  epic-9: done
   9-1-share-card-generator-story-format: done
   9-2-share-card-generator-square-format: done
   9-3-native-share-integration: done
