@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import type { Stripe, StripeElements } from '@stripe/stripe-js';
 import { useConsultationStore } from '@/stores/consultation';
 
 interface PaymentState {
@@ -14,6 +15,10 @@ interface PaymentState {
 
 interface UsePaymentReturn extends PaymentState {
   createPaymentIntent: () => Promise<void>;
+  confirmPayment: (
+    stripe: Stripe | null,
+    elements: StripeElements | null
+  ) => Promise<{ success: boolean; error: string | null }>;
 }
 
 export function usePayment(consultationId: string): UsePaymentReturn {
@@ -71,5 +76,70 @@ export function usePayment(consultationId: string): UsePaymentReturn {
     }
   }, [consultationId, setPaymentStatus]);
 
-  return { ...state, createPaymentIntent };
+  /**
+   * Wraps stripe.confirmPayment() and handles success/failure state transitions.
+   * On success: sets paymentStatus to 'paid' in store.
+   * On failure: sets error message, keeps paymentStatus as 'pending'.
+   * Edge cases: null stripe/elements instances, network errors.
+   */
+  const confirmPayment = useCallback(
+    async (
+      stripe: Stripe | null,
+      elements: StripeElements | null
+    ): Promise<{ success: boolean; error: string | null }> => {
+      // Edge case: null stripe or elements
+      if (!stripe || !elements) {
+        const errorMessage = 'Pagamento nao processado. Tente outro metodo.';
+        setState((prev) => ({
+          ...prev,
+          isLoading: false,
+          error: errorMessage,
+        }));
+        return { success: false, error: errorMessage };
+      }
+
+      setState((prev) => ({ ...prev, isLoading: true, error: null }));
+
+      try {
+        const { error } = await stripe.confirmPayment({
+          elements,
+          confirmParams: {
+            return_url: typeof window !== 'undefined' ? window.location.href : '',
+          },
+          redirect: 'if_required',
+        });
+
+        if (error) {
+          const errorMessage =
+            error.message ?? 'Pagamento nao processado. Tente outro metodo.';
+          setState((prev) => ({
+            ...prev,
+            isLoading: false,
+            error: errorMessage,
+          }));
+          // Keep paymentStatus as 'pending' on failure so user can retry
+          return { success: false, error: errorMessage };
+        }
+
+        // Success: update store to 'paid'
+        setState((prev) => ({ ...prev, isLoading: false, error: null }));
+        setPaymentStatus('paid');
+        return { success: true, error: null };
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error
+            ? err.message
+            : 'Pagamento nao processado. Tente outro metodo.';
+        setState((prev) => ({
+          ...prev,
+          isLoading: false,
+          error: errorMessage,
+        }));
+        return { success: false, error: errorMessage };
+      }
+    },
+    [setPaymentStatus]
+  );
+
+  return { ...state, createPaymentIntent, confirmPayment };
 }

@@ -1,10 +1,12 @@
 'use client';
 
+import React from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { ShieldCheck } from 'lucide-react';
 import type { FaceAnalysisOutput } from '@/lib/ai/schemas';
 import { BlurredRecommendationCard } from './BlurredRecommendationCard';
 import { StripeProvider } from '@/components/payment/StripeProvider';
+import { PaymentForm } from '@/components/payment/PaymentForm';
 import {
   FACE_SHAPE_LABELS,
   FACE_SHAPE_DESCRIPTIONS,
@@ -21,6 +23,7 @@ interface PaywallProps {
   isLoadingPayment: boolean;
   paymentError: string | null;
   onInitiatePayment: () => void;
+  onPaymentSuccess: () => void;
 }
 
 /**
@@ -46,9 +49,12 @@ export function Paywall({
   userType,
   clientSecret,
   isLoadingPayment,
-  paymentError,
+  paymentError: externalPaymentError,
   onInitiatePayment,
+  onPaymentSuccess,
 }: PaywallProps) {
+  const [internalPaymentError, setInternalPaymentError] = React.useState<string | null>(null);
+  const paymentError = internalPaymentError ?? externalPaymentError;
   const shouldReduceMotion = useReducedMotion();
   const label = FACE_SHAPE_LABELS[faceAnalysis.faceShape];
   const description = FACE_SHAPE_DESCRIPTIONS[faceAnalysis.faceShape];
@@ -149,24 +155,14 @@ export function Paywall({
           )}
 
           {clientSecret ? (
-            /* Stripe payment form shell (Story 5.4 will add PaymentElement) */
+            /* Stripe payment form with PaymentElement and ExpressCheckoutElement */
             <StripeProvider clientSecret={clientSecret}>
-              <div className="space-y-3">
-                {/* Primary CTA: Apple Pay / Google Pay placeholder (Story 5.4) */}
-                <button
-                  className="w-full min-h-[48px] rounded-xl bg-primary px-6 py-4 text-lg font-semibold text-primary-foreground transition-opacity hover:opacity-90"
-                  type="button"
-                >
-                  Apple Pay / Google Pay
-                </button>
-                {/* Secondary CTA: Card payment placeholder (Story 5.4) */}
-                <button
-                  className="w-full min-h-[48px] rounded-xl border border-border bg-background px-6 py-4 text-base font-medium text-foreground transition-opacity hover:opacity-80"
-                  type="button"
-                >
-                  Cartão de crédito/débito
-                </button>
-              </div>
+              <PaymentForm
+                onPaymentSuccess={onPaymentSuccess}
+                onPaymentError={(message) => {
+                  setInternalPaymentError(message);
+                }}
+              />
             </StripeProvider>
           ) : (
             /* Pre-intent state: single unlock button */

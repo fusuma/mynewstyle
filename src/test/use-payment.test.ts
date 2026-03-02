@@ -196,4 +196,144 @@ describe('usePayment', () => {
 
     expect(result.current.error).toContain('500');
   });
+
+  // confirmPayment tests (Story 5.4 - Task 5)
+  it('confirmPayment returns error when stripe is null', async () => {
+    const { usePayment } = await import('@/hooks/usePayment');
+    const { result } = renderHook(() => usePayment('test-consultation-id'));
+
+    let outcome: { success: boolean; error: string | null } = { success: false, error: null };
+    await act(async () => {
+      outcome = await result.current.confirmPayment(null, {});
+    });
+
+    expect(outcome.success).toBe(false);
+    expect(outcome.error).toBeTruthy();
+    expect(mockSetPaymentStatus).not.toHaveBeenCalled();
+  });
+
+  it('confirmPayment returns error when elements is null', async () => {
+    const { usePayment } = await import('@/hooks/usePayment');
+    const { result } = renderHook(() => usePayment('test-consultation-id'));
+
+    const mockStripe = { confirmPayment: vi.fn() };
+    let outcome: { success: boolean; error: string | null } = { success: false, error: null };
+    await act(async () => {
+      outcome = await result.current.confirmPayment(mockStripe as never, null);
+    });
+
+    expect(outcome.success).toBe(false);
+    expect(outcome.error).toBeTruthy();
+    expect(mockStripe.confirmPayment).not.toHaveBeenCalled();
+  });
+
+  it('confirmPayment calls setPaymentStatus("paid") on success', async () => {
+    const { usePayment } = await import('@/hooks/usePayment');
+    const { result } = renderHook(() => usePayment('test-consultation-id'));
+
+    const mockStripe = {
+      confirmPayment: vi.fn().mockResolvedValueOnce({ error: null }),
+    };
+    const mockElements = {};
+
+    let outcome: { success: boolean; error: string | null } = { success: false, error: null };
+    await act(async () => {
+      outcome = await result.current.confirmPayment(
+        mockStripe as never,
+        mockElements as never
+      );
+    });
+
+    expect(outcome.success).toBe(true);
+    expect(outcome.error).toBeNull();
+    expect(mockSetPaymentStatus).toHaveBeenCalledWith('paid');
+  });
+
+  it('confirmPayment returns error and does NOT set paid status on failure', async () => {
+    const { usePayment } = await import('@/hooks/usePayment');
+    const { result } = renderHook(() => usePayment('test-consultation-id'));
+
+    const mockStripe = {
+      confirmPayment: vi.fn().mockResolvedValueOnce({
+        error: { message: 'Card declined' },
+      }),
+    };
+    const mockElements = {};
+
+    let outcome: { success: boolean; error: string | null } = { success: false, error: null };
+    await act(async () => {
+      outcome = await result.current.confirmPayment(
+        mockStripe as never,
+        mockElements as never
+      );
+    });
+
+    expect(outcome.success).toBe(false);
+    expect(outcome.error).toBe('Card declined');
+    expect(mockSetPaymentStatus).not.toHaveBeenCalledWith('paid');
+  });
+
+  it('confirmPayment uses fallback error message when stripe error has no message', async () => {
+    const { usePayment } = await import('@/hooks/usePayment');
+    const { result } = renderHook(() => usePayment('test-consultation-id'));
+
+    const mockStripe = {
+      confirmPayment: vi.fn().mockResolvedValueOnce({
+        error: { message: undefined },
+      }),
+    };
+    const mockElements = {};
+
+    let outcome: { success: boolean; error: string | null } = { success: false, error: null };
+    await act(async () => {
+      outcome = await result.current.confirmPayment(
+        mockStripe as never,
+        mockElements as never
+      );
+    });
+
+    expect(outcome.success).toBe(false);
+    expect(outcome.error).toBe('Pagamento nao processado. Tente outro metodo.');
+  });
+
+  it('confirmPayment handles network errors gracefully', async () => {
+    const { usePayment } = await import('@/hooks/usePayment');
+    const { result } = renderHook(() => usePayment('test-consultation-id'));
+
+    const mockStripe = {
+      confirmPayment: vi.fn().mockRejectedValueOnce(new Error('Network error')),
+    };
+    const mockElements = {};
+
+    let outcome: { success: boolean; error: string | null } = { success: false, error: null };
+    await act(async () => {
+      outcome = await result.current.confirmPayment(
+        mockStripe as never,
+        mockElements as never
+      );
+    });
+
+    expect(outcome.success).toBe(false);
+    expect(outcome.error).toBe('Network error');
+    expect(mockSetPaymentStatus).not.toHaveBeenCalledWith('paid');
+  });
+
+  it('confirmPayment sets isLoading to false after completion', async () => {
+    const { usePayment } = await import('@/hooks/usePayment');
+    const { result } = renderHook(() => usePayment('test-consultation-id'));
+
+    const mockStripe = {
+      confirmPayment: vi.fn().mockResolvedValueOnce({ error: null }),
+    };
+    const mockElements = {};
+
+    await act(async () => {
+      await result.current.confirmPayment(
+        mockStripe as never,
+        mockElements as never
+      );
+    });
+
+    expect(result.current.isLoading).toBe(false);
+  });
 });

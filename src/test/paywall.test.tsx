@@ -22,6 +22,22 @@ vi.mock('@/components/payment/StripeProvider', () => ({
   ),
 }));
 
+// Mock PaymentForm to avoid needing Stripe Elements context
+vi.mock('@/components/payment/PaymentForm', () => ({
+  PaymentForm: ({
+    onPaymentSuccess,
+    onPaymentError,
+  }: {
+    onPaymentSuccess: () => void;
+    onPaymentError: (msg: string) => void;
+  }) => (
+    <div data-testid="payment-form">
+      <button onClick={onPaymentSuccess}>Pay</button>
+      <button onClick={() => onPaymentError('Test error')}>Fail</button>
+    </div>
+  ),
+}));
+
 // Mock BlurredRecommendationCard
 vi.mock('@/components/consultation/BlurredRecommendationCard', () => ({
   BlurredRecommendationCard: ({ rank }: { rank: number }) => (
@@ -62,6 +78,7 @@ const defaultProps = {
   isLoadingPayment: false,
   paymentError: null as string | null,
   onInitiatePayment: vi.fn(),
+  onPaymentSuccess: vi.fn(),
 };
 
 describe('Paywall', () => {
@@ -196,9 +213,12 @@ describe('Paywall', () => {
     expect(badge).toBeDefined();
   });
 
-  it('shows correct secondary button label with proper Portuguese text', async () => {
+  it('renders PaymentForm when clientSecret is available (Story 5.4)', async () => {
     const { Paywall } = await import('@/components/consultation/Paywall');
-    render(<Paywall {...defaultProps} clientSecret="pi_test_secret_xyz" />);
-    expect(screen.getByText(/Cartão de crédito\/débito/i)).toBeDefined();
+    render(
+      <Paywall {...defaultProps} clientSecret="pi_test_secret_xyz" onPaymentSuccess={vi.fn()} />
+    );
+    // PaymentForm is mocked and rendered inside StripeProvider
+    expect(screen.getByTestId('payment-form')).toBeDefined();
   });
 });
