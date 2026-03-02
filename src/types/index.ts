@@ -99,7 +99,7 @@ export interface AICallLog {
   id: string;
   provider: 'gemini' | 'openai' | 'kie';
   model: string;
-  task: 'face-analysis' | 'consultation' | 'preview';
+  task: 'face-analysis' | 'consultation' | 'preview' | 'face-similarity';
   inputTokens: number;
   outputTokens: number;
   costCents: number;

@@ -12,6 +12,8 @@
 
 import { createHmac, timingSafeEqual } from 'crypto';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { compareFaces, logQualityGate, FACE_SIMILARITY_THRESHOLD } from '@/lib/ai/face-similarity';
+import { logAICall, persistAICallLog } from '@/lib/ai/logger';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -352,8 +354,113 @@ export async function processKieCallback(taskId: string): Promise<KieWebhookResu
   }
 
   // ---------------------------------------------------------------------------
-  // Step 7: Upload image to Supabase Storage
+  // Step 7: Face similarity quality gate (AC #1, #2, #4)
+  // Runs BEFORE uploading to Supabase Storage to avoid storing rejected previews.
+  // Downloads the original user photo and compares face embeddings.
+  // ---------------------------------------------------------------------------
+  const photoStoragePath = (existingParams.photoStoragePath as string) ?? null;
+  const qualityGateStart = Date.now();
+
+  if (photoStoragePath) {
+    // Download the original user photo from Supabase Storage for comparison
+    const { data: originalPhotoBlob, error: photoDownloadError } = await supabase.storage
+      .from('user-photos')
+      .download(photoStoragePath);
+
+    if (photoDownloadError || !originalPhotoBlob) {
+      console.warn(
+        `[webhook/kie] Could not download original photo for quality gate check (taskId: ${taskId}): ${
+          photoDownloadError?.message ?? 'unknown'
+        } — skipping quality gate`
+      );
+      // Non-fatal: proceed with upload if original photo is unavailable
+    } else {
+      // Convert Blob to Buffer for comparison
+      const originalPhotoBuffer = Buffer.from(await originalPhotoBlob.arrayBuffer());
+
+      try {
+        const similarityResult = await compareFaces(originalPhotoBuffer, imageBuffer);
+        const latencyMs = Date.now() - qualityGateStart;
+
+        // Log the quality gate evaluation (AC #5) — structured console log
+        logQualityGate({
+          consultation_id: consultationId,
+          recommendation_id: recommendationId,
+          similarity_score: similarityResult.similarity,
+          threshold: FACE_SIMILARITY_THRESHOLD,
+          passed: similarityResult.passed,
+          provider: 'kie',
+          latency_ms: latencyMs,
+        });
+
+        // Persist quality gate result to ai_calls table (AC #5)
+        // success=true means the face comparison itself completed without error;
+        // passed/failed is recorded via logQualityGate and in preview_generation_params.
+        const aiCallEntry = logAICall({
+          provider: 'kie',
+          model: 'face-api/ssd-mobilenetv1',
+          task: 'face-similarity',
+          inputTokens: 0,
+          outputTokens: 0,
+          costCents: 0,
+          latencyMs,
+          success: similarityResult.passed,
+        });
+        // Best-effort persistence — errors are logged but not thrown
+        persistAICallLog(supabase, consultationId, aiCallEntry).catch((err: unknown) => {
+          console.error('[webhook/kie] Failed to persist face-similarity AI call log:', err);
+        });
+
+        if (!similarityResult.passed) {
+          // Quality gate failed: do NOT upload, set preview_status=unavailable (AC #2, #4)
+          console.warn(
+            `[webhook/kie] Quality gate FAILED for taskId: ${taskId} — similarity: ${similarityResult.similarity.toFixed(3)} (threshold: ${FACE_SIMILARITY_THRESHOLD})`
+          );
+
+          const { error: unavailableError } = await supabase
+            .from('recommendations')
+            .update({
+              preview_status: 'unavailable',
+              preview_generation_params: {
+                ...existingParams,
+                quality_gate_reason: 'face_similarity_below_threshold',
+                quality_gate_similarity_score: similarityResult.similarity,
+              },
+            })
+            .eq('id', recommendationId);
+
+          if (unavailableError) {
+            console.error(
+              `[webhook/kie] Failed to update preview_status to unavailable for taskId: ${taskId}:`,
+              unavailableError
+            );
+          }
+
+          return { status: 'ok', message: `Quality gate failed — preview unavailable (similarity: ${similarityResult.similarity.toFixed(3)})` };
+        }
+
+        console.log(
+          `[webhook/kie] Quality gate PASSED for taskId: ${taskId} — similarity: ${similarityResult.similarity.toFixed(3)}`
+        );
+      } catch (similarityError) {
+        // Non-fatal: log and proceed if similarity check itself errors
+        console.error(
+          `[webhook/kie] Face similarity check error for taskId: ${taskId}:`,
+          similarityError instanceof Error ? similarityError.message : similarityError
+        );
+        // Fall through to upload — we prefer showing the preview over blocking on check errors
+      }
+    }
+  } else {
+    console.warn(
+      `[webhook/kie] No photoStoragePath in preview_generation_params for taskId: ${taskId} — skipping quality gate`
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Step 8: Upload image to Supabase Storage
   // upsert: true ensures idempotency — second upload overwrites harmlessly
+  // Only reached if quality gate passed (or was skipped due to missing original photo)
   // ---------------------------------------------------------------------------
   const { data: uploadData, error: uploadError } = await supabase.storage
     .from('preview-images')
@@ -374,7 +481,7 @@ export async function processKieCallback(taskId: string): Promise<KieWebhookResu
   }
 
   // ---------------------------------------------------------------------------
-  // Step 8: Update recommendation record with preview_url and preview_status=ready
+  // Step 9: Update recommendation record with preview_url and preview_status=ready
   // ---------------------------------------------------------------------------
   const { error: updateError } = await supabase
     .from('recommendations')

@@ -109,7 +109,7 @@ development_status:
   epic-7: in-progress
   7-1-kie-ai-integration: done
   7-2-kie-ai-webhook-handler: done
-  7-3-face-similarity-check: ready-for-dev
+  7-3-face-similarity-check: done
   7-4-preview-loading-ux: ready-for-dev
   7-5-preview-display-and-before-after: ready-for-dev
   7-6-preview-fallback-gemini-pro-direct: ready-for-dev

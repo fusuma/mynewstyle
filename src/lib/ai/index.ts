@@ -27,6 +27,10 @@ export type { FaceAnalysisOutput, ConsultationOutput } from './schemas';
 export { validateFaceAnalysis, validateConsultation, logValidationFailure } from './validation';
 export type { ValidationResult, ValidationFailureContext } from './validation';
 
+// Face similarity exports (Story 7.3)
+export { compareFaces, logQualityGate, FACE_SIMILARITY_THRESHOLD } from './face-similarity';
+export type { FaceSimilarityResult, QualityGateLogEntry } from './face-similarity';
+
 // Re-export AI types from types package
 export type {
   FaceShape,
