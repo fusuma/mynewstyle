@@ -1,6 +1,6 @@
 # Story 4.4: Instant Face Shape Reveal
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -571,6 +571,7 @@ claude-sonnet-4-6
 - Base64 extraction correctly strips data URL prefix (`photoPreview.split(',')[1]`)
 - Full test suite: 827 tests passing (802 baseline + 25 new), zero regressions
 - All 10 Acceptance Criteria verified
+- Code Review (2026-03-02): Fixed 4 issues found during adversarial review: (1) photoPreview=null with valid consultationId now correctly shows error state instead of infinite loading; (2) Added AbortController to cancel in-flight fetch on component unmount preventing setState-on-unmounted-component; (3) Replaced hardcoded inline fontFamily style with project-standard `font-display` Tailwind utility class; (4) Added 2 new tests for the photoPreview=null edge case (total: 829 tests, 27 in this story)
 
 ### File List
 
@@ -583,3 +584,4 @@ claude-sonnet-4-6
 ## Change Log
 
 - 2026-03-02: Implemented story 4-4-instant-face-shape-reveal — replaced stub processing page with full face analysis fetch + animated reveal UI. Added `setFaceAnalysis` to Zustand store, created `ProcessingScreen` and `FaceShapeReveal` components with Framer Motion animations, added comprehensive test suite (25 new tests, 827 total passing).
+- 2026-03-02: Code review fixes — fixed photoPreview=null infinite loading (now shows error state), added AbortController for fetch cleanup on unmount, replaced hardcoded fontFamily inline style with `font-display` Tailwind utility, added 2 edge case tests (829 total, 27 in this story).

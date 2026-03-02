@@ -49,8 +49,16 @@ export default function ProcessingPage() {
     }
   }, [consultationId, router]);
 
-  const runAnalysis = useCallback(async () => {
-    if (!consultationId || !photoPreview) return;
+  const runAnalysis = useCallback(async (signal?: AbortSignal) => {
+    if (!consultationId) return;
+
+    // Guard: if photoPreview is missing, show error state immediately
+    if (!photoPreview) {
+      setPageState('error');
+      setErrorMessage('Algo correu mal. Tentar de novo?');
+      return;
+    }
+
     setPageState('loading');
     setErrorMessage(null);
 
@@ -61,6 +69,7 @@ export default function ProcessingPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ consultationId, photoBase64 }),
+        signal,
       });
 
       if (!response.ok) {
@@ -73,15 +82,19 @@ export default function ProcessingPage() {
       setFaceAnalysis(analysis); // Store in Zustand
       setFaceAnalysisResult(analysis); // Local state for render
       setPageState('revealed');
-    } catch {
+    } catch (err) {
+      // Ignore abort errors (component unmounted)
+      if (err instanceof Error && err.name === 'AbortError') return;
       setPageState('error');
       setErrorMessage('Algo correu mal. Tentar de novo?');
     }
   }, [consultationId, photoPreview, setFaceAnalysis]);
 
   useEffect(() => {
-    if (consultationId && photoPreview) {
-      void runAnalysis();
+    if (consultationId) {
+      const controller = new AbortController();
+      void runAnalysis(controller.signal);
+      return () => controller.abort();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -93,7 +106,7 @@ export default function ProcessingPage() {
   }
 
   if (pageState === 'error') {
-    return <ErrorState message={errorMessage} onRetry={() => void runAnalysis()} />;
+    return <ErrorState message={errorMessage} onRetry={() => void runAnalysis(undefined)} />;
   }
 
   if (pageState === 'revealed' && faceAnalysisResult) {

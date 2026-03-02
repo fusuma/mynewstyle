@@ -255,6 +255,30 @@ describe('ProcessingPage', () => {
       expect(container).toBeEmptyDOMElement();
     });
   });
+
+  describe('Guard: no photoPreview', () => {
+    it('shows error state when consultationId is present but photoPreview is null', async () => {
+      setupMocks({ photoPreview: null });
+
+      render(<ProcessingPage />);
+
+      await waitFor(() => {
+        expect(screen.getByText('Algo correu mal. Tentar de novo?')).toBeInTheDocument();
+      });
+    });
+
+    it('does not call fetch when photoPreview is null', async () => {
+      setupMocks({ photoPreview: null });
+
+      render(<ProcessingPage />);
+
+      await waitFor(() => {
+        expect(screen.getByText('Algo correu mal. Tentar de novo?')).toBeInTheDocument();
+      });
+
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
+  });
 });
 
 describe('FaceShapeReveal - Portuguese label mapping', () => {

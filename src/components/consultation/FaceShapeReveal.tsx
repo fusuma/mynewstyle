@@ -57,7 +57,7 @@ export function FaceShapeReveal({ faceAnalysis, onContinue }: FaceShapeRevealPro
         {/* Face Shape Badge */}
         <motion.div {...revealAnimation}>
           <div className="mb-2 inline-flex items-center rounded-lg bg-primary px-6 py-3">
-            <span className="text-3xl font-bold text-primary-foreground" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+            <span className="font-display text-3xl font-bold text-primary-foreground">
               Rosto {label}
             </span>
           </div>
