@@ -66,7 +66,7 @@ development_status:
   3-1-questionnaire-engine: done
   3-2-male-questionnaire-content: done
   3-3-female-questionnaire-content: done
-  3-4-question-card-components: backlog
+  3-4-question-card-components: done
   3-5-progress-bar-and-conversational-tone: backlog
   3-6-questionnaire-completion-and-data-submission: backlog
   epic-3-retrospective: optional
