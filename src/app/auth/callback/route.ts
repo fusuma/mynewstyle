@@ -19,6 +19,10 @@ import { NextResponse } from 'next/server';
  * The redirect URL format: https://<project-ref>.supabase.co/auth/v1/callback
  * This is Supabase's redirect URL -- the app does NOT handle Google OAuth directly.
  * Supabase then redirects to this route (/auth/callback) with a one-time code.
+ *
+ * Story 8-5 (Task 5.3): After successful code exchange, adds ?claim_guest=1 to the
+ * redirect URL. The destination page (e.g. /profile) uses this signal to trigger
+ * the client-side claimGuestSession() utility if a guest session exists in localStorage.
  */
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
@@ -40,7 +44,11 @@ export async function GET(request: Request) {
   const { error } = await supabase.auth.exchangeCodeForSession(code);
 
   if (!error) {
-    return NextResponse.redirect(`${origin}${next}`);
+    // Task 5.3 (Story 8-5): Append claim_guest=1 to trigger client-side guest migration.
+    // The destination page reads this param and calls claimGuestSession() if present.
+    const redirectUrl = new URL(`${origin}${next}`);
+    redirectUrl.searchParams.set('claim_guest', '1');
+    return NextResponse.redirect(redirectUrl.toString());
   }
 
   // Exchange failed -- redirect with error info

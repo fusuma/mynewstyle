@@ -4,12 +4,14 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Eye, EyeOff, AlertCircle, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useTheme } from '@/hooks/useTheme';
 import { useConsultationStore } from '@/stores/consultation';
 import { createClient } from '@/lib/supabase/client';
 import { cn } from '@/lib/utils';
+import { claimGuestSession } from '@/lib/auth/claim-guest';
 
 // ─── Google Icon SVG ──────────────────────────────────────────────────────────
 
@@ -117,7 +119,14 @@ export default function LoginForm() {
   const [resetError, setResetError] = useState<string | null>(null);
 
   // ── Post-login redirect logic ────────────────────────────────────────────────
-  const handleSuccessfulLogin = useCallback(() => {
+  const handleSuccessfulLogin = useCallback(async () => {
+    // Task 5.2 (Story 8-5): Claim any pending guest consultation data after login.
+    // This is best-effort -- it never blocks the login flow on failure.
+    const claim = await claimGuestSession();
+    if (claim.migrated > 0) {
+      toast.success('Sua consultoria foi salva no seu perfil!');
+    }
+
     const redirectTo = searchParams.get('redirect');
 
     // Only allow same-origin relative paths to prevent open redirect attacks

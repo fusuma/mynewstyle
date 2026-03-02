@@ -6,10 +6,12 @@ import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Eye, EyeOff, AlertCircle, Loader2 } from 'lucide-react';
 import { z } from 'zod';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { useTheme } from '@/hooks/useTheme';
 import { useConsultationStore } from '@/stores/consultation';
 import { createClient } from '@/lib/supabase/client';
+import { claimGuestSession } from '@/lib/auth/claim-guest';
 
 // ─── Validation Schema ────────────────────────────────────────────────────────
 
@@ -246,6 +248,13 @@ export default function RegistrationPage() {
           setGlobalError(data.error ?? 'Ocorreu um erro. Tente novamente.');
         }
         return;
+      }
+
+      // Task 5.1 (Story 8-5): Claim any pending guest consultation data after registration.
+      // This is best-effort -- it never blocks the registration flow on failure.
+      const claim = await claimGuestSession();
+      if (claim.migrated > 0) {
+        toast.success('Sua consultoria foi salva no seu perfil!');
       }
 
       // Success: redirect based on consultation state

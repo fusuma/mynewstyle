@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { Space_Grotesk, Inter } from "next/font/google";
 import { ThemeProvider } from "@/components/layout/ThemeProvider";
 import { Toaster } from "@/components/ui/sonner";
+import GuestClaimHandler from "@/components/auth/GuestClaimHandler";
 import "./globals.css";
 
 const spaceGrotesk = Space_Grotesk({
@@ -35,6 +37,10 @@ export default function RootLayout({
         <ThemeProvider>
           {children}
           <Toaster />
+          {/* Story 8-5: Handles ?claim_guest=1 param after OAuth redirect to trigger guest migration */}
+          <Suspense fallback={null}>
+            <GuestClaimHandler />
+          </Suspense>
         </ThemeProvider>
       </body>
     </html>

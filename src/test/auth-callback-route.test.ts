@@ -45,6 +45,17 @@ describe('Auth Callback Route', () => {
     );
   });
 
+  // Story 8-5 Task 5.3: OAuth callback appends claim_guest=1 to trigger client-side claim
+  it('appends claim_guest=1 to redirect URL after successful code exchange', async () => {
+    mockExchangeCodeForSession.mockResolvedValueOnce({ error: null });
+
+    const request = new Request('http://localhost:3000/auth/callback?code=test-code');
+    await GET(request);
+
+    const redirectArg = vi.mocked(NextResponse.redirect).mock.calls[0][0] as string;
+    expect(redirectArg).toContain('claim_guest=1');
+  });
+
   it('redirects to custom next param on success', async () => {
     mockExchangeCodeForSession.mockResolvedValueOnce({ error: null });
 
