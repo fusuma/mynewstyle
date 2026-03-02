@@ -136,7 +136,7 @@ development_status:
   epic-9-retrospective: optional
 
   # E10: Observability & Analytics (Sprint 5)
-  epic-10: in-progress
+  epic-10: done
   10-1-analytics-event-system: done
   10-2-ai-pipeline-monitoring-dashboard: done
   10-3-cost-and-quality-alerts: done
