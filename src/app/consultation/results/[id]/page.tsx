@@ -6,23 +6,21 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useConsultationStore } from '@/stores/consultation';
 import { Paywall } from '@/components/consultation/Paywall';
 import { RefundBanner } from '@/components/consultation/RefundBanner';
-import { FaceShapeAnalysisSection } from '@/components/results/FaceShapeAnalysisSection';
-import { HeroRecommendationCard } from '@/components/consultation/HeroRecommendationCard';
-import { AlternativeRecommendationsSection } from '@/components/consultation/AlternativeRecommendationsSection';
-import { StylesToAvoid } from '@/components/consultation/StylesToAvoid';
-import { GroomingTips } from '@/components/consultation/GroomingTips';
-import { StylingTipsSection } from '@/components/consultation/StylingTipsSection';
-import { ResultsActionsFooter } from '@/components/consultation/ResultsActionsFooter';
+import { ResultsPageAnimatedReveal } from '@/components/consultation/ResultsPageAnimatedReveal';
 import { usePayment } from '@/hooks/usePayment';
 import { useConsultationStatus } from '@/hooks/useConsultationStatus';
-import type { Consultation } from '@/types/index';
 
 /**
  * Results page route: /consultation/results/[id]
  *
  * - If paymentStatus !== 'paid': renders Paywall component with dissolve animation
- * - If paymentStatus === 'paid': renders placeholder (full results page is Epic 6)
+ * - If paymentStatus === 'paid': renders ResultsPageAnimatedReveal with staggered section reveal
  * - Guards: redirects to /consultation/questionnaire if no consultationId or faceAnalysis
+ *
+ * Animation flow (AC #5, #6):
+ *   1. Paywall exits: blur increases + opacity fades (500ms)
+ *   2. Results entrance: opacity 0 -> 1 (400ms, 0.3s delay) — syncs with paywall exit
+ *   3. ResultsPageAnimatedReveal: staggered section reveal (150ms per section) begins inside
  */
 function PaywallWrapper({
   consultationId,
@@ -63,13 +61,8 @@ export default function ResultsPage() {
 
   const consultationId = useConsultationStore((state) => state.consultationId);
   const faceAnalysis = useConsultationStore((state) => state.faceAnalysis);
-  const photoPreview = useConsultationStore((state) => state.photoPreview);
   const paymentStatus = useConsultationStore((state) => state.paymentStatus);
   const setPaymentStatus = useConsultationStore((state) => state.setPaymentStatus);
-  const gender = useConsultationStore((state) => state.gender);
-  const consultationRaw = useConsultationStore((state) => state.consultation);
-  // Cast consultation from unknown to Consultation type (validated by AI output schema)
-  const consultation = consultationRaw as Consultation | null;
 
   // Guard: redirect if no consultationId or no faceAnalysis
   useEffect(() => {
@@ -100,7 +93,7 @@ export default function ResultsPage() {
     setPaymentStatus('paid');
   };
 
-  // Paywall exit: blur increases + opacity fades (500ms)
+  // Paywall exit: blur increases + opacity fades (500ms) (AC #5)
   // Note: transition must be inside the exit object for Framer Motion to apply it to the exit animation.
   // A top-level transition prop controls initial→animate, not exit.
   const paywallExitVariants = shouldReduceMotion
@@ -109,7 +102,9 @@ export default function ResultsPage() {
         exit: { filter: 'blur(20px)', opacity: 0, transition: { duration: 0.5 } },
       };
 
-  // Results entrance: initial state (fades in after paywall dissolves)
+  // Results entrance: initial state (fades in after paywall dissolves) (AC #6)
+  // The 0.3s delay ensures staggered reveal begins AFTER the paywall exit animation (0.5s)
+  // is well underway, creating a seamless paywall-to-results transition.
   const resultsEntranceVariants = shouldReduceMotion
     ? {}
     : {
@@ -133,66 +128,8 @@ export default function ResultsPage() {
         </motion.div>
       ) : (
         <motion.div key="results" {...resultsEntranceVariants}>
-          <FaceShapeAnalysisSection
-            faceAnalysis={faceAnalysis}
-            photoPreview={photoPreview}
-          />
-          {consultation && consultation.recommendations && consultation.recommendations.length > 0 && (
-            <div className="w-full px-4 py-4">
-              <div className="mx-auto max-w-lg">
-                {/* Section B: Hero Recommendation Card (Story 6.2) */}
-                <HeroRecommendationCard
-                  recommendation={consultation.recommendations[0]}
-                  delay={0.15}
-                />
-              </div>
-            </div>
-          )}
-          {consultation && consultation.recommendations && consultation.recommendations.length > 1 && (
-            <div className="w-full px-4 py-4">
-              <div className="mx-auto max-w-lg">
-                {/* Section C: Alternative Recommendation Cards (Story 6.3) */}
-                <AlternativeRecommendationsSection
-                  recommendations={consultation.recommendations.slice(1)}
-                  baseDelay={0.3}
-                />
-              </div>
-            </div>
-          )}
-          {consultation && consultation.stylesToAvoid && consultation.stylesToAvoid.length > 0 && (
-            <div className="w-full px-4 py-4">
-              <div className="mx-auto max-w-lg">
-                {/* Section D: Styles to Avoid (Story 6.4) */}
-                <StylesToAvoid stylesToAvoid={consultation.stylesToAvoid} />
-              </div>
-            </div>
-          )}
-          {consultation && consultation.groomingTips && consultation.groomingTips.length > 0 && (
-            <div className="w-full px-4 py-4">
-              <div className="mx-auto max-w-lg">
-                {/* Section E: Grooming Tips (Story 6.5) */}
-                <GroomingTips
-                  groomingTips={consultation.groomingTips}
-                  gender={gender ?? 'male'}
-                />
-              </div>
-            </div>
-          )}
-          {consultation && consultation.groomingTips && consultation.groomingTips.length > 0 && (
-            <div className="w-full px-4 py-4">
-              <div className="mx-auto max-w-lg">
-                {/* Section F: Styling Tips Parsed & Structured (Story 6.6) */}
-                <StylingTipsSection
-                  groomingTips={consultation.groomingTips}
-                  gender={gender ?? 'male'}
-                />
-              </div>
-            </div>
-          )}
-          {/* Section G: Actions Footer (Story 6.7) */}
-          {/* Spacer for mobile sticky footer -- prevents content from being hidden behind it */}
-          <div className="h-[200px] md:h-0" aria-hidden="true" />
-          <ResultsActionsFooter consultationId={consultationId} />
+          {/* ResultsPageAnimatedReveal handles staggered section reveal (AC #1, #2, #3, #4) */}
+          <ResultsPageAnimatedReveal shouldReduceMotion={shouldReduceMotion} />
         </motion.div>
       )}
     </AnimatePresence>

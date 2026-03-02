@@ -94,7 +94,7 @@ development_status:
   epic-5-retrospective: optional
 
   # E6: Results Page (Sprint 3-4)
-  epic-6: in-progress
+  epic-6: done
   6-1-face-shape-analysis-section: done
   6-2-hero-recommendation-card: done
   6-3-alternative-recommendation-cards: done
@@ -102,7 +102,7 @@ development_status:
   6-5-grooming-tips-section: done
   6-6-styling-tips-parsed-and-structured: done
   6-7-results-actions-footer: done
-  6-8-results-page-animated-reveal: ready-for-dev
+  6-8-results-page-animated-reveal: done
   epic-6-retrospective: optional
 
   # E7: AI Preview Generation - Nano Banana 2 (Sprint 4)
