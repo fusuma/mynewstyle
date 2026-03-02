@@ -1,34 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceRoleClient } from '@/lib/supabase/server';
+import { isAuthorized } from '@/lib/admin/auth';
 
 const ALERT_THRESHOLD_CENTS = 25; // €0.25
 
 type Period = '24h' | '7d' | '30d' | 'all';
-
-/**
- * Verifies the request carries a valid admin secret.
- * Expects header: Authorization: Bearer <ADMIN_SECRET>
- * Falls back to ADMIN_SECRET query param for dashboard tools that can't set headers.
- */
-function isAuthorized(request: NextRequest): boolean {
-  const adminSecret = process.env.ADMIN_SECRET;
-  if (!adminSecret) {
-    // If no secret is configured, deny all access to prevent accidental exposure
-    return false;
-  }
-
-  const authHeader = request.headers.get('authorization');
-  if (authHeader?.startsWith('Bearer ')) {
-    return authHeader.slice(7) === adminSecret;
-  }
-
-  const querySecret = request.nextUrl.searchParams.get('secret');
-  if (querySecret) {
-    return querySecret === adminSecret;
-  }
-
-  return false;
-}
 
 /**
  * Resolves the period query parameter to a Date cutoff.
