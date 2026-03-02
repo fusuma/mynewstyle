@@ -163,7 +163,7 @@ describe('PaymentForm', () => {
 
     await waitFor(() => {
       expect(onPaymentError).toHaveBeenCalledWith(
-        'Pagamento nao processado. Tente outro metodo.'
+        'Pagamento não processado. Tente outro método.'
       );
     });
   });

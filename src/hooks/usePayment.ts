@@ -89,7 +89,7 @@ export function usePayment(consultationId: string): UsePaymentReturn {
     ): Promise<{ success: boolean; error: string | null }> => {
       // Edge case: null stripe or elements
       if (!stripe || !elements) {
-        const errorMessage = 'Pagamento nao processado. Tente outro metodo.';
+        const errorMessage = 'Pagamento não processado. Tente outro método.';
         setState((prev) => ({
           ...prev,
           isLoading: false,
@@ -111,7 +111,7 @@ export function usePayment(consultationId: string): UsePaymentReturn {
 
         if (error) {
           const errorMessage =
-            error.message ?? 'Pagamento nao processado. Tente outro metodo.';
+            error.message ?? 'Pagamento não processado. Tente outro método.';
           setState((prev) => ({
             ...prev,
             isLoading: false,
@@ -129,7 +129,7 @@ export function usePayment(consultationId: string): UsePaymentReturn {
         const errorMessage =
           err instanceof Error
             ? err.message
-            : 'Pagamento nao processado. Tente outro metodo.';
+            : 'Pagamento não processado. Tente outro método.';
         setState((prev) => ({
           ...prev,
           isLoading: false,

@@ -293,7 +293,7 @@ describe('usePayment', () => {
     });
 
     expect(outcome.success).toBe(false);
-    expect(outcome.error).toBe('Pagamento nao processado. Tente outro metodo.');
+    expect(outcome.error).toBe('Pagamento não processado. Tente outro método.');
   });
 
   it('confirmPayment handles network errors gracefully', async () => {

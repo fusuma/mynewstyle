@@ -159,6 +159,7 @@ export function Paywall({
             <StripeProvider clientSecret={clientSecret}>
               <PaymentForm
                 onPaymentSuccess={onPaymentSuccess}
+                onPaymentStart={() => setInternalPaymentError(null)}
                 onPaymentError={(message) => {
                   setInternalPaymentError(message);
                 }}

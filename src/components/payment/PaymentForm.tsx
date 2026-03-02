@@ -12,9 +12,11 @@ import type { StripeExpressCheckoutElementConfirmEvent } from '@stripe/stripe-js
 interface PaymentFormProps {
   onPaymentSuccess: () => void;
   onPaymentError: (message: string) => void;
+  /** Called immediately when a payment attempt begins — use to clear stale errors from previous attempts. */
+  onPaymentStart?: () => void;
 }
 
-export function PaymentForm({ onPaymentSuccess, onPaymentError }: PaymentFormProps) {
+export function PaymentForm({ onPaymentSuccess, onPaymentError, onPaymentStart }: PaymentFormProps) {
   const stripe = useStripe();
   const elements = useElements();
   const [isProcessing, setIsProcessing] = useState(false);
@@ -22,6 +24,7 @@ export function PaymentForm({ onPaymentSuccess, onPaymentError }: PaymentFormPro
   const handleConfirmPayment = async () => {
     if (!stripe || !elements) return;
 
+    onPaymentStart?.();
     setIsProcessing(true);
 
     const { error } = await stripe.confirmPayment({
@@ -33,9 +36,10 @@ export function PaymentForm({ onPaymentSuccess, onPaymentError }: PaymentFormPro
     });
 
     if (error) {
-      onPaymentError(error.message ?? 'Pagamento nao processado. Tente outro metodo.');
+      onPaymentError(error.message ?? 'Pagamento não processado. Tente outro método.');
       setIsProcessing(false);
     } else {
+      setIsProcessing(false);
       onPaymentSuccess();
     }
   };

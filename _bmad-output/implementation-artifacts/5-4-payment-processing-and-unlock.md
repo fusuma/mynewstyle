@@ -1,6 +1,6 @@
 # Story 5.4: Payment Processing & Unlock
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -632,6 +632,42 @@ src/test/use-payment.test.ts (MODIFIED)
 _bmad-output/implementation-artifacts/5-4-payment-processing-and-unlock.md (MODIFIED)
 _bmad-output/implementation-artifacts/sprint-status.yaml (MODIFIED)
 
+### Senior Developer Review (AI)
+
+**Reviewer:** Fusuma (AI Code Review) — 2026-03-02
+
+**Review Outcome:** APPROVED WITH FIXES APPLIED
+
+**Git vs Story File List:** 0 discrepancies — all 10 files in story File List matched git diff HEAD~1 exactly.
+
+**Issues Found and Fixed (4 total):**
+
+**HIGH - Fixed: Missing diacritics in user-visible error messages (AC 5 violation)**
+- UX spec (ux-design.md#11.4) requires: "Pagamento **não** processado. Tente outro **método**."
+- Code had: "Pagamento nao processado. Tente outro metodo." (3 occurrences in `usePayment.ts`, 1 in `PaymentForm.tsx`)
+- Fixed: All occurrences corrected to proper Portuguese with diacritics in source + test files.
+
+**HIGH - Fixed: Exit animation duration not scoped correctly (AC 3 violation)**
+- In `results/[id]/page.tsx`, `paywallExitVariants` spread `transition: { duration: 0.5 }` as a top-level peer of `exit`. In Framer Motion, a top-level `transition` prop controls `initial→animate` transitions, NOT exit animations. The exit animation was using Framer Motion's default 0.3s, not the specified 500ms.
+- Fixed: Moved `transition: { duration: 0.5 }` inside the `exit` object: `exit: { filter: 'blur(20px)', opacity: 0, transition: { duration: 0.5 } }`.
+
+**MEDIUM - Fixed: `isProcessing` not reset before `onPaymentSuccess()` callback in PaymentForm**
+- On the success path, `onPaymentSuccess()` was called with `isProcessing` still `true`. If parent re-renders with animation delay, the submit button could briefly show "A processar..." incorrectly.
+- Fixed: Added `setIsProcessing(false)` before `onPaymentSuccess()` call.
+
+**MEDIUM - Fixed: `internalPaymentError` never cleared on retry in Paywall**
+- After a payment failure, `internalPaymentError` persisted as stale state when the user retried payment. The error message would remain visible during the next payment attempt until a new error (or success) replaced it.
+- Fixed: Added `onPaymentStart` optional prop to `PaymentForm`. Paywall passes `onPaymentStart={() => setInternalPaymentError(null)}` so the stale error is cleared when a new attempt begins.
+
+**LOW - Fixed: Missing diacritic in placeholder text**
+- `"disponiveis"` should be `"disponíveis"` in `PaidResultsPlaceholder` (results page).
+- Fixed: Corrected to `"disponíveis"`.
+
+**All Acceptance Criteria verified as IMPLEMENTED:**
+AC1 (PaymentForm renders both Elements), AC2 (confirmPayment flow + store update), AC3 (paywall blur dissolve 500ms — fixed), AC4 (staggered 150ms reveal), AC5 (inline error with role=alert — fixed diacritics), AC6 (ExpressCheckout primary, Card secondary), AC7 (Paywall uses PaymentForm), AC8 (results page transition), AC9 (usePayment.confirmPayment), AC10 (paymentStatus in Zustand), AC11 (guest-only payment, no auth required), AC12 (994 tests passing).
+
+**Test Suite:** 994/994 passing after fixes.
+
 ### Change Log
 
 - feat(epic-5): implement story 5-4-payment-processing-and-unlock (Date: 2026-03-02)
@@ -640,3 +676,10 @@ _bmad-output/implementation-artifacts/sprint-status.yaml (MODIFIED)
   - Added AnimatePresence paywall dissolve animation (500ms blur-to-clear) and staggered results reveal (150ms/element)
   - Extended usePayment hook with confirmPayment function
   - Added 29 new tests across 4 test files (994 total, all passing)
+- review(epic-5): code review story 5-4-payment-processing-and-unlock (Date: 2026-03-02)
+  - Fixed: Portuguese diacritics in error messages (PaymentForm.tsx, usePayment.ts, test files)
+  - Fixed: Framer Motion exit animation duration now correctly scoped inside exit object (results page)
+  - Fixed: isProcessing reset before onPaymentSuccess() callback to prevent stale button state
+  - Fixed: Added onPaymentStart prop to PaymentForm; Paywall clears internalPaymentError on retry
+  - Fixed: "disponiveis" → "disponíveis" in PaidResultsPlaceholder
+  - Status: review → done

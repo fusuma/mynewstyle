@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { AnimatePresence, motion, useReducedMotion, type Variants } from 'framer-motion';
 import { useConsultationStore } from '@/stores/consultation';
 import { Paywall } from '@/components/consultation/Paywall';
 import { usePayment } from '@/hooks/usePayment';
@@ -60,8 +60,11 @@ function PaidResultsPlaceholder({ shouldReduceMotion }: { shouldReduceMotion: bo
     },
   };
 
-  const itemVariants = shouldReduceMotion
-    ? {}
+  const itemVariants: Variants = shouldReduceMotion
+    ? {
+        hidden: {},
+        visible: {},
+      }
     : {
         hidden: { opacity: 0, y: 20 },
         visible: { opacity: 1, y: 0, transition: { duration: 0.4 } },
@@ -84,7 +87,7 @@ function PaidResultsPlaceholder({ shouldReduceMotion }: { shouldReduceMotion: bo
         className="mt-2 text-sm text-muted-foreground"
         variants={itemVariants}
       >
-        Resultados completos disponiveis em breve (Epic 6).
+        Resultados completos disponíveis em breve (Epic 6).
       </motion.p>
     </motion.div>
   );
@@ -124,11 +127,12 @@ export default function ResultsPage() {
   };
 
   // Paywall exit: blur increases + opacity fades (500ms)
+  // Note: transition must be inside the exit object for Framer Motion to apply it to the exit animation.
+  // A top-level transition prop controls initial→animate, not exit.
   const paywallExitVariants = shouldReduceMotion
     ? {}
     : {
-        exit: { filter: 'blur(20px)', opacity: 0 },
-        transition: { duration: 0.5 },
+        exit: { filter: 'blur(20px)', opacity: 0, transition: { duration: 0.5 } },
       };
 
   // Results entrance: initial state (fades in after paywall dissolves)
