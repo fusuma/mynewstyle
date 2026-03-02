@@ -10,6 +10,8 @@ import { FaceShapeAnalysisSection } from '@/components/results/FaceShapeAnalysis
 import { HeroRecommendationCard } from '@/components/consultation/HeroRecommendationCard';
 import { AlternativeRecommendationsSection } from '@/components/consultation/AlternativeRecommendationsSection';
 import { StylesToAvoid } from '@/components/consultation/StylesToAvoid';
+import { GroomingTips } from '@/components/consultation/GroomingTips';
+import { StylingTipsSection } from '@/components/consultation/StylingTipsSection';
 import { usePayment } from '@/hooks/usePayment';
 import { useConsultationStatus } from '@/hooks/useConsultationStatus';
 import type { Consultation } from '@/types/index';
@@ -63,6 +65,7 @@ export default function ResultsPage() {
   const photoPreview = useConsultationStore((state) => state.photoPreview);
   const paymentStatus = useConsultationStore((state) => state.paymentStatus);
   const setPaymentStatus = useConsultationStore((state) => state.setPaymentStatus);
+  const gender = useConsultationStore((state) => state.gender);
   const consultationRaw = useConsultationStore((state) => state.consultation);
   // Cast consultation from unknown to Consultation type (validated by AI output schema)
   const consultation = consultationRaw as Consultation | null;
@@ -160,6 +163,28 @@ export default function ResultsPage() {
               <div className="mx-auto max-w-lg">
                 {/* Section D: Styles to Avoid (Story 6.4) */}
                 <StylesToAvoid stylesToAvoid={consultation.stylesToAvoid} />
+              </div>
+            </div>
+          )}
+          {consultation && consultation.groomingTips && consultation.groomingTips.length > 0 && (
+            <div className="w-full px-4 py-4">
+              <div className="mx-auto max-w-lg">
+                {/* Section E: Grooming Tips (Story 6.5) */}
+                <GroomingTips
+                  groomingTips={consultation.groomingTips}
+                  gender={gender ?? 'male'}
+                />
+              </div>
+            </div>
+          )}
+          {consultation && consultation.groomingTips && consultation.groomingTips.length > 0 && (
+            <div className="w-full px-4 py-4">
+              <div className="mx-auto max-w-lg">
+                {/* Section F: Styling Tips Parsed & Structured (Story 6.6) */}
+                <StylingTipsSection
+                  groomingTips={consultation.groomingTips}
+                  gender={gender ?? 'male'}
+                />
               </div>
             </div>
           )}

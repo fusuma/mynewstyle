@@ -1,6 +1,6 @@
 # Story 6.6: Styling Tips (Parsed & Structured)
 
-Status: ready-for-dev
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -22,34 +22,34 @@ so that I can quickly find actionable advice without reading a wall of text.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Create StylingTipCard component (AC: #1, #2, #5)
-  - [ ] 1.1 Create `src/components/consultation/StylingTipCard.tsx`
-  - [ ] 1.2 Accept props: `tipText: string`, `icon: string`, `category: string`
-  - [ ] 1.3 Render shadcn/ui Card with Lucide icon resolved from `icon` string prop
-  - [ ] 1.4 Apply gender-themed styling via existing ThemeProvider context
-  - [ ] 1.5 Write unit tests in `src/components/consultation/__tests__/StylingTipCard.test.tsx`
+- [x] Task 1: Create StylingTipCard component (AC: #1, #2, #5)
+  - [x] 1.1 Create `src/components/consultation/StylingTipCard.tsx`
+  - [x] 1.2 Accept props: `tipText: string`, `icon: string`, `category: string`
+  - [x] 1.3 Render shadcn/ui Card with Lucide icon resolved from `icon` string prop
+  - [x] 1.4 Apply gender-themed styling via existing ThemeProvider context
+  - [x] 1.5 Write unit tests in `src/test/styling-tip-card.test.tsx`
 
-- [ ] Task 2: Create StylingTipsSection container component (AC: #1, #3, #4, #6, #7)
-  - [ ] 2.1 Create `src/components/consultation/StylingTipsSection.tsx`
-  - [ ] 2.2 Accept `groomingTips: GroomingTip[]` prop (reuses existing `GroomingTip` type from `src/types/index.ts`)
-  - [ ] 2.3 Filter tips by category and group into "Produtos" / "Rotina Diaria" / "Dicas para o Barbeiro/Cabeleireiro"
-  - [ ] 2.4 Render category sub-headers with appropriate styling
-  - [ ] 2.5 Render grid of StylingTipCard per category (CSS grid: `grid-cols-1 md:grid-cols-2 lg:grid-cols-3`)
-  - [ ] 2.6 Return `null` if `groomingTips` array is empty or undefined (empty state)
-  - [ ] 2.7 Write unit tests in `src/components/consultation/__tests__/StylingTipsSection.test.tsx`
+- [x] Task 2: Create StylingTipsSection container component (AC: #1, #3, #4, #6, #7)
+  - [x] 2.1 Create `src/components/consultation/StylingTipsSection.tsx`
+  - [x] 2.2 Accept `groomingTips: GroomingTip[]` prop (reuses existing `GroomingTip` type from `src/types/index.ts`)
+  - [x] 2.3 Filter tips by category and group into "Produtos" / "Rotina Diaria" / "Dicas para o Barbeiro/Cabeleireiro"
+  - [x] 2.4 Render category sub-headers with appropriate styling
+  - [x] 2.5 Render grid of StylingTipCard per category (CSS grid: `grid-cols-1 md:grid-cols-2 lg:grid-cols-3`)
+  - [x] 2.6 Return `null` if `groomingTips` array is empty or undefined (empty state)
+  - [x] 2.7 Write unit tests in `src/test/styling-tips-section.test.tsx`
 
-- [ ] Task 3: Create icon resolver utility (AC: #2)
-  - [ ] 3.1 Create `src/components/consultation/styling-tips/icon-resolver.ts`
-  - [ ] 3.2 Map AI-returned icon strings (e.g. "scissors", "spray-can", "clock") to Lucide React components
-  - [ ] 3.3 Provide a fallback icon (e.g. `Lightbulb`) for unrecognized icon strings
-  - [ ] 3.4 Reuse pattern from existing `src/components/consultation/question-cards/icon-resolver.ts`
-  - [ ] 3.5 Write unit tests for icon resolution and fallback behavior
+- [x] Task 3: Create icon resolver utility (AC: #2)
+  - [x] 3.1 Create `src/components/consultation/styling-tips/icon-resolver.ts`
+  - [x] 3.2 Map AI-returned icon strings (e.g. "scissors", "spray-can", "clock") to Lucide React components
+  - [x] 3.3 Provide a fallback icon (`Lightbulb`) for unrecognized icon strings
+  - [x] 3.4 Reuse pattern from existing `src/components/consultation/question-cards/icon-resolver.ts`
+  - [x] 3.5 Write unit tests for icon resolution and fallback behavior
 
-- [ ] Task 4: Integrate into results page (AC: #6)
-  - [ ] 4.1 Import StylingTipsSection in the results page component
-  - [ ] 4.2 Position after grooming tips section, before actions footer
-  - [ ] 4.3 Pass consultation.groomingTips data to the component
-  - [ ] 4.4 Ensure staggered reveal animation wraps this section (Framer Motion, 150ms stagger consistent with S6.8)
+- [x] Task 4: Integrate into results page (AC: #6)
+  - [x] 4.1 Import StylingTipsSection in the results page component
+  - [x] 4.2 Position after grooming tips section, before actions footer
+  - [x] 4.3 Pass consultation.groomingTips data to the component
+  - [x] 4.4 Ensure staggered reveal animation wraps this section (Framer Motion, 150ms stagger consistent with S6.8)
 
 ## Dev Notes
 
@@ -63,7 +63,7 @@ so that I can quickly find actionable advice without reading a wall of text.
 - **Icons:** Use `lucide-react` (v0.575.0 installed). Import icons dynamically or via a lookup map. The AI returns icon name strings that must be mapped to Lucide components.
 - **Styling:** Tailwind CSS with the dual-theme system. The gender theme is available via `useTheme` hook from `src/hooks/useTheme.ts`. Apply accent colors from the theme context.
 - **Animation:** Framer Motion is installed (v12.34.3). The results page already uses staggered reveal with 150ms delay. Wrap StylingTipsSection in `motion.div` with `variants` matching the existing pattern in `src/app/consultation/results/[id]/page.tsx`.
-- **Testing:** Vitest + React Testing Library + jsdom. Test files in `__tests__/` directory alongside components. Test rendering, category grouping, empty state, and icon fallback.
+- **Testing:** Vitest + React Testing Library + jsdom. Test files in `src/test/` directory following project convention. Test rendering, category grouping, empty state, and icon fallback.
 
 ### Category Mapping
 
@@ -87,8 +87,8 @@ For female path, `barber_tips` label should display as "Dicas para o Cabeleireir
 
 - Alignment with unified project structure: all consultation components live in `src/components/consultation/`
 - The icon resolver follows the established pattern in `src/components/consultation/question-cards/icon-resolver.ts`
-- Tests follow the existing pattern with `__tests__/` subdirectory
-- No new directories needed except possibly `src/components/consultation/styling-tips/` for the icon resolver if preferred, but can also be co-located
+- Tests follow the existing pattern with `src/test/` directory (not `__tests__/` subdirectory — project convention uses `src/test/`)
+- Icon resolver placed in `src/components/consultation/styling-tips/` subdirectory
 
 ### Results Page Integration Context
 
@@ -127,10 +127,45 @@ AI Pipeline (Story 4.5) -> ConsultationSchema validation (Story 4.6)
 
 ### Agent Model Used
 
-(to be filled by dev agent)
+claude-sonnet-4-6
 
 ### Debug Log References
 
+- ESLint "Cannot create components during render" error: Resolved by following the same pattern as GroomingTips.tsx — the IconComponent is resolved in StylingTipsSection (parent) before being passed as a prop to StylingTipCard, preventing creation of components during render.
+
 ### Completion Notes List
 
+- Task 1 complete: `StylingTipCard` component created at `src/components/consultation/StylingTipCard.tsx`. Uses shadcn/ui Card, accepts pre-resolved `IconComponent` as prop, applies accent color styling, `aria-hidden="true"` on icon (WCAG 2.1 AA), `role="listitem"` for accessibility. Tests in `src/test/styling-tip-card.test.tsx` (6 tests passing).
+
+- Task 2 complete: `StylingTipsSection` container created at `src/components/consultation/StylingTipsSection.tsx`. Reuses `GroomingTip` type, groups tips by category in canonical order (products, routine, barber_tips), renders category h3 sub-headers, responsive grid `grid-cols-1 md:grid-cols-2 lg:grid-cols-3`, returns `null` for empty/undefined input, respects `useReducedMotion()` with stagger animation disabled when reduced motion preferred. Gender-specific barber_tips label (male: "Dicas para o Barbeiro/Cabeleireiro", female: "Dicas para o Cabeleireiro"). Tests in `src/test/styling-tips-section.test.tsx` (19 tests passing).
+
+- Task 3 complete: Icon resolver created at `src/components/consultation/styling-tips/icon-resolver.ts`. Maps AI icon strings to Lucide components (scissors, droplets, clock, spray-can, comb, wand2, brush, shower-head, star, palette, sparkles, wind, heart). Fallback to `Lightbulb` for unrecognized/empty strings. Case-insensitive resolution. Tests in `src/test/styling-tips-icon-resolver.test.ts` (10 tests passing).
+
+- Task 4 complete: `StylingTipsSection` integrated into `src/app/consultation/results/[id]/page.tsx`. Added `gender` selector from consultation store, conditional rendering guard (groomingTips must be non-empty), positioned after Section D (StylesToAvoid). Animation wrapped via framer-motion's `motion.div` container in results page. Integration tests in `src/test/results-page-styling-tips.test.tsx` (6 tests passing).
+
+- Full test suite: 86 test files, 1248 tests all passing. Zero regressions introduced.
+
+- All 7 Acceptance Criteria verified:
+  - AC #1: Each groomingTip rendered as a separate StylingTipCard
+  - AC #2: Lucide icons resolved from icon string, with Lightbulb fallback
+  - AC #3: Category sub-headers rendered in order: Produtos, Rotina Diaria, Dicas para o Barbeiro/Cabeleireiro
+  - AC #4: `grid-cols-1 md:grid-cols-2 lg:grid-cols-3` responsive grid
+  - AC #5: shadcn/ui Card used, accent-foreground color applied
+  - AC #6: Integrated into results page after StylesToAvoid section
+  - AC #7: Returns null when groomingTips is empty or undefined
+
 ### File List
+
+- src/components/consultation/StylingTipCard.tsx (new)
+- src/components/consultation/StylingTipsSection.tsx (new)
+- src/components/consultation/styling-tips/icon-resolver.ts (new)
+- src/test/styling-tip-card.test.tsx (new)
+- src/test/styling-tips-section.test.tsx (new)
+- src/test/styling-tips-icon-resolver.test.ts (new)
+- src/test/results-page-styling-tips.test.tsx (new)
+- src/app/consultation/results/[id]/page.tsx (modified — added GroomingTips Section E and StylingTipsSection Section F imports and integration)
+
+## Change Log
+
+- 2026-03-02: Story 6.6 implemented — StylingTipCard, StylingTipsSection, icon-resolver created; integrated into results page. 41 new tests added. (claude-sonnet-4-6)
+- 2026-03-02: Code review fixes applied — (1) Removed invalid `Comb` import from lucide-react (not available in v0.575.0), mapped `comb` key to `Wand2` icon instead; (2) Added GroomingTips (Section E) to results page before StylingTipsSection (Section F) to comply with AC #6 UX spec hierarchy; (3) Updated icon-resolver test mock to remove invalid `Comb` entry and added tests for `comb` and `wand2` resolution; (4) Updated integration test to verify Section E before Section F ordering. 43 tests passing (1250 total, zero regressions). (claude-sonnet-4-6)
