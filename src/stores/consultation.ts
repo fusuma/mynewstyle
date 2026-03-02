@@ -22,7 +22,7 @@ export interface ConsultationStore {
   previews: Map<string, unknown>;
 
   // Payment (future stories)
-  paymentStatus: 'none' | 'pending' | 'paid' | 'failed';
+  paymentStatus: 'none' | 'pending' | 'paid' | 'failed' | 'refunded';
   isReturningUser: boolean;
 
   // Actions
@@ -33,7 +33,7 @@ export interface ConsultationStore {
   setQuestionnaireComplete: (responses: QuestionnaireResponses) => void;
   setConsultationId: (id: string) => void;
   setFaceAnalysis: (analysis: FaceAnalysisOutput) => void;
-  setPaymentStatus: (status: 'none' | 'pending' | 'paid' | 'failed') => void;
+  setPaymentStatus: (status: 'none' | 'pending' | 'paid' | 'failed' | 'refunded') => void;
   reset: () => void;
 }
 

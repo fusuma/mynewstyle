@@ -5,7 +5,9 @@ import { useParams, useRouter } from 'next/navigation';
 import { AnimatePresence, motion, useReducedMotion, type Variants } from 'framer-motion';
 import { useConsultationStore } from '@/stores/consultation';
 import { Paywall } from '@/components/consultation/Paywall';
+import { RefundBanner } from '@/components/consultation/RefundBanner';
 import { usePayment } from '@/hooks/usePayment';
+import { useConsultationStatus } from '@/hooks/useConsultationStatus';
 
 /**
  * Results page route: /consultation/results/[id]
@@ -126,6 +128,12 @@ export default function ResultsPage() {
     setPaymentStatus('paid');
   };
 
+  // Poll for refund status after payment succeeds
+  const { isPolling: _isPolling } = useConsultationStatus(
+    consultationId ?? '',
+    paymentStatus === 'paid'
+  );
+
   // Paywall exit: blur increases + opacity fades (500ms)
   // Note: transition must be inside the exit object for Framer Motion to apply it to the exit animation.
   // A top-level transition prop controls initial→animate, not exit.
@@ -146,7 +154,11 @@ export default function ResultsPage() {
 
   return (
     <AnimatePresence mode="wait">
-      {paymentStatus !== 'paid' ? (
+      {paymentStatus === 'refunded' ? (
+        <motion.div key="refund" {...resultsEntranceVariants}>
+          <RefundBanner />
+        </motion.div>
+      ) : paymentStatus !== 'paid' ? (
         <motion.div key="paywall" {...paywallExitVariants}>
           <PaywallWrapper
             consultationId={consultationId}

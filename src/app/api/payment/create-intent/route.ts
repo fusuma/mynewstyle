@@ -9,16 +9,18 @@ import { consultations } from '@/app/api/consultation/start/route';
 
 // Local type extension for payment fields (src/types/index.ts is frozen)
 interface PaymentConsultationRecord {
-  paymentStatus: 'free' | 'pending' | 'paid' | 'refunded';
+  paymentStatus: 'none' | 'pending' | 'paid' | 'failed' | 'refunded';
   paymentIntentId: string | null;
 }
 
 const CreatePaymentIntentSchema = z.object({
   consultationId: z.string().uuid('consultationId must be a valid UUID'),
   type: z.enum(['first', 'repeat']).optional(),
+  email: z.string().email('email must be a valid email address').optional(),
 });
 
 type CreatePaymentIntentInput = z.infer<typeof CreatePaymentIntentSchema>;
+
 
 export async function POST(request: NextRequest) {
   let body: unknown;
@@ -42,7 +44,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const { consultationId, type }: CreatePaymentIntentInput = result.data;
+  const { consultationId, type, email }: CreatePaymentIntentInput = result.data;
 
   // Look up consultation
   const consultation = consultations.get(consultationId);
@@ -82,6 +84,8 @@ export async function POST(request: NextRequest) {
         consultationId,
         userType: String(userType),
       },
+      // Stripe automatically sends receipt email on successful payment when set
+      ...(email ? { receipt_email: email } : {}),
     });
 
     if (!paymentIntent.client_secret) {
