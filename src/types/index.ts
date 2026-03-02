@@ -8,9 +8,38 @@ export type Gender = "male" | "female";
 export interface UserProfile {
   id: string;
   displayName: string | null;
+  email?: string;
   genderPreference: 'male' | 'female' | null;
   createdAt: string;
-  updatedAt: string;
+  updatedAt?: string;
+}
+
+// Profile history types (Story 8.6)
+export interface ConsultationHistoryItem {
+  id: string;
+  gender: 'male' | 'female';
+  faceShape: FaceShape;
+  confidence: number;
+  status: string;
+  paymentStatus: string;
+  createdAt: string;
+  completedAt: string | null;
+  topRecommendation: {
+    styleName: string;
+    matchScore: number;
+  } | null;
+}
+
+export interface FavoriteItem {
+  id: string;
+  favoritedAt: string;
+  recommendationId: string;
+  styleName: string;
+  matchScore: number;
+  consultationId: string;
+  faceShape: FaceShape;
+  gender: 'male' | 'female';
+  consultationDate: string;
 }
 
 export interface AuthState {
