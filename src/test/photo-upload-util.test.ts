@@ -7,14 +7,14 @@ const mockUpload = vi.fn();
 const mockCreateSignedUrl = vi.fn();
 
 vi.mock('@/lib/supabase/client', () => ({
-  supabase: {
+  createClient: vi.fn().mockReturnValue({
     storage: {
       from: vi.fn().mockReturnValue({
         upload: (...args: unknown[]) => mockUpload(...args),
         createSignedUrl: (...args: unknown[]) => mockCreateSignedUrl(...args),
       }),
     },
-  },
+  }),
 }));
 
 import { uploadPhoto } from '@/lib/photo/upload';

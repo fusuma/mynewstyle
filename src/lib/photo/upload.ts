@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase/client';
+import { createClient } from '@/lib/supabase/client';
 
 export interface PhotoUploadResult {
   success: boolean;
@@ -25,6 +25,7 @@ export async function uploadPhoto(
   consultationId: string
 ): Promise<PhotoUploadResult> {
   const storagePath = `${sessionId}/${consultationId}/original.jpg`;
+  const supabase = createClient();
 
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
     try {

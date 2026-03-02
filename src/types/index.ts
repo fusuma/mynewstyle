@@ -1,4 +1,23 @@
+import type { User, Session } from '@supabase/supabase-js';
+
+export type { User, Session };
+
 export type Gender = "male" | "female";
+
+// Auth types (Story 8.1)
+export interface UserProfile {
+  id: string;
+  displayName: string | null;
+  genderPreference: 'male' | 'female' | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AuthState {
+  user: User | null;
+  session: Session | null;
+  isLoading: boolean;
+}
 
 export interface ThemeColors {
   background: string;

@@ -117,13 +117,13 @@ development_status:
   epic-7-retrospective: optional
 
   # E8: Auth & User Profile (Sprint 4-5)
-  epic-8: backlog
-  8-1-supabase-auth-setup: backlog
-  8-2-registration-page: backlog
-  8-3-login-page: backlog
-  8-4-guest-session-management: backlog
-  8-5-guest-to-auth-migration: backlog
-  8-6-user-profile-and-history: backlog
+  epic-8: in-progress
+  8-1-supabase-auth-setup: done
+  8-2-registration-page: ready-for-dev
+  8-3-login-page: ready-for-dev
+  8-4-guest-session-management: ready-for-dev
+  8-5-guest-to-auth-migration: ready-for-dev
+  8-6-user-profile-and-history: ready-for-dev
   epic-8-retrospective: optional
 
   # E9: Sharing & Virality (Sprint 5)
