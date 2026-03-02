@@ -1,6 +1,6 @@
 # Story 6.3: Alternative Recommendation Cards (#2, #3)
 
-Status: ready-for-dev
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -24,59 +24,59 @@ so that I can make an informed decision about which hairstyle suits me best.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Create `AlternativeRecommendationCard` component (AC: 2, 3, 4, 6, 7)
-  - [ ] Create `src/components/consultation/AlternativeRecommendationCard.tsx`
-  - [ ] Accept props: `rank` (2 or 3), `styleName`, `justification`, `matchScore`, `difficultyLevel`
-  - [ ] Render ordinal badge: "2a Recomendacao" / "3a Recomendacao" with muted accent styling
-  - [ ] Render style name in medium typography (smaller than hero card's large typography)
-  - [ ] Render match score as percentage: `Math.round(matchScore * 100)` + "% compativel"
-  - [ ] Render difficulty badge with label mapping: `low` -> "Baixa", `medium` -> "Media", `high` -> "Alta"
-  - [ ] Render justification text (2-3 sentences)
-  - [ ] Render "Ver como fico" button in secondary style (border + text, not filled)
-  - [ ] Button is currently a placeholder (onClick logs or does nothing) -- Epic 7 will connect it
-  - [ ] Use Framer Motion for entrance animation with configurable delay (passed via prop or index)
-  - [ ] Respect `prefers-reduced-motion` via `useReducedMotion()`
-  - [ ] Accessible: proper heading hierarchy, aria-labels on interactive elements
+- [x] Task 1: Create `AlternativeRecommendationCard` component (AC: 2, 3, 4, 6, 7)
+  - [x] Create `src/components/consultation/AlternativeRecommendationCard.tsx`
+  - [x] Accept props: `rank` (2 or 3), `styleName`, `justification`, `matchScore`, `difficultyLevel`
+  - [x] Render ordinal badge: "2a Recomendacao" / "3a Recomendacao" with muted accent styling
+  - [x] Render style name in medium typography (smaller than hero card's large typography)
+  - [x] Render match score as percentage: `Math.round(matchScore * 100)` + "% compativel"
+  - [x] Render difficulty badge with label mapping: `low` -> "Baixa", `medium` -> "Media", `high` -> "Alta"
+  - [x] Render justification text (2-3 sentences)
+  - [x] Render "Ver como fico" button in secondary style (border + text, not filled)
+  - [x] Button is currently a placeholder (onClick logs or does nothing) -- Epic 7 will connect it
+  - [x] Use Framer Motion for entrance animation with configurable delay (passed via prop or index)
+  - [x] Respect `prefers-reduced-motion` via `useReducedMotion()`
+  - [x] Accessible: proper heading hierarchy, aria-labels on interactive elements
 
-- [ ] Task 2: Implement collapsible behavior for mobile (AC: 4)
-  - [ ] Add collapsible state management: `isExpanded` boolean, default `false`
-  - [ ] Always-visible section: rank badge, style name, match score
-  - [ ] Expandable section: justification, difficulty badge, "Ver como fico" button
-  - [ ] Tap on the card header toggles expansion
-  - [ ] Add chevron icon (Lucide `ChevronDown`) that rotates on expand/collapse
-  - [ ] Use Framer Motion `AnimatePresence` for smooth expand/collapse animation
-  - [ ] Collapse behavior only on mobile (< 768px) -- use CSS media queries or `useMediaQuery` hook
-  - [ ] On desktop (>= 768px), content is always visible (no collapse toggle)
+- [x] Task 2: Implement collapsible behavior for mobile (AC: 4)
+  - [x] Add collapsible state management: `isExpanded` boolean, default `false`
+  - [x] Always-visible section: rank badge, style name, match score
+  - [x] Expandable section: justification, difficulty badge, "Ver como fico" button
+  - [x] Tap on the card header toggles expansion
+  - [x] Add chevron icon (Lucide `ChevronDown`) that rotates on expand/collapse
+  - [x] Use Framer Motion `AnimatePresence` for smooth expand/collapse animation
+  - [x] Collapse behavior only on mobile (< 768px) -- use CSS media queries or `useMediaQuery` hook
+  - [x] On desktop (>= 768px), content is always visible (no collapse toggle)
 
-- [ ] Task 3: Create `AlternativeRecommendationsSection` container component (AC: 1, 5, 7)
-  - [ ] Create `src/components/consultation/AlternativeRecommendationsSection.tsx`
-  - [ ] Accept props: `recommendations` array (items at index 1 and 2 from the consultation recommendations array -- the hero card uses index 0)
-  - [ ] Render section with proper spacing below hero card
-  - [ ] Grid layout: single column on mobile, 2-column on tablet/desktop (`grid grid-cols-1 md:grid-cols-2 gap-4`)
-  - [ ] Staggered animation: each card gets a delay based on its index (150ms stagger)
-  - [ ] Handle edge case: if only 1 alternative recommendation exists (array has 2 items total), render only 1 card
+- [x] Task 3: Create `AlternativeRecommendationsSection` container component (AC: 1, 5, 7)
+  - [x] Create `src/components/consultation/AlternativeRecommendationsSection.tsx`
+  - [x] Accept props: `recommendations` array (items at index 1 and 2 from the consultation recommendations array -- the hero card uses index 0)
+  - [x] Render section with proper spacing below hero card
+  - [x] Grid layout: single column on mobile, 2-column on tablet/desktop (`grid grid-cols-1 md:grid-cols-2 gap-4`)
+  - [x] Staggered animation: each card gets a delay based on its index (150ms stagger)
+  - [x] Handle edge case: if only 1 alternative recommendation exists (array has 2 items total), render only 1 card
 
-- [ ] Task 4: Create difficulty level labels mapping utility (AC: 2)
-  - [ ] Create difficulty label mapping in the component file (not a separate utility -- keep it local)
-  - [ ] Mapping: `{ low: 'Baixa', medium: 'Media', high: 'Alta' }`
-  - [ ] Badge color coding: low = green/success muted, medium = amber/warning muted, high = red/destructive muted
-  - [ ] Use theme-aware design tokens (not hardcoded colors)
+- [x] Task 4: Create difficulty level labels mapping utility (AC: 2)
+  - [x] Create difficulty label mapping in the component file (not a separate utility -- keep it local)
+  - [x] Mapping: `{ low: 'Baixa', medium: 'Media', high: 'Alta' }`
+  - [x] Badge color coding: low = green/success muted, medium = amber/warning muted, high = red/destructive muted
+  - [x] Use theme-aware design tokens (not hardcoded colors)
 
-- [ ] Task 5: Write unit tests (AC: 9)
-  - [ ] Create `src/test/alternative-recommendation-card.test.tsx`
-  - [ ] Test renders style name, justification, match score percentage, difficulty badge
-  - [ ] Test ordinal label renders correctly for rank 2 and rank 3
-  - [ ] Test "Ver como fico" button renders with secondary styling
-  - [ ] Test collapsed state on mobile: justification and details are hidden
-  - [ ] Test expanded state: all content visible after click
-  - [ ] Test desktop rendering: always expanded, no collapse toggle
-  - [ ] Test `prefers-reduced-motion` disables animations
-  - [ ] Test accessibility: proper roles, aria-expanded attribute on collapsible
-  - [ ] Create `src/test/alternative-recommendations-section.test.tsx`
-  - [ ] Test renders 2 cards when 2 alternative recommendations provided
-  - [ ] Test renders 1 card when only 1 alternative recommendation provided
-  - [ ] Test renders nothing when no alternative recommendations provided
-  - [ ] Test grid layout classes are present
+- [x] Task 5: Write unit tests (AC: 9)
+  - [x] Create `src/test/alternative-recommendation-card.test.tsx`
+  - [x] Test renders style name, justification, match score percentage, difficulty badge
+  - [x] Test ordinal label renders correctly for rank 2 and rank 3
+  - [x] Test "Ver como fico" button renders with secondary styling
+  - [x] Test collapsed state on mobile: justification and details are hidden
+  - [x] Test expanded state: all content visible after click
+  - [x] Test desktop rendering: always expanded, no collapse toggle
+  - [x] Test `prefers-reduced-motion` disables animations
+  - [x] Test accessibility: proper roles, aria-expanded attribute on collapsible
+  - [x] Create `src/test/alternative-recommendations-section.test.tsx`
+  - [x] Test renders 2 cards when 2 alternative recommendations provided
+  - [x] Test renders 1 card when only 1 alternative recommendation provided
+  - [x] Test renders nothing when no alternative recommendations provided
+  - [x] Test grid layout classes are present
 
 ## Dev Notes
 
@@ -295,10 +295,83 @@ No new environment variables required. This story is purely frontend components 
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+claude-sonnet-4-6
 
 ### Debug Log References
 
+No issues encountered. Implementation was straightforward following established patterns from Story 6.2 (HeroRecommendationCard).
+
 ### Completion Notes List
 
+- Implemented `AlternativeRecommendationCard` component with all required features: ordinal badges (2a/3a Recomendacao), muted styling (NOT gold), match score as percentage, difficulty badge with PT-BR labels and theme-aware colors, secondary "Ver como fico" button, Framer Motion entrance animation with configurable delay, `prefers-reduced-motion` support via `useReducedMotion()`, and mobile collapsible behavior.
+- Collapsible pattern uses pure CSS (Tailwind `md:hidden` / `hidden md:block`) to control responsive behavior — no isMobile prop or window.innerWidth needed. Toggle button is always in DOM but hidden on desktop via CSS. Expandable wrapper is `hidden md:block` — collapsed by JS state on mobile, always visible on desktop via CSS override.
+- Implemented `AlternativeRecommendationsSection` container with `grid grid-cols-1 md:grid-cols-2 gap-4` responsive layout, staggered 150ms delay per card (STAGGER_DELAY at module level), handles 0/1/2 recommendations, `role="region"` with aria-label, `onPreviewRequest` threaded through to child cards.
+- Difficulty badge uses theme-aware Tailwind classes: green for low, amber for medium, red for high (with dark mode variants).
+- All components use `StyleRecommendation` type from `src/types/index.ts` (NOT modified — only imported from it).
+- `onPreviewRequest?: (styleName: string) => void` callback prop included in both card and section components for future Epic 7 connection.
+- 40 new tests added across 2 test files. All 1164 tests pass (79 test files, no regressions).
+
 ### File List
+
+- src/components/consultation/AlternativeRecommendationCard.tsx (NEW)
+- src/components/consultation/AlternativeRecommendationsSection.tsx (NEW)
+- src/test/alternative-recommendation-card.test.tsx (NEW)
+- src/test/alternative-recommendations-section.test.tsx (NEW)
+- _bmad-output/implementation-artifacts/6-3-alternative-recommendation-cards.md (MODIFIED - story file updates only)
+- _bmad-output/implementation-artifacts/sprint-status.yaml (MODIFIED - status updated)
+
+## Senior Developer Review (AI)
+
+**Reviewer:** Fusuma (AI Code Review) on 2026-03-02
+**Story:** 6-3-alternative-recommendation-cards
+**Git vs Story Discrepancies:** 0 found (all listed files present as untracked new files)
+
+### Issues Found and Fixed
+
+#### HIGH - Architectural Violation: `isMobile` Prop Breaks CSS-Driven Responsive Design
+- **Issue:** The original implementation used an `isMobile` prop to externalize responsive collapse behavior. The story's Dev Notes explicitly state "DO NOT use window.innerWidth or resize listeners. Tailwind CSS classes handle responsive behavior declaratively." Delegating mobile detection to the parent caller is fragile and inconsistent — if no parent passes `isMobile={true}`, the card renders always-expanded on ALL viewports.
+- **Fix:** Refactored `AlternativeRecommendationCard` to remove the `isMobile` prop entirely. The collapse toggle is now always present in DOM but hidden on desktop via `md:hidden` Tailwind class. The expandable content wrapper uses `hidden md:block` — collapsed by JS state on mobile, always visible on desktop via CSS override. This is the correct pattern per dev notes.
+- **Files:** `src/components/consultation/AlternativeRecommendationCard.tsx`
+
+#### HIGH - Missing `onPreviewRequest` Threading Through Container Component
+- **Issue:** `AlternativeRecommendationsSection` had no `onPreviewRequest` prop and therefore could not pass the Epic 7 callback down to its child cards. This silently swallowed the callback — any parent passing `onPreviewRequest` to the section (the natural integration point) would have it dropped.
+- **Fix:** Added `onPreviewRequest?: (styleName: string) => void` to `AlternativeRecommendationsSectionProps` and passed it through to each `AlternativeRecommendationCard`.
+- **Files:** `src/components/consultation/AlternativeRecommendationsSection.tsx`
+
+#### MEDIUM - `STAGGER_DELAY` Defined Inside Function Body (Recreated on Every Render)
+- **Issue:** `const STAGGER_DELAY = 0.15;` was declared inside the `AlternativeRecommendationsSection` function, causing it to be re-created on every render cycle.
+- **Fix:** Moved `STAGGER_DELAY` to module level as a constant.
+- **Files:** `src/components/consultation/AlternativeRecommendationsSection.tsx`
+
+#### MEDIUM - Fragile React Key Using `styleName` Alone (Could Collide)
+- **Issue:** `key={recommendation.styleName}` — if the AI returned the same `styleName` for two recommendations (possible edge case), React would silently render duplicate keys, causing rendering bugs.
+- **Fix:** Changed to composite key `key={\`rank-${rank}-${recommendation.styleName}\`}` which is always unique within the section.
+- **Files:** `src/components/consultation/AlternativeRecommendationsSection.tsx`
+
+#### MEDIUM - Missing Test: `onPreviewRequest` Not Called Without Callback (No Error)
+- **Issue:** Tests only verified the callback IS called. Missing test for clicking "Ver como fico" when no callback is provided (should silently succeed, not throw).
+- **Fix:** Added test "does not throw when 'Ver como fico' is clicked without onPreviewRequest".
+- **Files:** `src/test/alternative-recommendation-card.test.tsx`
+
+#### MEDIUM - Missing Tests for `onPreviewRequest` Threading Through Section
+- **Issue:** Zero tests verified that the section component threads the callback to child cards. This was completely untested.
+- **Fix:** Added `AlternativeRecommendationsSection - onPreviewRequest threading` describe block with 3 tests covering: first card receives callback, second card receives callback, optional prop renders without crash.
+- **Files:** `src/test/alternative-recommendations-section.test.tsx`
+
+#### LOW - Dead Code: Fallback in ORDINAL_LABELS for Non-Existent Ranks
+- **Issue:** `ORDINAL_LABELS[rank] ?? \`${rank}a Recomendacao\`` — TypeScript enforces `rank: 2 | 3` so the fallback is unreachable dead code. It uses a looser `Record<number, string>` type.
+- **Fix:** Changed `ORDINAL_LABELS` type to `Record<2 | 3, string>` and removed the fallback expression. The ordinal assignment is now `const ordinalLabel = ORDINAL_LABELS[rank];`.
+- **Files:** `src/components/consultation/AlternativeRecommendationCard.tsx`
+
+### Final Test Results
+- 40 tests pass in the 2 new test files (up from 31 — 9 tests added by review)
+- 1164 total tests pass across 79 test files (no regressions)
+
+### Verdict: APPROVED — Story status set to done
+
+---
+
+### Change Log
+
+- 2026-03-02: Implemented Story 6.3 — AlternativeRecommendationCard and AlternativeRecommendationsSection components with collapsible mobile behavior, staggered animations, and full test coverage (31 tests).
+- 2026-03-02: Code review (AI) — Fixed: isMobile prop replaced with CSS-driven md:hidden/md:block pattern; onPreviewRequest threaded through section container; STAGGER_DELAY moved to module level; composite React keys; 9 additional tests added. All 1164 tests pass.
