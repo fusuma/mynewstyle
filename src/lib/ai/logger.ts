@@ -11,6 +11,13 @@ const PRICING: Record<string, { inputPer1M: number; outputPer1M: number }> = {
 };
 
 /**
+ * Fixed cost per image generation for Kie.ai Nano Banana 2.
+ * Kie.ai charges per image (not per token). Estimated ~$0.04 per image.
+ * Input/output tokens are set to 0 for image generation tasks.
+ */
+export const KIE_COST_PER_IMAGE_CENTS = 4;
+
+/**
  * Calculate cost in cents for an AI call based on token usage.
  */
 export function calculateCost(

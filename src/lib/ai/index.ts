@@ -6,7 +6,11 @@ import { getAIConfig } from './config';
 // Re-export types
 export type { AIProvider } from './provider';
 export { AIRouter, isRetryable } from './provider';
-export { logAICall, getAICallLogs, clearAICallLogs, calculateCost, persistAICallLog } from './logger';
+
+// Kie.ai preview generation client (separate from text/vision AI providers)
+export { KieClient, KieApiError } from './kie';
+export type { KieJobRequest, KieJobResponse, KieTaskResult } from './kie';
+export { logAICall, getAICallLogs, clearAICallLogs, calculateCost, persistAICallLog, KIE_COST_PER_IMAGE_CENTS } from './logger';
 export { getAIConfig } from './config';
 export { GeminiProvider } from './gemini';
 export { OpenAIProvider } from './openai';

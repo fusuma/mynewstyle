@@ -106,14 +106,14 @@ development_status:
   epic-6-retrospective: optional
 
   # E7: AI Preview Generation - Nano Banana 2 (Sprint 4)
-  epic-7: backlog
-  7-1-kie-ai-integration: backlog
-  7-2-kie-ai-webhook-handler: backlog
-  7-3-face-similarity-check: backlog
-  7-4-preview-loading-ux: backlog
-  7-5-preview-display-and-before-after: backlog
-  7-6-preview-fallback-gemini-pro-direct: backlog
-  7-7-barber-reference-card: backlog
+  epic-7: in-progress
+  7-1-kie-ai-integration: done
+  7-2-kie-ai-webhook-handler: ready-for-dev
+  7-3-face-similarity-check: ready-for-dev
+  7-4-preview-loading-ux: ready-for-dev
+  7-5-preview-display-and-before-after: ready-for-dev
+  7-6-preview-fallback-gemini-pro-direct: ready-for-dev
+  7-7-barber-reference-card: ready-for-dev
   epic-7-retrospective: optional
 
   # E8: Auth & User Profile (Sprint 4-5)

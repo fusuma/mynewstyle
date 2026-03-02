@@ -1,39 +1,41 @@
 ---
 name: 'sprint-runner'
-description: 'Autonomous sprint execution: picks next backlog story, creates story file, implements it, reviews code, commits and pushes. Runs continuously processing stories one by one.'
+description: 'Autonomous sprint execution: batch-creates story files in parallel, then implements sequentially with code review. Commits after each story.'
 ---
 
 # Sprint Runner — Autonomous Sprint Execution
 
-You are the Sprint Runner orchestrator. Your job is to autonomously execute the full development cycle for stories in the sprint plan.
+You are the Sprint Runner orchestrator. Your job is to autonomously execute the full development cycle for stories in the sprint plan, using **parallel story creation** followed by **sequential implementation**.
 
 ## Execution Mode
 
 Determine the mode from the user argument: $ARGUMENTS
 
 - **(no argument)** or **"next"** — Process the next single backlog story, then stop.
-- **"epic"** — Process ALL remaining backlog stories in the current in-progress epic, sequentially.
-- **"sprint"** — Process all stories in the current sprint, parallelizing independent epics using worktree-isolated subagents.
+- **"epic"** or **"epic N"** — Process ALL remaining backlog/ready-for-dev stories in the specified (or current in-progress) epic.
+- **"sprint"** — Process all stories in the current sprint's epics.
 - **"all"** — Process all remaining stories across all epics.
 
-## Core Loop
-
-For each story to process, execute these steps **in order**:
-
-### Step 1: Read Sprint Status
+## Phase 1: Read Sprint Status & Identify Stories
 
 Read the full file `_bmad-output/implementation-artifacts/sprint-status.yaml`.
 
-Identify the next story to work on:
-- Find the first story with status `backlog` (scanning top to bottom).
-- If the story's epic is `backlog`, it will transition to `in-progress` during create-story.
-- If no backlog stories remain, report "All stories are complete!" and stop.
+Collect ALL stories to process based on the execution mode:
+- **"next"**: The first `backlog` story only.
+- **"epic"**: All `backlog` and `ready-for-dev` stories in the target epic.
+- **"sprint"/"all"**: All `backlog` and `ready-for-dev` stories in scope.
 
-Record the **story key** (e.g., `1-2-landing-page-hero-section`) and its **epic number**.
+Record each story's **key** (e.g., `6-8-results-page-animated-reveal`) and **epic number**.
 
-### Step 2: Create Story File
+If no stories remain, report "All stories are complete!" and stop.
 
-Spawn a `general-purpose` subagent **using model: "opus"** to create the story file:
+## Phase 2: Batch Create Story Files (Parallel)
+
+For all stories that are `backlog` (not yet `ready-for-dev`), create their story files **in parallel**.
+
+**Launch all create-story agents simultaneously** using `run_in_background: true`:
+
+For each backlog story, spawn a `general-purpose` subagent **using model: "opus"**:
 
 ```
 Invoke the Skill tool with skill: "bmad-bmm-create-story"
@@ -44,20 +46,21 @@ IMPORTANT:
 - Run in YOLO mode — select [y] at every template-output checkpoint.
 - When the workflow asks which story, provide the story identifier.
 - After completion, the story file should exist in _bmad-output/implementation-artifacts/
-- The sprint-status.yaml should show the story as "ready-for-dev" and the epic as "in-progress"
 ```
 
-After the subagent completes, verify:
-- The story file exists in `_bmad-output/implementation-artifacts/`
-- The status in `sprint-status.yaml` updated to `ready-for-dev`
+**After ALL agents complete**, verify and fix:
+1. Check that each story file exists in `_bmad-output/implementation-artifacts/`
+2. Read `sprint-status.yaml` and fix any race conditions — parallel agents may overwrite each other's status changes. Ensure ALL created stories show `ready-for-dev` and their epics show `in-progress`.
 
-If the status wasn't updated by the workflow, update it yourself:
-- Set the story to `ready-for-dev`
-- Set the epic to `in-progress` (if it was `backlog`)
+**Batch size:** Launch up to 4 agents at a time. If more than 4 stories, process in batches of 4.
 
-### Step 3: Implement Story (Dev)
+## Phase 3: Sequential Implement + Review + Commit
 
-Spawn a `general-purpose` subagent **using model: "sonnet"** to implement the story:
+Process each `ready-for-dev` story **one at a time**, in order:
+
+### Step A: Implement Story
+
+Spawn a `general-purpose` subagent **using model: "sonnet"**:
 
 ```
 Invoke the Skill tool with skill: "bmad-bmm-dev-story"
@@ -71,12 +74,11 @@ IMPORTANT:
 - After completion, all acceptance criteria in the story file should be met.
 ```
 
-After the subagent completes, update `sprint-status.yaml`:
-- Set the story status to `review`
+After completion, update `sprint-status.yaml`: story → `review`
 
-### Step 4: Code Review
+### Step B: Code Review
 
-Spawn a `general-purpose` subagent **using model: "sonnet"** to perform adversarial code review:
+Spawn a `general-purpose` subagent **using model: "sonnet"**:
 
 ```
 Invoke the Skill tool with skill: "bmad-bmm-code-review"
@@ -90,17 +92,17 @@ IMPORTANT:
 - After completion, the code should be production-ready.
 ```
 
-After the subagent completes, update `sprint-status.yaml`:
-- Set the story status to `done`
-- If ALL stories in the epic are now `done`, set the epic status to `done`
+After completion, update `sprint-status.yaml`:
+- Story → `done`
+- If ALL stories in the epic are now `done`, set epic → `done`
 
-### Step 5: Commit and Push
+### Step C: Commit and Push
 
-1. Stage all changes related to this story:
+1. Stage all changes:
    ```
    git add -A
    ```
-2. Create a descriptive commit:
+2. Commit:
    ```
    git commit -m "feat(epic-{N}): implement story {story-key}
 
@@ -111,32 +113,26 @@ After the subagent completes, update `sprint-status.yaml`:
    Story: {story-key}
    Epic: {epic-number}"
    ```
-3. Push to remote:
+3. Push:
    ```
    git push
    ```
 
-### Step 6: Loop or Stop
+### Step D: Next Story
 
-- **"next" mode:** Stop. Report completion summary.
-- **"epic" mode:** Check if more backlog stories exist in this epic. If yes, go to Step 1. If no, stop.
-- **"sprint" mode:** Check if more stories exist in the current sprint's epics. If yes, go to Step 1. If no, stop.
-- **"all" mode:** Check if any backlog stories remain anywhere. If yes, go to Step 1. If no, stop.
+Repeat Steps A–C for the next `ready-for-dev` story until all stories are processed.
 
-## Parallel Execution (Sprint Mode)
+## Cross-Epic Parallelism (Sprint/All Mode)
 
-When running in **sprint** or **all** mode, check for parallelization opportunities:
+When running in **sprint** or **all** mode with multiple independent epics:
 
-1. Read the sprint plan to identify which epics can run in parallel.
-2. For independent epics (no cross-dependencies), spawn subagents with `isolation: "worktree"`:
-   - Each worktree-isolated subagent processes its own epic's stories sequentially.
-   - After a worktree subagent completes a story, its changes are on a separate branch.
-3. After all parallel stories complete, merge worktree branches back to main.
+1. Identify which epics can run in parallel (no cross-dependencies).
+2. For independent epics, spawn subagents with `isolation: "worktree"` — each worktree processes one epic using the Phase 2 → Phase 3 pipeline.
+3. After all worktree agents complete, merge branches back to main.
 
 **Dependency rules:**
-- Stories within an epic are sequential (story N+1 depends on story N).
-- Epics listed in the same sprint phase can run in parallel unless noted otherwise.
-- Always check `sprint-status.yaml` before spawning parallel work.
+- Stories within an epic are always sequential (story N+1 depends on story N).
+- Epics in the same sprint phase can run in parallel unless noted otherwise.
 
 ## Error Handling
 
@@ -148,7 +144,7 @@ When running in **sprint** or **all** mode, check for parallelization opportunit
 
 ## Status Updates
 
-Always update `sprint-status.yaml` after each transition. The valid transitions are:
+Always update `sprint-status.yaml` after each transition:
 
 ```
 backlog → ready-for-dev     (after create-story)
@@ -171,7 +167,6 @@ After all stories are processed, output a summary:
 ## Sprint Runner Summary
 
 ### Stories Processed
-- [story-key]: done ✓
 - [story-key]: done ✓
 - [story-key]: FAILED at [stage] — [error]
 

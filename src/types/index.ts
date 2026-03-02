@@ -97,9 +97,9 @@ export interface Consultation {
 
 export interface AICallLog {
   id: string;
-  provider: 'gemini' | 'openai';
+  provider: 'gemini' | 'openai' | 'kie';
   model: string;
-  task: 'face-analysis' | 'consultation';
+  task: 'face-analysis' | 'consultation' | 'preview';
   inputTokens: number;
   outputTokens: number;
   costCents: number;
@@ -107,6 +107,17 @@ export interface AICallLog {
   success: boolean;
   error?: string;
   timestamp: string;
+}
+
+export interface PreviewGenerationParams {
+  taskId: string;
+  model: 'nano-banana-2';
+  callbackUrl: string;
+  requestedAt: string;        // ISO timestamp
+  photoStoragePath: string;   // Supabase Storage path (NOT signed URL)
+  stylePrompt: string;
+  styleName: string;
+  gender: 'male' | 'female';
 }
 
 export interface AIProviderConfig {
