@@ -72,7 +72,7 @@ development_status:
   epic-3-retrospective: optional
 
   # E4: AI Pipeline - Analysis + Consultation (Sprint 2-3)
-  epic-4: in-progress
+  epic-4: done
   4-1-ai-provider-abstraction-layer: done
   4-2-prompt-management-system: done
   4-3-face-analysis: done
