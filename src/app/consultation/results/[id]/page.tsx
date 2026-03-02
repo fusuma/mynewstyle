@@ -12,6 +12,7 @@ import { AlternativeRecommendationsSection } from '@/components/consultation/Alt
 import { StylesToAvoid } from '@/components/consultation/StylesToAvoid';
 import { GroomingTips } from '@/components/consultation/GroomingTips';
 import { StylingTipsSection } from '@/components/consultation/StylingTipsSection';
+import { ResultsActionsFooter } from '@/components/consultation/ResultsActionsFooter';
 import { usePayment } from '@/hooks/usePayment';
 import { useConsultationStatus } from '@/hooks/useConsultationStatus';
 import type { Consultation } from '@/types/index';
@@ -188,6 +189,10 @@ export default function ResultsPage() {
               </div>
             </div>
           )}
+          {/* Section G: Actions Footer (Story 6.7) */}
+          {/* Spacer for mobile sticky footer -- prevents content from being hidden behind it */}
+          <div className="h-[200px] md:h-0" aria-hidden="true" />
+          <ResultsActionsFooter consultationId={consultationId} />
         </motion.div>
       )}
     </AnimatePresence>

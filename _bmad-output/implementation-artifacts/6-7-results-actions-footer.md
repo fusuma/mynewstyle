@@ -1,6 +1,6 @@
 # Story 6.7: Results Actions Footer
 
-Status: ready-for-dev
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -24,65 +24,65 @@ so that I can act on my consultation results with clear, accessible actions.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Create `ResultsActionsFooter` component (AC: 1, 2, 3, 4, 5, 6, 7, 8)
-  - [ ] Create `src/components/consultation/ResultsActionsFooter.tsx`
-  - [ ] Accept `consultationId: string` prop for future share functionality
-  - [ ] Render 4 action buttons: "Partilhar resultado", "Guardar", "Nova consultoria (€2,99)", "Voltar ao inicio"
-  - [ ] Use `Button` component from `@/components/ui/button` with correct variants (default, secondary, secondary, ghost)
-  - [ ] Use Lucide icons: `Share2` for share, `Bookmark` for save, `PlusCircle` for new consultation, `Home` for back
-  - [ ] Layout: vertical stack on mobile, horizontal row on desktop (responsive with Tailwind)
-  - [ ] Sticky positioning: `fixed bottom-0 left-0 right-0` on mobile (`md:static md:relative`) with safe-area padding (`pb-[env(safe-area-inset-bottom)]`)
-  - [ ] Background: `bg-background/95 backdrop-blur-sm border-t` on mobile sticky mode, transparent on desktop
-  - [ ] Max width container aligned with results page content
+- [x] Task 1: Create `ResultsActionsFooter` component (AC: 1, 2, 3, 4, 5, 6, 7, 8)
+  - [x] Create `src/components/consultation/ResultsActionsFooter.tsx`
+  - [x] Accept `consultationId: string` prop for future share functionality
+  - [x] Render 4 action buttons: "Partilhar resultado", "Guardar", "Nova consultoria (€2,99)", "Voltar ao inicio"
+  - [x] Use `Button` component from `@/components/ui/button` with correct variants (default, secondary, secondary, ghost)
+  - [x] Use Lucide icons: `Share2` for share, `Bookmark` for save, `PlusCircle` for new consultation, `Home` for back
+  - [x] Layout: vertical stack on mobile, horizontal row on desktop (responsive with Tailwind)
+  - [x] Sticky positioning: `fixed bottom-0 left-0 right-0` on mobile (`md:static md:relative`) with safe-area padding (`pb-[env(safe-area-inset-bottom)]`)
+  - [x] Background: `bg-background/95 backdrop-blur-sm border-t` on mobile sticky mode, transparent on desktop
+  - [x] Max width container aligned with results page content
 
-- [ ] Task 2: Implement share action handler (AC: 1)
-  - [ ] Create `handleShare` function inside `ResultsActionsFooter`
-  - [ ] Check `navigator.share` availability (Web Share API)
-  - [ ] If available: call `navigator.share({ title: 'Meu resultado mynewstyle', url: window.location.href })` wrapped in try/catch (user may cancel)
-  - [ ] If unavailable: copy `window.location.href` to clipboard via `navigator.clipboard.writeText()`
-  - [ ] Show success toast via `sonner`: "Link copiado!" (when clipboard used) or silently succeed (Web Share handles its own UI)
-  - [ ] Note: Full share card generation is Epic 9 (S9.1-S9.3). This story only wires the share trigger.
+- [x] Task 2: Implement share action handler (AC: 1)
+  - [x] Create `handleShare` function inside `ResultsActionsFooter`
+  - [x] Check `navigator.share` availability (Web Share API)
+  - [x] If available: call `navigator.share({ title: 'Meu resultado mynewstyle', url: window.location.href })` wrapped in try/catch (user may cancel)
+  - [x] If unavailable: copy `window.location.href` to clipboard via `navigator.clipboard.writeText()`
+  - [x] Show success toast via `sonner`: "Link copiado!" (when clipboard used) or silently succeed (Web Share handles its own UI)
+  - [x] Note: Full share card generation is Epic 9 (S9.1-S9.3). This story only wires the share trigger.
 
-- [ ] Task 3: Implement save action handler (AC: 2)
-  - [ ] Create `handleSave` function inside `ResultsActionsFooter`
-  - [ ] Since auth is not implemented (Epic 8), always show the guest prompt
-  - [ ] Show toast via `sonner`: "Crie uma conta para guardar este resultado" with action link to `/register`
-  - [ ] When Epic 8 is implemented, this handler will check auth state and either save to favorites or prompt registration
+- [x] Task 3: Implement save action handler (AC: 2)
+  - [x] Create `handleSave` function inside `ResultsActionsFooter`
+  - [x] Since auth is not implemented (Epic 8), always show the guest prompt
+  - [x] Show toast via `sonner`: "Crie uma conta para guardar este resultado" with action link to `/register`
+  - [x] When Epic 8 is implemented, this handler will check auth state and either save to favorites or prompt registration
 
-- [ ] Task 4: Implement new consultation handler (AC: 3)
-  - [ ] Create `handleNewConsultation` function
-  - [ ] Call `useConsultationStore.getState().reset()` to clear all consultation state
-  - [ ] Navigate to `/start` via `useRouter().push('/start')`
-  - [ ] Pattern follows `RefundBanner` component's reset+navigate approach
+- [x] Task 4: Implement new consultation handler (AC: 3)
+  - [x] Create `handleNewConsultation` function
+  - [x] Call `useConsultationStore.getState().reset()` to clear all consultation state
+  - [x] Navigate to `/start` via `useRouter().push('/start')`
+  - [x] Pattern follows `RefundBanner` component's reset+navigate approach
 
-- [ ] Task 5: Implement back-to-home handler (AC: 4)
-  - [ ] Create `handleBackToHome` function
-  - [ ] Navigate to `/` via `useRouter().push('/')`
+- [x] Task 5: Implement back-to-home handler (AC: 4)
+  - [x] Create `handleBackToHome` function
+  - [x] Navigate to `/` via `useRouter().push('/')`
 
-- [ ] Task 6: Add Framer Motion animation (AC: 7)
-  - [ ] Wrap footer in `motion.div` with slide-up + fade-in animation
-  - [ ] Use `useReducedMotion()` hook from Framer Motion
-  - [ ] Animation: `initial: { opacity: 0, y: 24 }`, `animate: { opacity: 1, y: 0 }`, `transition: { duration: 0.4, ease: 'easeOut' }`
-  - [ ] When `shouldReduceMotion`: skip animation (empty variants)
-  - [ ] The parent `ResultsPage` stagger container will control the 150ms delay
+- [x] Task 6: Add Framer Motion animation (AC: 7)
+  - [x] Wrap footer in `motion.div` with slide-up + fade-in animation
+  - [x] Use `useReducedMotion()` hook from Framer Motion
+  - [x] Animation: `initial: { opacity: 0, y: 24 }`, `animate: { opacity: 1, y: 0 }`, `transition: { duration: 0.4, ease: 'easeOut' }`
+  - [x] When `shouldReduceMotion`: skip animation (empty variants)
+  - [x] The parent `ResultsPage` stagger container will control the 150ms delay
 
-- [ ] Task 7: Integrate into results page (AC: 5)
-  - [ ] Import `ResultsActionsFooter` in `src/app/consultation/results/[id]/page.tsx`
-  - [ ] Add as the last section in the paid results view (replacing `PaidResultsPlaceholder` content or appending below it)
-  - [ ] Pass `consultationId` prop
-  - [ ] Ensure it's part of the staggered animation container with `variants={itemVariants}`
+- [x] Task 7: Integrate into results page (AC: 5)
+  - [x] Import `ResultsActionsFooter` in `src/app/consultation/results/[id]/page.tsx`
+  - [x] Add as the last section in the paid results view (replacing `PaidResultsPlaceholder` content or appending below it)
+  - [x] Pass `consultationId` prop
+  - [x] Ensure it's part of the staggered animation container with `variants={itemVariants}`
 
-- [ ] Task 8: Write unit tests (AC: 9)
-  - [ ] Create `src/test/results-actions-footer.test.tsx`
-  - [ ] Test all 4 buttons render with correct text and icons
-  - [ ] Test share handler: Web Share API path (mock `navigator.share`) and clipboard fallback (mock `navigator.clipboard.writeText`)
-  - [ ] Test save handler: toast is shown with registration prompt
-  - [ ] Test new consultation: `reset()` called on store and navigation to `/start`
-  - [ ] Test back to home: navigation to `/`
-  - [ ] Test sticky class is applied for mobile viewport context
-  - [ ] Test accessibility: `aria-label` on buttons, role attributes
-  - [ ] Test reduced motion: animation variants are empty when `useReducedMotion` returns true
-  - [ ] Run full test suite -- all existing + new tests must pass
+- [x] Task 8: Write unit tests (AC: 9)
+  - [x] Create `src/test/results-actions-footer.test.tsx`
+  - [x] Test all 4 buttons render with correct text and icons
+  - [x] Test share handler: Web Share API path (mock `navigator.share`) and clipboard fallback (mock `navigator.clipboard.writeText`)
+  - [x] Test save handler: toast is shown with registration prompt
+  - [x] Test new consultation: `reset()` called on store and navigation to `/start`
+  - [x] Test back to home: navigation to `/`
+  - [x] Test sticky class is applied for mobile viewport context
+  - [x] Test accessibility: `aria-label` on buttons, role attributes
+  - [x] Test reduced motion: animation variants are empty when `useReducedMotion` returns true
+  - [x] Run full test suite -- all existing + new tests must pass
 
 ## Dev Notes
 
@@ -333,10 +333,34 @@ No new environment variables required. All needed variables are already configur
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+claude-sonnet-4-6
 
 ### Debug Log References
 
+No issues encountered during implementation.
+
 ### Completion Notes List
 
+- Implemented `ResultsActionsFooter` component in `src/components/consultation/ResultsActionsFooter.tsx` with all 4 action buttons and correct Button variants (default, secondary, secondary, ghost).
+- Share handler uses Web Share API with `navigator.canShare()` guard, falls back to clipboard with sonner toast "Link copiado!". AbortError (user cancel) is handled gracefully without error toast.
+- Save handler shows sonner `toast.info` with "Crie uma conta para guardar este resultado" and "Criar conta" CTA action that navigates to `/register`.
+- New consultation handler calls `reset()` on consultation store then navigates to `/start` — same pattern as `RefundBanner`.
+- Back-to-home handler navigates to `/`.
+- Sticky footer uses `fixed bottom-0 left-0 right-0 z-40` on mobile, `md:static` on desktop, with `pb-[env(safe-area-inset-bottom)]` for iPhone safe area.
+- Spacer div `h-[200px] md:h-0` added in results page to prevent content being hidden behind sticky footer on mobile.
+- Framer Motion slide-up + fade-in animation with `useReducedMotion()` guard.
+- All 4 buttons have `aria-label` attributes and are keyboard navigable with focus-visible rings from Button component.
+- Integrated as last section in the paid results branch of `src/app/consultation/results/[id]/page.tsx`.
+- 24 new unit tests added; full suite: 87 test files, 1274 tests — all passing, no regressions.
+
 ### File List
+
+- src/components/consultation/ResultsActionsFooter.tsx (NEW)
+- src/test/results-actions-footer.test.tsx (NEW)
+- src/app/consultation/results/[id]/page.tsx (MODIFIED)
+- _bmad-output/implementation-artifacts/6-7-results-actions-footer.md (MODIFIED)
+
+## Change Log
+
+- 2026-03-02: Implemented story 6-7-results-actions-footer — created ResultsActionsFooter component with share, save (guest prompt), new consultation (reset+navigate), and back-to-home actions; integrated into results page as sticky mobile footer; 24 unit tests added.
+- 2026-03-02: Code review fixes applied — (1) corrected Portuguese localization: "Voltar ao inicio" → "Voltar ao início" (missing accent) in component text and aria-label; (2) added 150ms delay to footer entrance animation per AC7; (3) added clipboard error handling with user-facing error toast "Não foi possível copiar o link. Tente novamente." for all clipboard fallback paths; (4) added 3 new reduced-motion tests verifying animation props are empty when `useReducedMotion()` returns true (AC9). Test count: 27 (up from 24). Full suite: 87 test files, 1277 tests — all passing.
