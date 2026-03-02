@@ -65,6 +65,17 @@ vi.mock('sonner', () => ({
   toast: { error: vi.fn() },
 }));
 
+// Mock Zustand consultation store (needed for setRatingSubmitted)
+const mockSetRatingSubmitted = vi.fn();
+vi.mock('@/stores/consultation', () => ({
+  useConsultationStore: (selector: (state: { setRatingSubmitted: typeof mockSetRatingSubmitted }) => unknown) => {
+    if (typeof selector === 'function') {
+      return selector({ setRatingSubmitted: mockSetRatingSubmitted });
+    }
+    return { setRatingSubmitted: mockSetRatingSubmitted };
+  },
+}));
+
 const VALID_CONSULTATION_ID = '550e8400-e29b-41d4-a716-446655440000';
 
 describe('ConsultationRatingPrompt — renders rating prompt', () => {
@@ -75,6 +86,7 @@ describe('ConsultationRatingPrompt — renders rating prompt', () => {
       ok: true,
       json: async () => ({ success: true, rating: 4 }),
     });
+    mockSetRatingSubmitted.mockReset();
   });
 
   it('renders the overall rating heading', async () => {
@@ -149,7 +161,7 @@ describe('ConsultationRatingPrompt — submits overall rating', () => {
     });
   });
 
-  it('calls trackEvent with results_rated on successful submission', async () => {
+  it('calls trackEvent with results_rated only once when user skips details', async () => {
     const { ConsultationRatingPrompt } = await import(
       '@/components/consultation/ConsultationRatingPrompt'
     );
@@ -160,17 +172,47 @@ describe('ConsultationRatingPrompt — submits overall rating', () => {
         hasGeneratedPreviews={false}
       />
     );
+
+    // Click star to submit overall rating (transitions to 'details' state)
     const starButton = screen.getByTestId('star-5');
     fireEvent.click(starButton);
 
+    // Wait for details state
+    await waitFor(() => screen.getByText('Saltar'));
+
+    // Skip decomposed ratings — analytics event should fire here
+    fireEvent.click(screen.getByText('Saltar'));
+
     await waitFor(() => {
+      expect(trackEvent).toHaveBeenCalledTimes(1);
       expect(trackEvent).toHaveBeenCalledWith(
         expect.objectContaining({
           type: 'results_rated',
           rating: 5,
+          hasDetails: false,
           consultationId: VALID_CONSULTATION_ID,
         })
       );
+    });
+  });
+
+  it('calls setRatingSubmitted(true) when user skips decomposed ratings', async () => {
+    const { ConsultationRatingPrompt } = await import(
+      '@/components/consultation/ConsultationRatingPrompt'
+    );
+    render(
+      <ConsultationRatingPrompt
+        consultationId={VALID_CONSULTATION_ID}
+        hasGeneratedPreviews={false}
+      />
+    );
+
+    fireEvent.click(screen.getByTestId('star-4'));
+    await waitFor(() => screen.getByText('Saltar'));
+    fireEvent.click(screen.getByText('Saltar'));
+
+    await waitFor(() => {
+      expect(mockSetRatingSubmitted).toHaveBeenCalledWith(true);
     });
   });
 });
@@ -328,31 +370,31 @@ describe('ConsultationRatingPrompt — auto-dismisses', () => {
       />
     );
 
-    // Click star to start rating process
-    fireEvent.click(screen.getByTestId('star-5'));
-
-    // Wait for details screen (using real time with shouldAdvanceTime)
-    await vi.runAllTimersAsync();
+    // Click star to start rating process (triggers async fetch)
     await act(async () => {
-      await Promise.resolve();
+      fireEvent.click(screen.getByTestId('star-5'));
+      await vi.runAllTimersAsync();
     });
 
-    // If details screen, click Saltar
+    // If details screen appeared, click Saltar
     if (screen.queryByText('Saltar')) {
-      fireEvent.click(screen.getByText('Saltar'));
+      await act(async () => {
+        fireEvent.click(screen.getByText('Saltar'));
+        await Promise.resolve();
+      });
     }
 
-    // Wait for success state
-    await act(async () => {
-      await Promise.resolve();
+    // Verify we're in success state
+    await waitFor(() => {
+      expect(screen.queryByText(/Obrigado!/i)).toBeInTheDocument();
     });
 
-    // Now advance timers past 3 seconds
+    // Advance timers past 3 seconds auto-dismiss
     await act(async () => {
       vi.advanceTimersByTime(3500);
     });
 
-    // Check dismissed
+    // Should be dismissed now
     expect(screen.queryByText(/Obrigado!/i)).not.toBeInTheDocument();
 
     vi.useRealTimers();

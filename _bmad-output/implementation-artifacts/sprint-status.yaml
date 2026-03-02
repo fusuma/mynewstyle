@@ -141,7 +141,7 @@ development_status:
   10-2-ai-pipeline-monitoring-dashboard: done
   10-3-cost-and-quality-alerts: done
   10-4-funnel-analytics: done
-  10-5-post-consultation-rating: review
+  10-5-post-consultation-rating: done
   epic-10-retrospective: optional
 
   # E11: LGPD Compliance (Sprint 3 parallel)

@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { StarRating } from '@/components/consultation/StarRating';
 import { trackEvent } from '@/lib/utils/analytics';
+import { useConsultationStore } from '@/stores/consultation';
 import type { RatingDetails } from '@/types/index';
 
 type PromptState = 'rating' | 'details' | 'submitting' | 'success' | 'dismissed';
@@ -30,6 +31,7 @@ export function ConsultationRatingPrompt({
   hasGeneratedPreviews,
 }: ConsultationRatingPromptProps) {
   const shouldReduceMotion = useReducedMotion();
+  const setRatingSubmitted = useConsultationStore((state) => state.setRatingSubmitted);
 
   const [promptState, setPromptState] = useState<PromptState>('rating');
   const [overallRating, setOverallRating] = useState<number | null>(existingRating ?? null);
@@ -85,19 +87,22 @@ export function ConsultationRatingPrompt({
           consultationId,
         });
 
+        setRatingSubmitted(true);
         setPromptState('success');
       } catch {
         // On error, go back to rating state
         setPromptState('rating');
       }
     },
-    [consultationId]
+    [consultationId, setRatingSubmitted]
   );
 
   const handleOverallRatingChange = useCallback(
     async (value: number) => {
       setOverallRating(value);
       // Submit the overall rating immediately, then show decomposed ratings
+      // Analytics event is emitted later (on final submission via submitRating), not here,
+      // to avoid double-firing when the user also submits decomposed details.
       setPromptState('submitting');
       try {
         const res = await fetch(`/api/consultation/${consultationId}/rate`, {
@@ -110,14 +115,7 @@ export function ConsultationRatingPrompt({
           throw new Error('Failed to submit rating');
         }
 
-        trackEvent({
-          type: 'results_rated',
-          rating: value,
-          hasDetails: false,
-          consultationId,
-        });
-
-        // Move to decomposed ratings
+        // Move to decomposed ratings (final analytics event emitted at handleSkipDetails or submitRating)
         setPromptState('details');
       } catch {
         setPromptState('rating');
@@ -127,24 +125,36 @@ export function ConsultationRatingPrompt({
   );
 
   const handleSubmitDetails = useCallback(async () => {
+    if (overallRating === null) return; // Guard: should never be null in details state
     const details = {
       faceShapeAccuracy: faceShapeAccuracy ?? undefined,
       recommendationQuality: recommendationQuality ?? undefined,
       previewRealism: hasGeneratedPreviews ? (previewRealism ?? undefined) : undefined,
     };
-    await submitRating(overallRating ?? 0, details);
+    await submitRating(overallRating, details);
   }, [faceShapeAccuracy, recommendationQuality, previewRealism, hasGeneratedPreviews, overallRating, submitRating]);
 
   const handleSkipDetails = useCallback(() => {
+    // Emit final analytics event when user skips decomposed ratings
+    if (overallRating !== null) {
+      trackEvent({
+        type: 'results_rated',
+        rating: overallRating,
+        hasDetails: false,
+        consultationId,
+      });
+    }
+    setRatingSubmitted(true);
     setPromptState('success');
-  }, []);
+  }, [overallRating, consultationId, setRatingSubmitted]);
 
   const handleDismiss = useCallback(() => {
     setPromptState('dismissed');
   }, []);
 
   const handleUpdate = useCallback(() => {
-    handleOverallRatingChange(overallRating ?? 0);
+    if (overallRating === null) return; // Guard: button is disabled when overallRating is null
+    handleOverallRatingChange(overallRating);
   }, [overallRating, handleOverallRatingChange]);
 
   const motionProps = shouldReduceMotion

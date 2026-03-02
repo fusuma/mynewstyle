@@ -1,6 +1,6 @@
 # Story 10.5: Post-Consultation Rating
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -266,6 +266,7 @@ claude-sonnet-4-6
 ### Change Log
 
 - 2026-03-02: Implemented Story 10.5 - Post-Consultation Rating. All 8 tasks complete, 49 tests added, 0 regressions.
+- 2026-03-02: Code review (AI) — Fixed 4 issues: (1) `setRatingSubmitted` was never called after successful rating submission, breaking the session-persistence AC #7; added `useConsultationStore` import and `setRatingSubmitted(true)` call in both `submitRating` and `handleSkipDetails`. (2) Double-fire analytics: `handleOverallRatingChange` was emitting `results_rated` AND `submitRating` was emitting it again — removed the emit from `handleOverallRatingChange` so it fires only once at the final submission step. (3) `overallRating ?? 0` guard in `handleSubmitDetails` and `handleUpdate` replaced with explicit null guards to prevent submitting rating=0 to the API. (4) Fixed `act()` warning in auto-dismiss test. Added 1 new test (setRatingSubmitted verification). 2198 total tests, 0 regressions.
 
 ### File List
 
@@ -283,9 +284,11 @@ New files:
 
 Modified files:
 - `src/components/consultation/ResultsPageAnimatedReveal.tsx`
+- `src/components/consultation/ConsultationRatingPrompt.tsx`
 - `src/lib/utils/analytics.ts`
 - `src/app/api/consultation/[id]/results/route.ts`
 - `src/types/index.ts`
 - `src/stores/consultation.ts`
+- `src/test/consultation-rating-prompt.test.tsx`
 - `src/test/results-page-animated-reveal.test.tsx`
 - `_bmad-output/implementation-artifacts/sprint-status.yaml`
