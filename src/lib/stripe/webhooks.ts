@@ -53,10 +53,20 @@ async function triggerAutoRefund(
     const stripe = getStripeServer();
     await stripe.refunds.create({ payment_intent: paymentIntentId });
 
-    await supabase
+    const { error: refundUpdateError } = await supabase
       .from('consultations')
       .update({ payment_status: 'refunded' })
       .eq('id', consultationId);
+
+    if (refundUpdateError) {
+      // Refund was issued by Stripe but DB update failed — log for manual reconciliation.
+      // The consultation still shows payment_status='paid' in DB, but the money is refunded.
+      console.error(
+        '[webhook/stripe] Refund issued but DB update failed (manual reconciliation needed):',
+        paymentIntentId,
+        refundUpdateError
+      );
+    }
 
     console.log('[webhook/stripe] Auto-refund issued for:', paymentIntentId);
     return { status: 'ok', message: 'Generation failed, refunded', refunded: true };
@@ -133,16 +143,28 @@ export async function processPaymentSucceeded(
     process.env.NEXT_PUBLIC_APP_URL ||
     (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
 
+  // Use AbortController to enforce a 25s timeout (Stripe webhook timeout is 30s).
+  // Without a timeout, a slow AI response could cause Stripe to retry while the first
+  // request is still in-flight, risking duplicate generation.
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 25_000);
+
   try {
     const generateResponse = await fetch(`${baseUrl}/api/consultation/generate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ consultationId }),
+      signal: controller.signal,
     });
+    clearTimeout(timeoutId);
 
     const generateData = await generateResponse.json();
 
     if (generateResponse.ok) {
+      // Handle already_complete response from generate endpoint (idempotent duplicate)
+      if (generateData.status === 'already_complete') {
+        return { status: 'ok', message: 'Already complete' };
+      }
       const message = generateData.cached
         ? 'Consultation generated (cached)'
         : 'Consultation generated';
@@ -153,6 +175,7 @@ export async function processPaymentSucceeded(
     console.error('[webhook/stripe] Consultation generation failed:', generateData);
     return await triggerAutoRefund(paymentIntent.id, consultationId, supabase);
   } catch (error) {
+    clearTimeout(timeoutId);
     console.error('[webhook/stripe] Generate request failed:', error);
     return await triggerAutoRefund(paymentIntent.id, consultationId, supabase);
   }

@@ -1,6 +1,6 @@
 # Story 5.5: Stripe Webhook Handler
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -738,7 +738,34 @@ No blocking issues encountered. All tasks completed in a single session.
 - `src/lib/stripe/index.ts` (MODIFIED — added webhook exports)
 - `src/test/stripe-webhook.test.ts` (NEW)
 - `src/test/webhook-route.test.ts` (NEW)
+- `.env.example` (MODIFIED — added NEXT_PUBLIC_APP_URL documentation)
+
+## Senior Developer Review (AI)
+
+**Reviewer:** claude-sonnet-4-6 on 2026-03-02
+**Result:** Changes Requested → All Fixed → Approved
+
+### Issues Found and Fixed
+
+**HIGH (2 fixed):**
+1. **Missing `already_complete` handling** — Task 2 subtask claimed `already_complete` response from `/api/consultation/generate` is handled with `{ status: 'ok', message: 'Already complete' }`, but the implementation only checked `generateData.cached`. Fixed by adding explicit `generateData.status === 'already_complete'` check before the cached message check.
+2. **No fetch timeout on generate call** — The `fetch` to `/api/consultation/generate` had no timeout. AI calls can take >30s, causing Stripe's webhook timeout to trigger and retry the event. On the retry, if the DB hasn't yet been updated to `status='complete'`, the idempotency check fails and generation is triggered a second time. Fixed by adding `AbortController` with a 25s timeout (within Stripe's 30s window). `clearTimeout` called on both success and catch paths.
+
+**MEDIUM (4 fixed):**
+3. **Error results logged at info level** — Route handler logged `result.message` with `console.log` even when `result.status === 'error'`. Errors now logged via `console.error` with explicit "processing error" label.
+4. **`event.id` not logged** — Dev Notes specify "include event.id, event.type, consultationId" in logs. Added `console.log` for each received event including `event.id`, and included `event.id` in all event-specific log messages for Stripe Dashboard correlation.
+5. **`triggerAutoRefund` ignored Supabase update errors** — If `stripe.refunds.create()` succeeded but the DB update to `payment_status='refunded'` failed, the refund was issued but the DB still showed `paid`. The next Stripe retry would bypass idempotency and re-trigger generation. Fixed by checking and logging the Supabase update error for manual reconciliation.
+6. **`NEXT_PUBLIC_APP_URL` undocumented** — Used in `webhooks.ts` for the internal generate fetch but missing from `.env.example`. Added with descriptive comment explaining the fallback chain.
+
+**LOW (2 fixed via new tests):**
+7. **No test for `already_complete` response** — Added test verifying `processPaymentSucceeded` returns `{ status: 'ok', message: 'Already complete' }` when generate returns `{ status: 'already_complete' }`, and that auto-refund is NOT triggered.
+8. **No test for `stripe.refunds.create()` throwing** — Added test verifying auto-refund API failure returns `{ status: 'error', message: 'Auto-refund failed' }` with `refunded` undefined.
+
+### Post-Fix Test Count
+
+4 new tests added (1019 → 1023 total). All 1023 tests pass.
 
 ## Change Log
 
 - 2026-03-02: Implemented Story 5-5 — Stripe webhook handler with signature verification, payment succeeded/failed processing, idempotency, auto-refund on AI failure, and 25 new unit tests.
+- 2026-03-02: Code review (AI) — 6 issues fixed: already_complete handling, fetch timeout (25s AbortController), error-level logging for errors, event.id in all log messages, triggerAutoRefund Supabase error checking, NEXT_PUBLIC_APP_URL in .env.example. 4 new tests added (1023 total).

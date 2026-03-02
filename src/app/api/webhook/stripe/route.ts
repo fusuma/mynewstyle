@@ -45,28 +45,51 @@ export async function POST(request: Request) {
   }
 
   // 3. Process event by type
+  // Log event.id for correlation with Stripe Dashboard during debugging
+  console.log(`[webhook/stripe] Received event: ${event.type} (${event.id})`);
+
   try {
     switch (event.type) {
       case 'payment_intent.succeeded': {
         const paymentIntent = event.data.object as Stripe.PaymentIntent;
         const result = await processPaymentSucceeded(paymentIntent);
-        console.log('[webhook/stripe] payment_intent.succeeded:', result.message);
+        if (result.status === 'error') {
+          console.error(
+            `[webhook/stripe] payment_intent.succeeded processing error (${event.id}):`,
+            result.message
+          );
+        } else {
+          console.log(
+            `[webhook/stripe] payment_intent.succeeded (${event.id}):`,
+            result.message
+          );
+        }
         break;
       }
       case 'payment_intent.payment_failed': {
         const paymentIntent = event.data.object as Stripe.PaymentIntent;
         const result = await processPaymentFailed(paymentIntent);
-        console.log('[webhook/stripe] payment_intent.payment_failed:', result.message);
+        if (result.status === 'error') {
+          console.error(
+            `[webhook/stripe] payment_intent.payment_failed processing error (${event.id}):`,
+            result.message
+          );
+        } else {
+          console.log(
+            `[webhook/stripe] payment_intent.payment_failed (${event.id}):`,
+            result.message
+          );
+        }
         break;
       }
       default:
-        console.log(`[webhook/stripe] Unhandled event type: ${event.type}`);
+        console.log(`[webhook/stripe] Unhandled event type: ${event.type} (${event.id})`);
     }
   } catch (error) {
     // Return 200 to acknowledge receipt -- Stripe will not retry.
     // Internal processing errors are logged but don't cause 500.
     // This prevents Stripe from retrying events that will always fail.
-    console.error(`[webhook/stripe] Error processing ${event.type}:`, error);
+    console.error(`[webhook/stripe] Error processing ${event.type} (${event.id}):`, error);
   }
 
   return NextResponse.json({ received: true }, { status: 200 });

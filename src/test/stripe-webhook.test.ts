@@ -246,6 +246,27 @@ describe('processPaymentSucceeded', () => {
     expect(result.message).toContain('generated');
   });
 
+  it('returns "Already complete" when generate returns status=already_complete', async () => {
+    const supabase = makeSupabaseWithSelectAndUpdate(
+      { data: { id: 'cid-test-uuid', payment_status: 'pending', status: 'pending' }, error: null },
+      [{ error: null }]
+    );
+    (createServerSupabaseClient as ReturnType<typeof vi.fn>).mockReturnValue(supabase);
+
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ status: 'already_complete' }),
+    });
+
+    const { processPaymentSucceeded } = await import('@/lib/stripe/webhooks');
+    const pi = makePaymentIntent();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const result = await processPaymentSucceeded(pi as any);
+    expect(result).toEqual({ status: 'ok', message: 'Already complete' });
+    // Auto-refund should NOT be triggered for already_complete
+    expect(mockRefundsCreate).not.toHaveBeenCalled();
+  });
+
   it('returns cached message when generate returns cached=true', async () => {
     const supabase = makeSupabaseWithSelectAndUpdate(
       { data: { id: 'cid-test-uuid', payment_status: 'pending', status: 'pending' }, error: null },
@@ -313,6 +334,31 @@ describe('processPaymentSucceeded', () => {
 
     expect(mockRefundsCreate).toHaveBeenCalledWith({ payment_intent: 'pi_test_123' });
     expect(result.refunded).toBe(true);
+  });
+
+  it('returns error result when stripe.refunds.create() throws (auto-refund API failure)', async () => {
+    const supabase = makeSupabaseWithSelectAndUpdate(
+      { data: { id: 'cid-test-uuid', payment_status: 'pending', status: 'pending' }, error: null },
+      [{ error: null }]
+    );
+    (createServerSupabaseClient as ReturnType<typeof vi.fn>).mockReturnValue(supabase);
+
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 422,
+      json: async () => ({ error: 'AI validation failed' }),
+    });
+    mockRefundsCreate.mockRejectedValueOnce(new Error('Stripe refund API unavailable'));
+
+    const { processPaymentSucceeded } = await import('@/lib/stripe/webhooks');
+    const pi = makePaymentIntent();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const result = await processPaymentSucceeded(pi as any);
+
+    expect(mockRefundsCreate).toHaveBeenCalledWith({ payment_intent: 'pi_test_123' });
+    // When refund API fails, returns error result (not refunded)
+    expect(result).toEqual({ status: 'error', message: 'Auto-refund failed' });
+    expect(result.refunded).toBeUndefined();
   });
 
   it('triggers auto-refund when fetch itself throws a network error', async () => {

@@ -155,6 +155,7 @@ describe('POST /api/webhook/stripe', () => {
     const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     mockVerify.mockReturnValueOnce({
       type: 'customer.created',
+      id: 'evt_test_unhandled',
       data: { object: {} },
     });
     const { POST } = await import('@/app/api/webhook/stripe/route');
@@ -164,5 +165,44 @@ describe('POST /api/webhook/stripe', () => {
       expect.stringContaining('customer.created')
     );
     consoleSpy.mockRestore();
+  });
+
+  it('logs event.id in the received event log for debugging', async () => {
+    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    mockVerify.mockReturnValueOnce({
+      type: 'charge.refunded',
+      id: 'evt_test_abc123',
+      data: { object: {} },
+    });
+    const { POST } = await import('@/app/api/webhook/stripe/route');
+    const request = createWebhookRequest('{}', 'valid_sig');
+    await POST(request);
+    // The route should log event.id for correlation with Stripe Dashboard
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringContaining('evt_test_abc123')
+    );
+    consoleSpy.mockRestore();
+  });
+
+  it('logs error via console.error when processPaymentSucceeded returns error status', async () => {
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.spyOn(console, 'log').mockImplementation(() => {});
+    mockVerify.mockReturnValueOnce({
+      type: 'payment_intent.succeeded',
+      id: 'evt_test_err',
+      data: { object: { id: 'pi_test', metadata: { consultationId: 'test-id' } } },
+    });
+    mockProcessSucceeded.mockResolvedValueOnce({ status: 'error', message: 'Consultation not found' });
+    const { POST } = await import('@/app/api/webhook/stripe/route');
+    const request = createWebhookRequest('{}', 'valid_sig');
+    const response = await POST(request);
+    // Still returns 200 (prevent Stripe retries), but error is logged
+    expect(response.status).toBe(200);
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      expect.stringContaining('processing error'),
+      expect.anything()
+    );
+    consoleErrorSpy.mockRestore();
+    vi.restoreAllMocks();
   });
 });
