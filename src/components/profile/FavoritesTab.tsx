@@ -8,20 +8,18 @@ import { FavoriteCard } from './FavoriteCard';
 import { EmptyState } from './EmptyState';
 import type { FavoriteItem } from '@/types';
 
-interface FavoritesTabProps {}
-
 type FetchState = 'idle' | 'loading' | 'success' | 'error';
 
-export function FavoritesTab(_props: FavoritesTabProps) {
+export function FavoritesTab() {
   const [state, setState] = useState<FetchState>('loading');
   const [favorites, setFavorites] = useState<FavoriteItem[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const fetchFavorites = async () => {
+  const fetchFavorites = async (signal?: AbortSignal) => {
     setState('loading');
     setErrorMessage(null);
     try {
-      const response = await fetch('/api/profile/favorites');
+      const response = await fetch('/api/profile/favorites', { signal });
       if (!response.ok) {
         throw new Error('Erro ao carregar favoritos');
       }
@@ -29,6 +27,7 @@ export function FavoritesTab(_props: FavoritesTabProps) {
       setFavorites(data.favorites ?? []);
       setState('success');
     } catch (err) {
+      if (err instanceof Error && err.name === 'AbortError') return;
       const message = err instanceof Error ? err.message : 'Erro ao carregar favoritos';
       setErrorMessage(message);
       setState('error');
@@ -36,8 +35,12 @@ export function FavoritesTab(_props: FavoritesTabProps) {
   };
 
   useEffect(() => {
-    fetchFavorites();
-    return () => {};
+    const controller = new AbortController();
+    fetchFavorites(controller.signal);
+    return () => {
+      controller.abort();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Loading state: skeleton grid cards

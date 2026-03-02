@@ -8,20 +8,18 @@ import { ConsultationHistoryCard } from './ConsultationHistoryCard';
 import { EmptyState } from './EmptyState';
 import type { ConsultationHistoryItem } from '@/types';
 
-interface ConsultationHistoryTabProps {}
-
 type FetchState = 'idle' | 'loading' | 'success' | 'error';
 
-export function ConsultationHistoryTab(_props: ConsultationHistoryTabProps) {
+export function ConsultationHistoryTab() {
   const [state, setState] = useState<FetchState>('loading');
   const [consultations, setConsultations] = useState<ConsultationHistoryItem[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const fetchConsultations = async () => {
+  const fetchConsultations = async (signal?: AbortSignal) => {
     setState('loading');
     setErrorMessage(null);
     try {
-      const response = await fetch('/api/profile/consultations');
+      const response = await fetch('/api/profile/consultations', { signal });
       if (!response.ok) {
         throw new Error('Erro ao carregar consultorias');
       }
@@ -29,6 +27,7 @@ export function ConsultationHistoryTab(_props: ConsultationHistoryTabProps) {
       setConsultations(data.consultations ?? []);
       setState('success');
     } catch (err) {
+      if (err instanceof Error && err.name === 'AbortError') return;
       const message = err instanceof Error ? err.message : 'Erro ao carregar consultorias';
       setErrorMessage(message);
       setState('error');
@@ -36,8 +35,12 @@ export function ConsultationHistoryTab(_props: ConsultationHistoryTabProps) {
   };
 
   useEffect(() => {
-    fetchConsultations();
-    return () => {};
+    const controller = new AbortController();
+    fetchConsultations(controller.signal);
+    return () => {
+      controller.abort();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Loading state: show skeleton shimmer cards

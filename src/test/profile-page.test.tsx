@@ -144,7 +144,7 @@ describe('ProfilePage - empty states', () => {
     const { ProfilePage } = await import('@/components/profile/ProfilePage');
     render(<ProfilePage userProfile={mockUserProfile} />);
     await waitFor(() => {
-      expect(screen.getByText(/ainda nao tem consultorias/i)).toBeInTheDocument();
+      expect(screen.getByText(/ainda nao tem consultorias\. descubra o seu estilo!/i)).toBeInTheDocument();
     });
   });
 
@@ -179,7 +179,7 @@ describe('ProfilePage - empty states', () => {
     const { ProfilePage } = await import('@/components/profile/ProfilePage');
     render(<ProfilePage userProfile={mockUserProfile} />);
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /descubra o seu estilo/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /iniciar consultoria/i })).toBeInTheDocument();
     });
   });
 });

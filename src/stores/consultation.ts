@@ -38,6 +38,7 @@ export interface ConsultationStore {
   setQuestionnaireComplete: (responses: QuestionnaireResponses) => void;
   setConsultationId: (id: string) => void;
   setFaceAnalysis: (analysis: FaceAnalysisOutput) => void;
+  setConsultation: (consultation: unknown) => void;
   setPaymentStatus: (status: 'none' | 'pending' | 'paid' | 'failed' | 'refunded') => void;
   setGuestSessionId: (id: string) => void;
   reset: () => void;
@@ -91,6 +92,7 @@ export const useConsultationStore = create<ConsultationStore>()(
       setQuestionnaireComplete: (responses) => set({ questionnaire: responses }),
       setConsultationId: (id) => set({ consultationId: id }),
       setFaceAnalysis: (analysis) => set({ faceAnalysis: analysis }),
+      setConsultation: (consultation) => set({ consultation }),
       setPaymentStatus: (status) => set({ paymentStatus: status }),
       setGuestSessionId: (id) => set({ guestSessionId: id }),
 

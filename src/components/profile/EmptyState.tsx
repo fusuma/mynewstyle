@@ -21,17 +21,17 @@ export function EmptyState({ type }: EmptyStateProps) {
         </div>
         <div className="space-y-2">
           <p className="text-lg font-semibold text-foreground">
-            Ainda nao tem consultorias
+            Ainda nao tem consultorias. Descubra o seu estilo!
           </p>
           <p className="text-sm text-muted-foreground">
-            Descubra o seu estilo com uma análise personalizada
+            Comece uma análise personalizada para encontrar os estilos ideais para si
           </p>
         </div>
         <Button
           onClick={() => router.push('/start')}
-          aria-label="Descubra o seu estilo"
+          aria-label="Iniciar consultoria"
         >
-          Descubra o seu estilo
+          Iniciar consultoria
         </Button>
       </div>
     );

@@ -5,26 +5,11 @@ import { Calendar, Star } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { FACE_SHAPE_LABELS } from '@/lib/consultation/face-shape-labels';
+import { formatProfileDate } from '@/lib/profile/format-date';
 import type { FavoriteItem } from '@/types';
 
 interface FavoriteCardProps {
   favorite: FavoriteItem;
-}
-
-/**
- * Formats an ISO date string to a human-readable Portuguese date.
- */
-function formatDate(isoDate: string): string {
-  try {
-    const date = new Date(isoDate);
-    return date.toLocaleDateString('pt-BR', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-    });
-  } catch {
-    return isoDate;
-  }
 }
 
 export function FavoriteCard({ favorite }: FavoriteCardProps) {
@@ -48,7 +33,7 @@ export function FavoriteCard({ favorite }: FavoriteCardProps) {
           handleClick();
         }
       }}
-      aria-label={`${favorite.styleName} — ver consultoria de ${formatDate(favorite.consultationDate)}`}
+      aria-label={`${favorite.styleName} — ver consultoria de ${formatProfileDate(favorite.consultationDate)}`}
     >
       <CardContent className="p-4">
         {/* Style name */}
@@ -72,7 +57,7 @@ export function FavoriteCard({ favorite }: FavoriteCardProps) {
         {/* Consultation date */}
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <Calendar className="size-3.5 flex-shrink-0" aria-hidden="true" />
-          <span>{formatDate(favorite.consultationDate)}</span>
+          <span>{formatProfileDate(favorite.consultationDate)}</span>
         </div>
       </CardContent>
     </Card>

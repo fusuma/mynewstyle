@@ -7,6 +7,8 @@ const addFavoriteSchema = z.object({
   recommendationId: z.string().uuid('ID de recomendação inválido'),
 });
 
+const uuidSchema = z.string().uuid('ID de recomendação inválido');
+
 /**
  * GET /api/profile/favorites
  *
@@ -191,16 +193,26 @@ export async function DELETE(request: NextRequest): Promise<NextResponse> {
     );
   }
 
-  // Get recommendationId from query params
+  // Get and validate recommendationId from query params
   const { searchParams } = new URL(request.url);
-  const recommendationId = searchParams.get('recommendationId');
+  const rawRecommendationId = searchParams.get('recommendationId');
 
-  if (!recommendationId) {
+  if (!rawRecommendationId) {
     return NextResponse.json(
       { error: 'recommendationId é obrigatório' },
       { status: 400 }
     );
   }
+
+  const uuidParseResult = uuidSchema.safeParse(rawRecommendationId);
+  if (!uuidParseResult.success) {
+    return NextResponse.json(
+      { error: uuidParseResult.error.issues[0]?.message ?? 'ID de recomendação inválido' },
+      { status: 400 }
+    );
+  }
+
+  const recommendationId = uuidParseResult.data;
 
   const { error } = await supabase
     .from('favorites')

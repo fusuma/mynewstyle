@@ -6,27 +6,11 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { FACE_SHAPE_LABELS } from '@/lib/consultation/face-shape-labels';
+import { formatProfileDate } from '@/lib/profile/format-date';
 import type { ConsultationHistoryItem } from '@/types';
 
 interface ConsultationHistoryCardProps {
   consultation: ConsultationHistoryItem;
-}
-
-/**
- * Formats an ISO date string to a human-readable Portuguese date.
- * Example: "2026-01-15T10:00:00Z" → "15 jan 2026"
- */
-function formatDate(isoDate: string): string {
-  try {
-    const date = new Date(isoDate);
-    return date.toLocaleDateString('pt-BR', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-    });
-  } catch {
-    return isoDate;
-  }
 }
 
 export function ConsultationHistoryCard({ consultation }: ConsultationHistoryCardProps) {
@@ -48,7 +32,7 @@ export function ConsultationHistoryCard({ consultation }: ConsultationHistoryCar
           {/* Date */}
           <div className="flex items-center gap-1.5 text-sm text-muted-foreground mb-2">
             <Calendar className="size-4 flex-shrink-0" aria-hidden="true" />
-            <span>{formatDate(consultation.createdAt)}</span>
+            <span>{formatProfileDate(consultation.createdAt)}</span>
           </div>
 
           {/* Face shape badge + gender */}
@@ -78,7 +62,7 @@ export function ConsultationHistoryCard({ consultation }: ConsultationHistoryCar
           variant="outline"
           size="sm"
           onClick={handleViewAgain}
-          aria-label={`Ver novamente — consultoria de ${formatDate(consultation.createdAt)}`}
+          aria-label={`Ver novamente — consultoria de ${formatProfileDate(consultation.createdAt)}`}
           className="flex-shrink-0"
         >
           <span>Ver novamente</span>

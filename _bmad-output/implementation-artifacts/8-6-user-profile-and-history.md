@@ -1,6 +1,6 @@
 # Story 8.6: User Profile & History
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -240,8 +240,10 @@ No blocking issues encountered. Key implementation notes:
 New files:
 - src/app/api/profile/consultations/route.ts
 - src/app/api/profile/favorites/route.ts
+- src/app/api/consultation/[id]/results/route.ts (added in code review — AC#4 fix)
 - src/app/profile/page.tsx
 - src/lib/supabase/auth-server.ts
+- src/lib/profile/format-date.ts (added in code review — shared formatProfileDate utility)
 - src/components/profile/ProfilePage.tsx
 - src/components/profile/ConsultationHistoryTab.tsx
 - src/components/profile/ConsultationHistoryCard.tsx
@@ -258,10 +260,15 @@ New files:
 - src/test/profile-page.test.tsx
 - src/test/profile-auth-guard.test.ts
 - src/test/supabase-auth-server.test.ts
+- src/test/consultation-results-route.test.ts (added in code review)
 
 Modified files:
 - src/types/index.ts — added ConsultationHistoryItem, FavoriteItem interfaces; extended UserProfile with optional email
+- src/stores/consultation.ts — added setConsultation action (code review fix for store hydration)
+- src/app/consultation/results/[id]/page.tsx — added profile navigation hydration (code review fix for AC#4)
+- src/test/payment-transition.test.tsx — updated to reflect hydration behavior (code review fix)
 
 ## Change Log
 
 - 2026-03-02: Implemented Story 8.6 — User Profile & History. Created profile page at /profile with authentication guard, tab-based layout (Consultorias/Favoritos), consultation history cards with "Ver novamente" navigation, favorites grid with face shape/match score display, empty/loading/error states for both tabs, profile API routes (GET/POST/DELETE for consultations and favorites) with RLS-respecting Supabase client, favorites database table with RLS policies and unique constraint migration, and TypeScript types for all profile data shapes. All 1785 tests pass.
+- 2026-03-02: Code review fixes applied — (1) AC#4 fix: created GET /api/consultation/[id]/results endpoint and added store hydration to the results page so "Ver novamente" navigation from profile works correctly; (2) Fixed recommendations!inner → !left join in consultations route to include consultations with no recommendations; (3) Added React import to skeleton.tsx; (4) Added AbortController cleanup to ConsultationHistoryTab and FavoritesTab fetch effects; (5) Extracted shared formatProfileDate utility (pt-PT locale); (6) Added UUID validation to DELETE /api/profile/favorites; (7) Removed empty interfaces and unused _props params; (8) Fixed redundant type intersection in ProfilePage; (9) Fixed AC#7 empty state copy to match spec. All 1791 tests pass (6 new tests added).

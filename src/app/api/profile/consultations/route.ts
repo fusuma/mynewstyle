@@ -25,8 +25,11 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     );
   }
 
-  // Query consultations with top recommendation (rank = 1) joined
-  // Only fetch paid consultations — these are the ones the user has access to
+  // Query consultations with top recommendation (rank = 1) joined.
+  // Only fetch paid consultations — these are the ones the user has access to.
+  // Use left join (recommendations) instead of !inner so consultations without
+  // recommendations are still returned (they will have topRecommendation: null).
+  // Filter rank=1 at the DB level to avoid over-fetching all recommendations.
   const { data, error } = await supabase
     .from('consultations')
     .select(`
@@ -37,10 +40,11 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       payment_status,
       created_at,
       completed_at,
-      recommendations!inner(style_name, match_score, rank)
+      recommendations!left(style_name, match_score, rank)
     `)
     .eq('user_id', user.id)
     .eq('payment_status', 'paid')
+    .eq('recommendations.rank', 1)
     .order('created_at', { ascending: false })
     .limit(50);
 
@@ -54,10 +58,11 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
   // Map DB rows to ConsultationHistoryItem shape
   // Note: face_analysis is stored as JSONB with faceShape and confidence fields
+  // recommendations is a left join filtered to rank=1, so it's either [] or [{...}]
   const consultations: ConsultationHistoryItem[] = (data ?? []).map((row) => {
-    // Find rank=1 recommendation from the joined data
-    const topRec = Array.isArray(row.recommendations)
-      ? row.recommendations.find((r: { rank: number }) => r.rank === 1) ?? row.recommendations[0] ?? null
+    // With left join + rank=1 filter, array has 0 or 1 items
+    const topRec = Array.isArray(row.recommendations) && row.recommendations.length > 0
+      ? row.recommendations[0]
       : null;
 
     const faceAnalysis = row.face_analysis as { faceShape?: string; confidence?: number } | null;

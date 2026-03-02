@@ -136,6 +136,10 @@ const mockStoreState = {
   previews: new Map<string, unknown>(),
   reset: vi.fn(),
   setPaymentStatus: vi.fn(),
+  setConsultationId: vi.fn(),
+  setFaceAnalysis: vi.fn(),
+  setConsultation: vi.fn(),
+  setGender: vi.fn(),
 };
 
 vi.mock('@/stores/consultation', () => ({
@@ -208,13 +212,21 @@ describe('Results page payment transition', () => {
     ).toBeNull();
   });
 
-  it('renders null when consultationId is missing', async () => {
+  it('renders hydration loader when consultationId is missing but URL has id (profile navigation)', async () => {
+    // When navigating from profile history, the store may be stale (no consultationId/faceAnalysis)
+    // but the URL has a consultation id. The page should show a loading spinner while hydrating.
     mockStoreState.consultationId = null;
     mockStoreState.faceAnalysis = null;
+    // Mock fetch to never resolve (simulates in-flight hydration)
+    const mockFetch = vi.fn(() => new Promise(() => {}));
+    global.fetch = mockFetch;
     const ResultsPage = (await import('@/app/consultation/results/[id]/page'))
       .default;
     const { container } = render(<ResultsPage />);
-    expect(container.firstChild).toBeNull();
+    // Should show loading spinner, not null
+    expect(container.firstChild).not.toBeNull();
+    const loader = container.querySelector('[aria-busy="true"]');
+    expect(loader).not.toBeNull();
   });
 
   it('renders without errors using AnimatePresence wrapper', async () => {

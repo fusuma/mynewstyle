@@ -9,7 +9,7 @@ import { FavoritesTab } from './FavoritesTab';
 import type { UserProfile } from '@/types';
 
 interface ProfilePageProps {
-  userProfile: UserProfile & { email?: string };
+  userProfile: UserProfile;
 }
 
 type TabValue = 'consultorias' | 'favoritos';
