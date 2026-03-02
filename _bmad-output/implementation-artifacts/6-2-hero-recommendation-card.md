@@ -1,6 +1,6 @@
 # Story 6.2: Hero Recommendation Card (#1)
 
-Status: ready-for-dev
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -27,42 +27,42 @@ so that my decision about which hairstyle to choose is easy and immediate.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Create HeroRecommendationCard component (AC: 1-7, 8, 11)
-  - [ ] 1.1 Create `src/components/consultation/HeroRecommendationCard.tsx`
-  - [ ] 1.2 Implement #1 badge with gold/accent theme-aware coloring
-  - [ ] 1.3 Render style name with Space Grotesk heading typography
-  - [ ] 1.4 Render justification text block (2-3 sentences)
-  - [ ] 1.5 Render match score as percentage with "compativel" label
-  - [ ] 1.6 Render difficulty badge with low/medium/high mapping to Portuguese labels
-  - [ ] 1.7 Implement "Ver como fico" primary button (placeholder onClick — logs or shows toast)
-  - [ ] 1.8 Apply hero card styling: elevated shadow, accent border, largest card treatment
+- [x] Task 1: Create HeroRecommendationCard component (AC: 1-7, 8, 11)
+  - [x] 1.1 Create `src/components/consultation/HeroRecommendationCard.tsx`
+  - [x] 1.2 Implement #1 badge with gold/accent theme-aware coloring
+  - [x] 1.3 Render style name with Space Grotesk heading typography
+  - [x] 1.4 Render justification text block (2-3 sentences)
+  - [x] 1.5 Render match score as percentage with "compativel" label
+  - [x] 1.6 Render difficulty badge with low/medium/high mapping to Portuguese labels
+  - [x] 1.7 Implement "Ver como fico" primary button (placeholder onClick — logs or shows toast)
+  - [x] 1.8 Apply hero card styling: elevated shadow, accent border, largest card treatment
 
-- [ ] Task 2: Theme integration (AC: 8)
-  - [ ] 2.1 Use Tailwind theme classes for male/female variants (dark:* and themed accent colors)
-  - [ ] 2.2 Ensure badge colors, borders, and backgrounds adapt to gender theme
-  - [ ] 2.3 Verify both themes visually at 375px and 1024px
+- [x] Task 2: Theme integration (AC: 8)
+  - [x] 2.1 Use Tailwind theme classes for male/female variants (dark:* and themed accent colors)
+  - [x] 2.2 Ensure badge colors, borders, and backgrounds adapt to gender theme
+  - [x] 2.3 Verify both themes visually at 375px and 1024px
 
-- [ ] Task 3: Animation with Framer Motion (AC: 9, 10)
-  - [ ] 3.1 Implement slide-up + fade-in entrance animation (opacity 0->1, y 20->0, duration 400ms)
-  - [ ] 3.2 Accept `delay` prop for staggered reveal orchestration from parent
-  - [ ] 3.3 Use `useReducedMotion()` hook — when true, render without any animation
+- [x] Task 3: Animation with Framer Motion (AC: 9, 10)
+  - [x] 3.1 Implement slide-up + fade-in entrance animation (opacity 0->1, y 20->0, duration 400ms)
+  - [x] 3.2 Accept `delay` prop for staggered reveal orchestration from parent
+  - [x] 3.3 Use `useReducedMotion()` hook — when true, render without any animation
 
-- [ ] Task 4: Integrate into Results page (AC: 7, 9)
-  - [ ] 4.1 Replace `PaidResultsPlaceholder` in `src/app/consultation/results/[id]/page.tsx` with actual results layout
-  - [ ] 4.2 Wire HeroRecommendationCard to consultation data from store/API
-  - [ ] 4.3 Pass recommendation rank=1 data to HeroRecommendationCard
+- [x] Task 4: Integrate into Results page (AC: 7, 9)
+  - [x] 4.1 Replace `PaidResultsPlaceholder` in `src/app/consultation/results/[id]/page.tsx` with actual results layout
+  - [x] 4.2 Wire HeroRecommendationCard to consultation data from store/API
+  - [x] 4.3 Pass recommendation rank=1 data to HeroRecommendationCard
 
-- [ ] Task 5: Responsive and accessibility (AC: 11, 12)
-  - [ ] 5.1 Test at 375px, 768px, 1024px breakpoints
-  - [ ] 5.2 Add aria-labels to badge, match score, difficulty badge, and button
-  - [ ] 5.3 Ensure keyboard navigation (Tab to button, Enter to activate)
-  - [ ] 5.4 Verify WCAG 2.1 AA contrast ratios for both themes
+- [x] Task 5: Responsive and accessibility (AC: 11, 12)
+  - [x] 5.1 Test at 375px, 768px, 1024px breakpoints
+  - [x] 5.2 Add aria-labels to badge, match score, difficulty badge, and button
+  - [x] 5.3 Ensure keyboard navigation (Tab to button, Enter to activate)
+  - [x] 5.4 Verify WCAG 2.1 AA contrast ratios for both themes
 
-- [ ] Task 6: Unit tests
-  - [ ] 6.1 Test HeroRecommendationCard renders all required elements
-  - [ ] 6.2 Test theme variant rendering (male and female)
-  - [ ] 6.3 Test reduced motion behavior
-  - [ ] 6.4 Test with different recommendation data shapes
+- [x] Task 6: Unit tests
+  - [x] 6.1 Test HeroRecommendationCard renders all required elements
+  - [x] 6.2 Test theme variant rendering (male and female)
+  - [x] 6.3 Test reduced motion behavior
+  - [x] 6.4 Test with different recommendation data shapes
 
 ## Dev Notes
 
@@ -181,10 +181,55 @@ Recent commits are from Epic 5 (payment integration). The codebase has establish
 
 ### Agent Model Used
 
-(to be filled by dev agent)
+claude-sonnet-4-6
 
 ### Debug Log References
 
+- Long justification text test: fixed to use regex matcher instead of exact string (trailing space issue)
+- Badge aria-label test: refined to use specific "melhor corte" substring to avoid matching card's aria-label
+
 ### Completion Notes List
 
+- Implemented `HeroRecommendationCard` component at `src/components/consultation/HeroRecommendationCard.tsx`
+  - Uses shadcn/ui Card, Badge, Button primitives (no custom primitives created)
+  - Framer Motion `motion.div` with variants for slide-up + fade-in (AC: 9)
+  - `useReducedMotion()` hook: when true, variants are empty objects (no animation, AC: 10)
+  - `delay` prop accepted for parent stagger orchestration (AC: 9)
+  - Theme handled entirely via CSS custom properties (`data-theme` on `<html>`) — uses semantic tokens `bg-primary`, `text-primary-foreground`, `border-primary/60`, `shadow-elevated` (AC: 8)
+  - No `gender` prop: theming is CSS-variable-driven, not prop-driven
+  - Match score: `Math.round(matchScore * 100)` formatted as "X% compativel com o seu rosto" (AC: 4)
+  - Difficulty mapped: low→Baixa, medium→Media, high→Alta (AC: 5)
+  - "Ver como fico" button shows `toast.info('Em breve...')` as placeholder (AC: 6)
+  - Full-width layout with responsive heading: `text-2xl md:text-3xl` (24px/32px, AC: 2, 11)
+  - aria-labels on badge, match score div, difficulty badge, and button (AC: 12)
+  - Card has `role="article"` and `aria-label` for accessibility
+- Integrated into results page `src/app/consultation/results/[id]/page.tsx`
+  - Added `consultation` state selector from Zustand store
+  - `consultation` cast from `unknown` to `Consultation | null` (schema-validated by AI pipeline)
+  - HeroRecommendationCard rendered below FaceShapeAnalysisSection when `consultation.recommendations` exists
+  - Passes `consultation.recommendations[0]` (rank-1) and `delay={0.15}`
+  - Fixed pre-existing `react-hooks/rules-of-hooks` violation: moved `useConsultationStatus` hook before the early return guard
+- 32 new tests across 2 test files; all 1124 tests pass (77 test files)
+
+### Code Review Fixes (2026-03-02)
+
+- **FIXED — Design token compliance**: Replaced arbitrary values `rounded-[16px]`, `rounded-[8px]`, `rounded-[12px]` with design system tokens (Card already applies `rounded-card`; Badge already applies `rounded-badge` via cva)
+- **FIXED — Design token compliance**: Replaced arbitrary `shadow-[0_8px_32px_rgba(0,0,0,0.12)]` with `shadow-elevated` design token
+- **FIXED — Wrong theming approach**: Removed hardcoded `bg-amber-500`, `bg-rose-500`, `bg-amber-100`, `dark:bg-amber-900/30` classes. The project uses `data-theme="male"/"female"` on `<html>` with CSS variables, not Tailwind's `dark:` class. Component now uses semantic tokens: `bg-primary text-primary-foreground` (Badge variant="default") and `border-primary/60` which auto-adapt to both themes
+- **FIXED — Rules of Hooks violation**: Moved `useConsultationStatus` hook call before conditional early return in `ResultsPage`
+- **FIXED — Removed unused `gender` prop**: `HeroRecommendationCard` no longer accepts a `gender` prop since theming is handled at the CSS-variable level; removed corresponding unused store selector from results page
+- **FIXED — Updated integration tests**: Updated `results-page-hero-card.test.tsx` mock and test assertions to reflect removal of `gender` prop
+
 ### File List
+
+- src/components/consultation/HeroRecommendationCard.tsx (new)
+- src/app/consultation/results/[id]/page.tsx (modified)
+- src/test/hero-recommendation-card.test.tsx (new)
+- src/test/results-page-hero-card.test.tsx (new)
+- _bmad-output/implementation-artifacts/6-2-hero-recommendation-card.md (this file)
+- _bmad-output/implementation-artifacts/sprint-status.yaml (modified)
+
+## Change Log
+
+- 2026-03-02: Story 6.2 implemented — HeroRecommendationCard component created and integrated into results page. 32 new tests, all 1124 tests passing.
+- 2026-03-02: Code review fixes — design token compliance, theming approach correction, Rules of Hooks fix, gender prop removal. All 1124 tests pass.

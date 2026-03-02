@@ -7,8 +7,10 @@ import { useConsultationStore } from '@/stores/consultation';
 import { Paywall } from '@/components/consultation/Paywall';
 import { RefundBanner } from '@/components/consultation/RefundBanner';
 import { FaceShapeAnalysisSection } from '@/components/results/FaceShapeAnalysisSection';
+import { HeroRecommendationCard } from '@/components/consultation/HeroRecommendationCard';
 import { usePayment } from '@/hooks/usePayment';
 import { useConsultationStatus } from '@/hooks/useConsultationStatus';
+import type { Consultation } from '@/types/index';
 
 /**
  * Results page route: /consultation/results/[id]
@@ -59,6 +61,9 @@ export default function ResultsPage() {
   const photoPreview = useConsultationStore((state) => state.photoPreview);
   const paymentStatus = useConsultationStore((state) => state.paymentStatus);
   const setPaymentStatus = useConsultationStore((state) => state.setPaymentStatus);
+  const consultationRaw = useConsultationStore((state) => state.consultation);
+  // Cast consultation from unknown to Consultation type (validated by AI output schema)
+  const consultation = consultationRaw as Consultation | null;
 
   // Guard: redirect if no consultationId or no faceAnalysis
   useEffect(() => {
@@ -74,6 +79,13 @@ export default function ResultsPage() {
     }
   }, [consultationId, id, router]);
 
+  // Poll for refund status after payment succeeds
+  // Must be called before any early returns to satisfy Rules of Hooks
+  useConsultationStatus(
+    consultationId ?? '',
+    paymentStatus === 'paid'
+  );
+
   if (!consultationId || !faceAnalysis) {
     return null;
   }
@@ -81,12 +93,6 @@ export default function ResultsPage() {
   const handlePaymentSuccess = () => {
     setPaymentStatus('paid');
   };
-
-  // Poll for refund status after payment succeeds
-  const { isPolling: _isPolling } = useConsultationStatus(
-    consultationId ?? '',
-    paymentStatus === 'paid'
-  );
 
   // Paywall exit: blur increases + opacity fades (500ms)
   // Note: transition must be inside the exit object for Framer Motion to apply it to the exit animation.
@@ -125,6 +131,16 @@ export default function ResultsPage() {
             faceAnalysis={faceAnalysis}
             photoPreview={photoPreview}
           />
+          {consultation && consultation.recommendations && consultation.recommendations.length > 0 && (
+            <div className="w-full px-4 py-4">
+              <div className="mx-auto max-w-lg">
+                <HeroRecommendationCard
+                  recommendation={consultation.recommendations[0]}
+                  delay={0.15}
+                />
+              </div>
+            </div>
+          )}
         </motion.div>
       )}
     </AnimatePresence>

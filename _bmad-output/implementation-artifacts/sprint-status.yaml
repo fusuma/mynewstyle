@@ -96,7 +96,7 @@ development_status:
   # E6: Results Page (Sprint 3-4)
   epic-6: in-progress
   6-1-face-shape-analysis-section: done
-  6-2-hero-recommendation-card: ready-for-dev
+  6-2-hero-recommendation-card: done
   6-3-alternative-recommendation-cards: ready-for-dev
   6-4-styles-to-avoid-section: ready-for-dev
   6-5-grooming-tips-section: ready-for-dev
