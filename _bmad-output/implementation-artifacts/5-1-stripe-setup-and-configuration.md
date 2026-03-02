@@ -1,6 +1,6 @@
 # Story 5.1: Stripe Setup and Configuration
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -438,13 +438,14 @@ claude-sonnet-4-6
 ### Completion Notes List
 
 - Installed `stripe@^20.4.0`, `@stripe/stripe-js@^8.8.0`, `@stripe/react-stripe-js@^5.6.0` (3 new dependencies, 0 vulnerabilities).
-- Created `src/lib/stripe/server.ts` with singleton `getStripeServer()` — throws descriptive error on missing `STRIPE_SECRET_KEY`, pins `apiVersion: '2025-12-18.acacia'`.
+- Created `src/lib/stripe/server.ts` with singleton `getStripeServer()` — throws descriptive error on missing `STRIPE_SECRET_KEY`, pins `apiVersion: '2026-02-25.clover'` (stripe@20.4.0 latest).
 - Created `src/lib/stripe/client.ts` with lazy-loaded `getStripeClient()` — memoized promise, warns and returns null if `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` is missing.
 - Created `src/lib/stripe/index.ts` barrel export following the pattern from `src/lib/consultation/index.ts` and `src/lib/ai/index.ts`.
 - Updated `.env.example` with 3 Stripe env vars and descriptive comments.
 - Created `src/components/payment/StripeProvider.tsx` — `'use client'` component wrapping `<Elements>` with `locale: 'pt-BR'`, Tailwind CSS variable appearance theme, and lazy-loaded Stripe instance via `getStripeClient()`.
 - Wrote 8 unit tests across 3 test files covering: singleton pattern, env var validation, lazy-loading, memoization, missing key handling, and component render.
 - Full test suite result: **901 tests pass** (893 pre-existing + 8 new), 0 failures, 0 regressions.
+- **Code review fixes (2026-03-02):** Fixed apiVersion `'2025-12-18.acacia'` → `'2026-02-25.clover'` (was non-existent, caused TypeScript compile error). Fixed `getStripeClient()` memoization bug for missing-key path — now sets `stripePromise` instead of returning early, preventing repeated console.warn calls. Added `useMemo` to `StripeProvider` options to prevent unnecessary `<Elements>` re-mounts on re-render. Added JSDoc to `StripeProvider`. Improved `stripe-provider.test.tsx` to capture and assert on `options` prop (clientSecret, locale, appearance). Added missing-key memoization test to `stripe-client.test.ts`. Final test suite: **903 tests pass** (2 additional tests from review).
 
 ### File List
 
@@ -462,3 +463,4 @@ claude-sonnet-4-6
 ## Change Log
 
 - 2026-03-02: Implemented Story 5.1 — Stripe Setup and Configuration. Installed 3 Stripe packages, created server/client/index lib modules, StripeProvider component, 3 test files. All 901 tests pass.
+- 2026-03-02: Code review (claude-sonnet-4-6) — fixed 5 issues: (1) apiVersion wrong/non-existent `2025-12-18.acacia` → `2026-02-25.clover` (TypeScript error); (2) getStripeClient() memoization bug in missing-key path; (3) StripeProvider options useMemo for stable references; (4) StripeProvider JSDoc added; (5) test assertions improved with options capture and memoization edge case. 903 tests pass.

@@ -16,8 +16,7 @@ export function getStripeServer(): Stripe {
 
   if (!stripeInstance) {
     stripeInstance = new Stripe(process.env.STRIPE_SECRET_KEY, {
-      apiVersion: '2025-12-18.acacia',
-      typescript: true,
+      apiVersion: '2026-02-25.clover',
     });
   }
 

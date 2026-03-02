@@ -5,7 +5,8 @@ let stripePromise: Promise<Stripe | null> | null = null;
 /**
  * Returns a lazy-loaded Stripe client instance.
  * Stripe.js is NOT fetched until this function is called.
- * Memoized: subsequent calls return the same promise.
+ * Memoized: subsequent calls return the same promise, including the null case
+ * when the publishable key is missing.
  */
 export function getStripeClient(): Promise<Stripe | null> {
   if (!stripePromise) {
@@ -14,9 +15,10 @@ export function getStripeClient(): Promise<Stripe | null> {
       console.warn(
         'NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY is not set. Stripe will not load.'
       );
-      return Promise.resolve(null);
+      stripePromise = Promise.resolve(null);
+    } else {
+      stripePromise = loadStripe(key);
     }
-    stripePromise = loadStripe(key);
   }
   return stripePromise;
 }

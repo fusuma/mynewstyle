@@ -33,7 +33,7 @@ Record the **story key** (e.g., `1-2-landing-page-hero-section`) and its **epic 
 
 ### Step 2: Create Story File
 
-Spawn a `general-purpose` subagent to create the story file:
+Spawn a `general-purpose` subagent **using model: "opus"** to create the story file:
 
 ```
 Invoke the Skill tool with skill: "bmad-bmm-create-story"
@@ -57,7 +57,7 @@ If the status wasn't updated by the workflow, update it yourself:
 
 ### Step 3: Implement Story (Dev)
 
-Spawn a `general-purpose` subagent to implement the story:
+Spawn a `general-purpose` subagent **using model: "sonnet"** to implement the story:
 
 ```
 Invoke the Skill tool with skill: "bmad-bmm-dev-story"
@@ -76,7 +76,7 @@ After the subagent completes, update `sprint-status.yaml`:
 
 ### Step 4: Code Review
 
-Spawn a `general-purpose` subagent to perform adversarial code review:
+Spawn a `general-purpose` subagent **using model: "sonnet"** to perform adversarial code review:
 
 ```
 Invoke the Skill tool with skill: "bmad-bmm-code-review"

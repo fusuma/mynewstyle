@@ -28,7 +28,7 @@ Check if a specific story was requested: $ARGUMENTS
 
 ## Step 1: Create Story File
 
-Spawn a `general-purpose` subagent:
+Spawn a `general-purpose` subagent **using model: "opus"**:
 
 ```
 Invoke the Skill tool with skill: "bmad-bmm-create-story"
@@ -48,7 +48,7 @@ Verify the story file exists at `_bmad-output/implementation-artifacts/{story-ke
 
 ## Step 2: Implement Story
 
-Spawn a `general-purpose` subagent:
+Spawn a `general-purpose` subagent **using model: "sonnet"**:
 
 ```
 Invoke the Skill tool with skill: "bmad-bmm-dev-story"
@@ -65,7 +65,7 @@ After completion, update `sprint-status.yaml`:
 
 ## Step 3: Code Review
 
-Spawn a `general-purpose` subagent:
+Spawn a `general-purpose` subagent **using model: "sonnet"**:
 
 ```
 Invoke the Skill tool with skill: "bmad-bmm-code-review"
