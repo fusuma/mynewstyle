@@ -55,6 +55,8 @@ const mockStoreState: {
   gender: 'male' | 'female' | null;
   consultationId: string | null;
   paymentStatus: 'none' | 'pending' | 'paid' | 'failed' | 'refunded';
+  ratingSubmitted: boolean;
+  previews: Map<string, { status: 'idle' | 'generating' | 'ready' | 'failed' | 'unavailable' }>;
 } = {
   faceAnalysis: {
     faceShape: 'oval',
@@ -77,6 +79,8 @@ const mockStoreState: {
   gender: 'male',
   consultationId: 'test-id-123',
   paymentStatus: 'paid',
+  ratingSubmitted: false,
+  previews: new Map(),
 };
 
 vi.mock('@/stores/consultation', () => ({
@@ -119,6 +123,11 @@ vi.mock('@/components/consultation/ResultsActionsFooter', () => ({
   ResultsActionsFooter: () => <div>ResultsActionsFooter</div>,
 }));
 
+// Mock ConsultationRatingPrompt (Story 10.5) so it doesn't appear in section order tests
+vi.mock('@/components/consultation/ConsultationRatingPrompt', () => ({
+  ConsultationRatingPrompt: () => <div data-testid="consultation-rating-prompt">RatingPrompt</div>,
+}));
+
 // ---- Tests ----
 
 describe('ResultsPageAnimatedReveal - component renders', () => {
@@ -149,6 +158,8 @@ describe('ResultsPageAnimatedReveal - component renders', () => {
     mockStoreState.gender = 'male';
     mockStoreState.consultationId = 'test-id-123';
     mockStoreState.paymentStatus = 'paid';
+    mockStoreState.ratingSubmitted = false;
+    mockStoreState.previews = new Map();
   });
 
   it('renders without crashing', async () => {
@@ -225,6 +236,8 @@ describe('ResultsPageAnimatedReveal - section render order (AC #1)', () => {
     mockStoreState.gender = 'male';
     mockStoreState.consultationId = 'test-id-123';
     mockStoreState.paymentStatus = 'paid';
+    mockStoreState.ratingSubmitted = false;
+    mockStoreState.previews = new Map();
   });
 
   it('renders FaceShapeAnalysisSection before HeroRecommendationCard in DOM order', async () => {
@@ -374,6 +387,8 @@ describe('ResultsPageAnimatedReveal - reduced motion (AC #4)', () => {
     mockStoreState.gender = 'male';
     mockStoreState.consultationId = 'test-id-123';
     mockStoreState.paymentStatus = 'paid';
+    mockStoreState.ratingSubmitted = false;
+    mockStoreState.previews = new Map();
   });
 
   it('renders all sections even with reduced motion enabled', async () => {
@@ -454,6 +469,8 @@ describe('ResultsPageAnimatedReveal - accepts shouldReduceMotion prop', () => {
     mockStoreState.gender = 'male';
     mockStoreState.consultationId = 'test-id-123';
     mockStoreState.paymentStatus = 'paid';
+    mockStoreState.ratingSubmitted = false;
+    mockStoreState.previews = new Map();
   });
 
   it('accepts optional shouldReduceMotion prop (passed from parent page)', async () => {
@@ -504,6 +521,8 @@ describe('ResultsPageAnimatedReveal - integration with payment status (AC #6)', 
     mockStoreState.gender = 'male';
     mockStoreState.consultationId = 'test-id-123';
     mockStoreState.paymentStatus = 'paid';
+    mockStoreState.ratingSubmitted = false;
+    mockStoreState.previews = new Map();
   });
 
   it('renders FaceShapeSection (the first section) when store data is available', async () => {
@@ -570,6 +589,8 @@ describe('ResultsPageAnimatedReveal - all 7 sections render (AC #1, #3)', () => 
     mockStoreState.gender = 'male';
     mockStoreState.consultationId = 'test-id-123';
     mockStoreState.paymentStatus = 'paid';
+    mockStoreState.ratingSubmitted = false;
+    mockStoreState.previews = new Map();
   });
 
   it('renders FaceShapeSection', async () => {
@@ -668,6 +689,8 @@ describe('ResultsPageAnimatedReveal - stagger animation config (AC #2, #3)', () 
     mockStoreState.gender = 'male';
     mockStoreState.consultationId = 'test-id-123';
     mockStoreState.paymentStatus = 'paid';
+    mockStoreState.ratingSubmitted = false;
+    mockStoreState.previews = new Map();
   });
 
   it('applies staggerChildren: 0.15 on container variant when motion enabled (AC #2)', async () => {

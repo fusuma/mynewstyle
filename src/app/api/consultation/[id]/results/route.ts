@@ -51,11 +51,11 @@ export async function GET(
 
   const { id } = parseResult.data;
 
-  // Fetch consultation with all results data
+  // Fetch consultation with all results data (including rating fields for Story 10.5)
   // RLS ensures the user can only access their own consultations
   const { data: consultation, error: consultationError } = await supabase
     .from('consultations')
-    .select('id, gender, face_analysis, status, payment_status, created_at, completed_at')
+    .select('id, gender, face_analysis, status, payment_status, created_at, completed_at, rating, rating_details')
     .eq('id', id)
     .eq('user_id', user.id)
     .single();
@@ -127,6 +127,9 @@ export async function GET(
       paymentStatus: consultation.payment_status,
       createdAt: consultation.created_at,
       completedAt: consultation.completed_at ?? null,
+      // Rating fields (Story 10.5)
+      rating: (consultation as { rating?: number | null }).rating ?? null,
+      ratingDetails: (consultation as { rating_details?: unknown }).rating_details ?? null,
       recommendations: (recommendations ?? []).map((r) => ({
         id: r.id,
         rank: r.rank,

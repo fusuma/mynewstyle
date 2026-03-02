@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { motion, useReducedMotion, type Variants } from 'framer-motion';
 import { useConsultationStore } from '@/stores/consultation';
 import { FaceShapeAnalysisSection } from '@/components/results/FaceShapeAnalysisSection';
@@ -9,6 +10,7 @@ import { StylesToAvoid } from '@/components/consultation/StylesToAvoid';
 import { GroomingTips } from '@/components/consultation/GroomingTips';
 import { StylingTipsSection } from '@/components/consultation/StylingTipsSection';
 import { ResultsActionsFooter } from '@/components/consultation/ResultsActionsFooter';
+import { ConsultationRatingPrompt } from '@/components/consultation/ConsultationRatingPrompt';
 import type { Consultation } from '@/types/index';
 
 interface ResultsPageAnimatedRevealProps {
@@ -49,6 +51,23 @@ export function ResultsPageAnimatedReveal({
   const consultation = consultationRaw as Consultation | null;
   const gender = useConsultationStore((state) => state.gender);
   const consultationId = useConsultationStore((state) => state.consultationId);
+  const paymentStatus = useConsultationStore((state) => state.paymentStatus);
+  const ratingSubmitted = useConsultationStore((state) => state.ratingSubmitted);
+  const previews = useConsultationStore((state) => state.previews);
+
+  // Rating prompt: show after 15 seconds for paid consultations (Story 10.5, AC #1, #7)
+  const [showRatingPrompt, setShowRatingPrompt] = useState(false);
+
+  useEffect(() => {
+    if (paymentStatus !== 'paid' || ratingSubmitted) return;
+    const timer = setTimeout(() => {
+      setShowRatingPrompt(true);
+    }, 15000);
+    return () => clearTimeout(timer);
+  }, [paymentStatus, ratingSubmitted]);
+
+  // Check if any preview has been generated (status 'ready') — Story 10.5, AC #2
+  const hasGeneratedPreviews = Array.from(previews.values()).some((p) => p.status === 'ready');
 
   // Container variants: stagger children by 150ms (AC #2)
   const containerVariants: Variants = shouldReduceMotion
@@ -160,9 +179,23 @@ export function ResultsPageAnimatedReveal({
         </motion.div>
       )}
 
-      {/* Section G: Actions Footer (Story 6-7) */}
+      {/* Section G-Rating: Post-Consultation Rating Prompt (Story 10.5) */}
+      {/* Non-blocking, appears inline after 15s timer, positioned above sticky footer on mobile */}
+      {showRatingPrompt && (
+        <motion.div {...itemAnimationProps}>
+          <div data-testid="section-rating-prompt">
+            <ConsultationRatingPrompt
+              consultationId={consultationId ?? ''}
+              hasGeneratedPreviews={hasGeneratedPreviews}
+            />
+          </div>
+        </motion.div>
+      )}
+
+      {/* Section H: Actions Footer (Story 6-7) */}
       {/* Spacer for mobile sticky footer -- prevents content from being hidden behind it */}
-      <div className="h-[200px] md:h-0" aria-hidden="true" />
+      {/* Additional bottom padding when rating prompt is shown so it appears above sticky footer */}
+      <div className={showRatingPrompt ? 'h-[280px] md:h-0' : 'h-[200px] md:h-0'} aria-hidden="true" />
       <motion.div {...itemAnimationProps}>
         <div data-testid="section-results-actions-footer">
           <ResultsActionsFooter consultationId={consultationId ?? ''} />

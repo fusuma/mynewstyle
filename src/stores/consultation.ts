@@ -32,6 +32,9 @@ export interface ConsultationStore {
   // Guest session (Story 8.4)
   guestSessionId: string | null;
 
+  // Rating (Story 10.5) — session flag to prevent re-prompting
+  ratingSubmitted: boolean;
+
   // Actions
   setGender: (gender: 'male' | 'female') => void;
   setPhoto: (photo: Blob) => void;
@@ -43,6 +46,7 @@ export interface ConsultationStore {
   setConsultation: (consultation: unknown) => void;
   setPaymentStatus: (status: 'none' | 'pending' | 'paid' | 'failed' | 'refunded') => void;
   setGuestSessionId: (id: string) => void;
+  setRatingSubmitted: (submitted: boolean) => void;
   reset: () => void;
 
   // Preview actions (Story 7.4)
@@ -70,6 +74,7 @@ const initialState = {
   previews: new Map<string, PreviewStatus>(),
   paymentStatus: 'none' as const,
   isReturningUser: false,
+  ratingSubmitted: false,
   // guestSessionId intentionally NOT in initialState so reset() doesn't clear it
 };
 
@@ -100,6 +105,7 @@ export const useConsultationStore = create<ConsultationStore>()(
       setConsultation: (consultation) => set({ consultation }),
       setPaymentStatus: (status) => set({ paymentStatus: status }),
       setGuestSessionId: (id) => set({ guestSessionId: id }),
+      setRatingSubmitted: (submitted) => set({ ratingSubmitted: submitted }),
 
       reset: () => {
         // Preserve guestSessionId — it must survive across consultations
@@ -161,6 +167,7 @@ export const useConsultationStore = create<ConsultationStore>()(
         paymentStatus: state.paymentStatus,
         isReturningUser: state.isReturningUser,
         guestSessionId: state.guestSessionId,
+        ratingSubmitted: state.ratingSubmitted, // Story 10.5: prevent re-prompting after navigation
         // EXCLUDE: photo (Blob -- cannot serialize to JSON, handled by IndexedDB in Story 2.7)
         // EXCLUDE: faceAnalysis, consultation, previews (future stories, re-fetched from API)
       }),

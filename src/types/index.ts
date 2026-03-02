@@ -76,6 +76,14 @@ export interface ConsultationStartResponse {
   consultationId: string;
 }
 
+// Rating types (Story 10.5)
+export interface RatingDetails {
+  faceShapeAccuracy?: number;
+  recommendationQuality?: number;
+  previewRealism?: number;
+  ratedAt: string;
+}
+
 export interface ConsultationRecord {
   id: string;
   gender: 'male' | 'female';
@@ -87,6 +95,10 @@ export interface ConsultationRecord {
   guest_session_id: string | null;
   /** Referral code captured from ?ref= param. Story 9.5 */
   referral_code: string | null;
+  /** Overall 1-5 star rating for the consultation. Story 10.5 */
+  rating?: number | null;
+  /** Decomposed rating details. Story 10.5 */
+  rating_details?: RatingDetails | null;
 }
 
 // AI Provider types (Story 4.1)

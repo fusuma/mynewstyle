@@ -37,10 +37,20 @@ export interface PreviewSharedEventPayload {
 }
 
 /**
+ * Payload for results rated events (Story 10.5).
+ */
+export interface ResultsRatedEventPayload {
+  type: 'results_rated';
+  rating: number;
+  hasDetails: boolean;
+  consultationId: string;
+}
+
+/**
  * Union of all analytics event payload types (backward-compatible).
  * Superset of the new typed union from src/lib/analytics/types.ts.
  */
-export type AnalyticsEvent = ShareEventPayload | PreviewSharedEventPayload;
+export type AnalyticsEvent = ShareEventPayload | PreviewSharedEventPayload | ResultsRatedEventPayload;
 
 /**
  * Track a share event.
