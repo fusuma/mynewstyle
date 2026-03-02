@@ -106,7 +106,7 @@ development_status:
   epic-6-retrospective: optional
 
   # E7: AI Preview Generation - Nano Banana 2 (Sprint 4)
-  epic-7: in-progress
+  epic-7: done
   7-1-kie-ai-integration: done
   7-2-kie-ai-webhook-handler: done
   7-3-face-similarity-check: done
