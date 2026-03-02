@@ -62,13 +62,13 @@ development_status:
   epic-2-retrospective: optional
 
   # E3: Questionnaire Flow (Sprint 2)
-  epic-3: in-progress
+  epic-3: done
   3-1-questionnaire-engine: done
   3-2-male-questionnaire-content: done
   3-3-female-questionnaire-content: done
   3-4-question-card-components: done
   3-5-progress-bar-and-conversational-tone: done
-  3-6-questionnaire-completion-and-data-submission: backlog
+  3-6-questionnaire-completion-and-data-submission: done
   epic-3-retrospective: optional
 
   # E4: AI Pipeline - Analysis + Consultation (Sprint 2-3)

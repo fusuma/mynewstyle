@@ -30,6 +30,7 @@ export interface ConsultationStore {
   setPhotoPreview: (preview: string) => void;
   setQuestionnaireResponse: (questionId: string, value: string | string[] | number) => void;
   setQuestionnaireComplete: (responses: QuestionnaireResponses) => void;
+  setConsultationId: (id: string) => void;
   reset: () => void;
 }
 
@@ -62,6 +63,7 @@ export const useConsultationStore = create<ConsultationStore>()(
           },
         })),
       setQuestionnaireComplete: (responses) => set({ questionnaire: responses }),
+      setConsultationId: (id) => set({ consultationId: id }),
       reset: () => set({ ...initialState, previews: new Map<string, unknown>() }),
     }),
     {

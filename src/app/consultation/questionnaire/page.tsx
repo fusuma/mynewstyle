@@ -1,18 +1,27 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useEffect, useCallback, useMemo } from 'react';
+import { useEffect, useCallback, useMemo, useRef, useState } from 'react';
+import { toast } from 'sonner';
 import { useConsultationStore } from '@/stores/consultation';
 import { QuestionnaireFlow } from '@/components/consultation/QuestionnaireFlow';
 import { getQuestionnaireConfig } from '@/lib/questionnaire';
+import { submitConsultation } from '@/lib/consultation/submit';
 import type { QuestionnaireResponses } from '@/stores/consultation';
 
 export default function QuestionnairePage() {
   const router = useRouter();
   const gender = useConsultationStore((state) => state.gender);
+  const photoPreview = useConsultationStore((state) => state.photoPreview);
   const setQuestionnaireComplete = useConsultationStore(
     (state) => state.setQuestionnaireComplete
   );
+  const setConsultationId = useConsultationStore(
+    (state) => state.setConsultationId
+  );
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const isSubmittingRef = useRef(false);
 
   useEffect(() => {
     if (!gender) {
@@ -26,19 +35,53 @@ export default function QuestionnairePage() {
   );
 
   const handleComplete = useCallback(
-    (responses: QuestionnaireResponses) => {
+    async (responses: QuestionnaireResponses) => {
+      if (isSubmittingRef.current) return;
+
       setQuestionnaireComplete(responses);
-      router.push('/consultation/processing');
+      isSubmittingRef.current = true;
+      setIsSubmitting(true);
+
+      try {
+        const result = await submitConsultation({
+          gender: gender!,
+          photoUrl: photoPreview || '',
+          questionnaire: responses,
+        });
+
+        setConsultationId(result.consultationId);
+        router.push('/consultation/processing');
+      } catch (error) {
+        console.error('[QuestionnairePage] Submission failed:', error);
+        toast.error('Algo correu mal. Tente novamente.');
+        isSubmittingRef.current = false;
+        setIsSubmitting(false);
+      }
     },
-    [setQuestionnaireComplete, router]
+    [gender, photoPreview, setQuestionnaireComplete, setConsultationId, router]
   );
 
   if (!gender || !config) return null;
 
   return (
-    <QuestionnaireFlow
-      config={config}
-      onComplete={handleComplete}
-    />
+    <>
+      <QuestionnaireFlow
+        config={config}
+        onComplete={handleComplete}
+      />
+      {isSubmitting && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-background/80"
+          data-testid="submission-loading"
+        >
+          <div className="flex flex-col items-center gap-3">
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-muted border-t-primary" />
+            <p className="text-sm text-muted-foreground">
+              A enviar as suas respostas...
+            </p>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
