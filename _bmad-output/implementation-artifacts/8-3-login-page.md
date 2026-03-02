@@ -1,6 +1,6 @@
 # Story 8.3: Login Page
 
-Status: ready-for-dev
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -25,64 +25,64 @@ so that **I can view my past consultations, favorites, and continue where I left
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Create login page route (AC: 5, 10)
-  - [ ] 1.1 Create `src/app/login/page.tsx` as the Next.js App Router page
-  - [ ] 1.2 Add metadata export (`title: "Login | MyNewStyle"`, `description`)
-  - [ ] 1.3 Import and render the `LoginForm` client component
-  - [ ] 1.4 Page should be a server component that renders a client component for form interactivity
+- [x] Task 1: Create login page route (AC: 5, 10)
+  - [x] 1.1 Create `src/app/login/page.tsx` as the Next.js App Router page
+  - [x] 1.2 Add metadata export (`title: "Login | MyNewStyle"`, `description`)
+  - [x] 1.3 Import and render the `LoginForm` client component
+  - [x] 1.4 Page should be a server component that renders a client component for form interactivity
 
-- [ ] Task 2: Create LoginForm client component (AC: 1, 2, 5, 6, 7, 8, 9)
-  - [ ] 2.1 Create `src/components/auth/LoginForm.tsx` as `'use client'` component
-  - [ ] 2.2 Email input field with `type="email"`, required, `aria-label`, `aria-describedby` for errors
-  - [ ] 2.3 Password input field with `type="password"`, required, `aria-label`, `aria-describedby` for errors
-  - [ ] 2.4 Client-side validation: email format regex (`/^[^\s@]+@[^\s@]+\.[^\s@]+$/`), password min 1 char
-  - [ ] 2.5 "Entrar" (Login) submit button using `<Button>` from `@/components/ui/button`
-  - [ ] 2.6 Google OAuth button: "Continuar com Google" using `<Button variant="outline">` with Google SVG icon
-  - [ ] 2.7 "Esqueci a senha" link below password field (text button, navigates to inline reset flow or separate handler)
-  - [ ] 2.8 "Não tem conta? Criar conta" link at bottom, linking to `/register`
-  - [ ] 2.9 Apply gender-aware theme: read gender from `useConsultationStore` (sessionStorage), use neutral if null
-  - [ ] 2.10 Wrap form in shadcn `<Card>` component for consistent styling
+- [x] Task 2: Create LoginForm client component (AC: 1, 2, 5, 6, 7, 8, 9)
+  - [x] 2.1 Create `src/components/auth/LoginForm.tsx` as `'use client'` component
+  - [x] 2.2 Email input field with `type="email"`, required, `aria-label`, `aria-describedby` for errors
+  - [x] 2.3 Password input field with `type="password"`, required, `aria-label`, `aria-describedby` for errors
+  - [x] 2.4 Client-side validation: email format regex (`/^[^\s@]+@[^\s@]+\.[^\s@]+$/`), password min 1 char
+  - [x] 2.5 "Entrar" (Login) submit button using `<Button>` from `@/components/ui/button`
+  - [x] 2.6 Google OAuth button: "Continuar com Google" using `<Button variant="outline">` with Google SVG icon
+  - [x] 2.7 "Esqueci a senha" link below password field (text button, navigates to inline reset flow or separate handler)
+  - [x] 2.8 "Não tem conta? Criar conta" link at bottom, linking to `/register`
+  - [x] 2.9 Apply gender-aware theme: read gender from `useConsultationStore` (sessionStorage), use neutral if null
+  - [x] 2.10 Wrap form in shadcn `<Card>` component for consistent styling
 
-- [ ] Task 3: Implement email/password login (AC: 1, 7, 8)
-  - [ ] 3.1 On form submit, call `supabase.auth.signInWithPassword({ email, password })`
-  - [ ] 3.2 Import Supabase browser client from `@/lib/supabase/client`
-  - [ ] 3.3 Handle Supabase error responses: map `AuthApiError` codes to user-friendly Portuguese messages
-  - [ ] 3.4 Error message mapping: `invalid_credentials` -> "Email ou senha incorretos", `email_not_confirmed` -> "Confirme o seu email primeiro", network error -> "Erro de conexao. Tente novamente."
-  - [ ] 3.5 Show loading spinner on submit button during auth request (replace button text with `<Loader2>` icon)
-  - [ ] 3.6 Disable all form inputs and buttons during loading
+- [x] Task 3: Implement email/password login (AC: 1, 7, 8)
+  - [x] 3.1 On form submit, call `supabase.auth.signInWithPassword({ email, password })`
+  - [x] 3.2 Import Supabase browser client from `@/lib/supabase/client`
+  - [x] 3.3 Handle Supabase error responses: map `AuthApiError` codes to user-friendly Portuguese messages
+  - [x] 3.4 Error message mapping: `invalid_credentials` -> "Email ou senha incorretos", `email_not_confirmed` -> "Confirme o seu email primeiro", network error -> "Erro de conexao. Tente novamente."
+  - [x] 3.5 Show loading spinner on submit button during auth request (replace button text with `<Loader2>` icon)
+  - [x] 3.6 Disable all form inputs and buttons during loading
 
-- [ ] Task 4: Implement Google OAuth login (AC: 2, 7, 8)
-  - [ ] 4.1 On Google button click, call `supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin + '/login?auth_callback=true' } })`
-  - [ ] 4.2 Show loading state on Google button during redirect
-  - [ ] 4.3 Handle OAuth errors on callback (check URL params for `error` and `error_description`)
-  - [ ] 4.4 Display OAuth error messages to user via toast or inline error
+- [x] Task 4: Implement Google OAuth login (AC: 2, 7, 8)
+  - [x] 4.1 On Google button click, call `supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin + '/login?auth_callback=true' } })`
+  - [x] 4.2 Show loading state on Google button during redirect
+  - [x] 4.3 Handle OAuth errors on callback (check URL params for `error` and `error_description`)
+  - [x] 4.4 Display OAuth error messages to user via toast or inline error
 
-- [ ] Task 5: Implement password reset flow (AC: 3, 7, 8)
-  - [ ] 5.1 On "Esqueci a senha" click, show inline email input (reuse the email field value if already filled)
-  - [ ] 5.2 Call `supabase.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + '/login?reset=true' })`
-  - [ ] 5.3 Show success message: "Email de recuperacao enviado. Verifique a sua caixa de entrada."
-  - [ ] 5.4 Handle errors: invalid email -> "Insira um email valido", rate limit -> "Aguarde antes de tentar novamente"
-  - [ ] 5.5 Loading state on reset request button
+- [x] Task 5: Implement password reset flow (AC: 3, 7, 8)
+  - [x] 5.1 On "Esqueci a senha" click, show inline email input (reuse the email field value if already filled)
+  - [x] 5.2 Call `supabase.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + '/login?reset=true' })`
+  - [x] 5.3 Show success message: "Email de recuperacao enviado. Verifique a sua caixa de entrada."
+  - [x] 5.4 Handle errors: invalid email -> "Insira um email valido", rate limit -> "Aguarde antes de tentar novamente"
+  - [x] 5.5 Loading state on reset request button
 
-- [ ] Task 6: Implement post-login redirect logic (AC: 4)
-  - [ ] 6.1 After successful login, check `useConsultationStore` for `consultationId` or active flow state (gender + photo set)
-  - [ ] 6.2 If pending consultation exists in session: redirect to appropriate step in the consultation flow
-  - [ ] 6.3 If no pending consultation: redirect to `/profile`
-  - [ ] 6.4 Use Next.js `useRouter()` from `next/navigation` for client-side redirects
-  - [ ] 6.5 Handle `?redirect=` URL parameter: if present, redirect to that path after login (for auth-guarded routes in future stories)
+- [x] Task 6: Implement post-login redirect logic (AC: 4)
+  - [x] 6.1 After successful login, check `useConsultationStore` for `consultationId` or active flow state (gender + photo set)
+  - [x] 6.2 If pending consultation exists in session: redirect to appropriate step in the consultation flow
+  - [x] 6.3 If no pending consultation: redirect to `/profile`
+  - [x] 6.4 Use Next.js `useRouter()` from `next/navigation` for client-side redirects
+  - [x] 6.5 Handle `?redirect=` URL parameter: if present, redirect to that path after login (for auth-guarded routes in future stories)
 
-- [ ] Task 7: Write tests (AC: 1-9)
-  - [ ] 7.1 Unit test: LoginForm renders email input, password input, submit button, Google button, forgot password link, register link
-  - [ ] 7.2 Unit test: Client-side validation shows error for invalid email format
-  - [ ] 7.3 Unit test: Client-side validation shows error for empty password
-  - [ ] 7.4 Unit test: Submit button shows loading state during auth request
-  - [ ] 7.5 Unit test: Error message displayed for invalid credentials
-  - [ ] 7.6 Unit test: Success triggers redirect (mock `useRouter`)
-  - [ ] 7.7 Unit test: Google OAuth button calls `signInWithOAuth`
-  - [ ] 7.8 Unit test: Password reset flow shows success message
-  - [ ] 7.9 Unit test: Gender theme applied when gender is set in store
-  - [ ] 7.10 Unit test: Neutral theme applied when no gender is set
-  - [ ] 7.11 Accessibility test: all inputs have associated labels, form is keyboard-navigable
+- [x] Task 7: Write tests (AC: 1-9)
+  - [x] 7.1 Unit test: LoginForm renders email input, password input, submit button, Google button, forgot password link, register link
+  - [x] 7.2 Unit test: Client-side validation shows error for invalid email format
+  - [x] 7.3 Unit test: Client-side validation shows error for empty password
+  - [x] 7.4 Unit test: Submit button shows loading state during auth request
+  - [x] 7.5 Unit test: Error message displayed for invalid credentials
+  - [x] 7.6 Unit test: Success triggers redirect (mock `useRouter`)
+  - [x] 7.7 Unit test: Google OAuth button calls `signInWithOAuth`
+  - [x] 7.8 Unit test: Password reset flow shows success message
+  - [x] 7.9 Unit test: Gender theme applied when gender is set in store
+  - [x] 7.10 Unit test: Neutral theme applied when no gender is set
+  - [x] 7.11 Accessibility test: all inputs have associated labels, form is keyboard-navigable
 
 ## Dev Notes
 
@@ -345,10 +345,31 @@ All user-facing strings should be in Portuguese (PT) as the primary language, co
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+claude-sonnet-4-6
 
 ### Debug Log References
 
+No blocking issues encountered. One test adjustment required: `getByLabelText(/senha/i)` matched both the label and the "Mostrar senha" toggle button aria-label. Fixed by using `document.getElementById('login-password')` directly in password-specific tests, consistent with registration page test patterns.
+
 ### Completion Notes List
 
+- Implemented `src/app/login/page.tsx` as a Next.js App Router server component with `Metadata` export and `Suspense` wrapper (required for `useSearchParams` in client child).
+- Implemented `src/components/auth/LoginForm.tsx` as a `'use client'` component with: email/password form, Google OAuth button, password visibility toggle, inline password reset flow, gender-aware theming, post-login redirect logic with 5 cases (redirect param, consultationId, gender+photo, gender only, /profile default).
+- Email validation uses `/^[^\s@]+@[^\s@]+\.[^\s@]+$/` regex per spec. Password validated for non-empty on submit and on blur.
+- Supabase error codes mapped to Portuguese: `invalid_credentials` -> "Email ou senha incorretos", `email_not_confirmed` -> "Confirme o seu email primeiro", network error -> "Erro de conexao. Tente novamente."
+- Loading states: `aria-busy` on both submit and Google OAuth buttons; inputs disabled during submission; `<Loader2 className="animate-spin">` replaces button text.
+- Password reset uses inline mode switch (shows "Recuperar senha" heading), reuses email field value, calls `supabase.auth.resetPasswordForEmail`, shows success message on success.
+- `onAuthStateChange` subscription handles OAuth callback: detects `SIGNED_IN` event and triggers redirect logic.
+- Gender theming: syncs `ThemeProvider` with consultation store gender; uses `useTheme()` for theme colors; applies dark (male) / female / neutral CSS classes.
+- All 33 unit tests pass. Full regression suite: 1661 tests across 117 files, all green.
+
 ### File List
+
+- src/app/login/page.tsx (new)
+- src/components/auth/LoginForm.tsx (new)
+- src/test/login-form.test.tsx (new)
+
+## Change Log
+
+- 2026-03-02: Story 8.3 implemented. Created login page server component and LoginForm client component with email/password auth, Google OAuth, password reset flow, gender-aware theming, post-login redirect logic. 33 unit tests added covering all ACs. All 1661 tests pass.
+- 2026-03-02: Code review completed. Fixed 5 issues: (1) Open redirect vulnerability — added `isSafeRedirect()` validation rejecting non-relative URLs in `?redirect=` param. (2) Stale closure + double-redirect bug — `handleSuccessfulLogin` converted to `useCallback` with proper deps; `handleSubmit` no longer calls it directly (redirect handled solely via `onAuthStateChange`). (3) shadcn `<Card>` component now used per Task 2.10 spec (was raw `<div>`). (4) Supabase client instantiated once via `useMemo` instead of per event handler call. (5) Fixed broken `aria-describedby` reference — reset error div now has `id="reset-email-error"`. Added 2 new tests (open redirect rejection, non-SIGNED_IN event guard). All 1663 tests pass.
