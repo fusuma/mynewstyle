@@ -84,7 +84,7 @@ development_status:
   epic-4-retrospective: optional
 
   # E5: Payment Integration (Sprint 3)
-  epic-5: in-progress
+  epic-5: done
   5-1-stripe-setup-and-configuration: done
   5-2-payment-intent-creation: done
   5-3-paywall-ui: done
