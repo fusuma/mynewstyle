@@ -193,13 +193,14 @@ describe('GET /api/admin/alerts/check', () => {
     expect(data).toHaveProperty('timestamp');
     expect(data).toHaveProperty('alertsTriggered');
     expect(typeof data.alertsTriggered).toBe('number');
-    // Each check should have value, threshold, triggered, sampleSize, dispatched
+    // Each check should have value, threshold, triggered, sampleSize, dispatched, and window (AC9)
     for (const check of Object.values(data.checks) as Record<string, unknown>[]) {
       expect(check).toHaveProperty('value');
       expect(check).toHaveProperty('threshold');
       expect(check).toHaveProperty('triggered');
       expect(check).toHaveProperty('sampleSize');
       expect(check).toHaveProperty('dispatched');
+      expect(check).toHaveProperty('window'); // AC9: time windows queryable from response
     }
   });
 

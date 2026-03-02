@@ -6,6 +6,9 @@
  * - Authorization: Bearer <ADMIN_SECRET> header (for manual admin access)
  * - Authorization: Bearer <CRON_SECRET> header (for Vercel Cron automated calls, AC #8)
  * - ?secret=<ADMIN_SECRET> query param (fallback for dashboard tools that can't set headers)
+ *
+ * Security note: CRON_SECRET is intentionally NOT accepted via query param to prevent
+ * it from appearing in server logs, referrer headers, or browser history.
  */
 import type { NextRequest } from 'next/server';
 
@@ -31,11 +34,12 @@ export function isAuthorized(request: NextRequest): boolean {
     return false;
   }
 
-  // Fallback: accept ?secret= query param for dashboard tools
+  // Fallback: accept ?secret= query param for dashboard tools that can't set headers.
+  // CRON_SECRET is deliberately NOT accepted here — it must only come via Bearer header
+  // to prevent exposure in server logs, referrer headers, or browser history.
   const querySecret = request.nextUrl.searchParams.get('secret');
   if (querySecret) {
     if (adminSecret && querySecret === adminSecret) return true;
-    if (cronSecret && querySecret === cronSecret) return true;
     return false;
   }
 

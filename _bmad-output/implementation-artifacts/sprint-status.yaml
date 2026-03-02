@@ -139,7 +139,7 @@ development_status:
   epic-10: in-progress
   10-1-analytics-event-system: done
   10-2-ai-pipeline-monitoring-dashboard: done
-  10-3-cost-and-quality-alerts: review
+  10-3-cost-and-quality-alerts: done
   10-4-funnel-analytics: ready-for-dev
   10-5-post-consultation-rating: ready-for-dev
   epic-10-retrospective: optional

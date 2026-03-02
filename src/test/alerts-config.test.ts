@@ -57,6 +57,7 @@ describe('Alert Configuration', () => {
       const costConfig = ALERT_CONFIGS[AlertType.cost];
       expect(costConfig.defaultThreshold).toBe(25);
       expect(costConfig.windowMs).toBe(60 * 60 * 1000); // 1 hour
+      expect(costConfig.windowDescription).toBe('1 hour');
       expect(costConfig.thresholdEnvVar).toBe('ALERT_COST_THRESHOLD_CENTS');
     });
 
@@ -65,6 +66,7 @@ describe('Alert Configuration', () => {
       const config = ALERT_CONFIGS[AlertType.error_rate];
       expect(config.defaultThreshold).toBe(5);
       expect(config.windowMs).toBe(60 * 60 * 1000); // 1 hour
+      expect(config.windowDescription).toBe('1 hour');
       expect(config.thresholdEnvVar).toBe('ALERT_ERROR_RATE_PERCENT');
     });
 
@@ -73,6 +75,7 @@ describe('Alert Configuration', () => {
       const config = ALERT_CONFIGS[AlertType.preview_quality];
       expect(config.defaultThreshold).toBe(20);
       expect(config.windowMs).toBe(24 * 60 * 60 * 1000); // 24 hours
+      expect(config.windowDescription).toBe('24 hours');
       expect(config.thresholdEnvVar).toBe('ALERT_PREVIEW_QUALITY_PERCENT');
     });
 
@@ -81,6 +84,7 @@ describe('Alert Configuration', () => {
       const config = ALERT_CONFIGS[AlertType.latency_p95];
       expect(config.defaultThreshold).toBe(45000);
       expect(config.windowMs).toBe(60 * 60 * 1000); // 1 hour
+      expect(config.windowDescription).toBe('1 hour');
       expect(config.thresholdEnvVar).toBe('ALERT_LATENCY_P95_MS');
     });
   });

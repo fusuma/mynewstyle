@@ -21,6 +21,8 @@ export interface AlertConfig {
   defaultThreshold: number;
   /** Rolling time window in milliseconds */
   windowMs: number;
+  /** Human-readable time window label (e.g. '1 hour', '24 hours') — used in webhook payloads and API responses */
+  windowDescription: string;
   /** Human-readable description of the alert */
   description: string;
 }
@@ -41,6 +43,7 @@ export const ALERT_CONFIGS: Record<AlertType, AlertConfig> = {
     thresholdEnvVar: 'ALERT_COST_THRESHOLD_CENTS',
     defaultThreshold: 25,
     windowMs: ONE_HOUR_MS,
+    windowDescription: '1 hour',
     description: 'Average AI cost per consultation (cents) over 1-hour rolling window',
   },
   [AlertType.error_rate]: {
@@ -48,6 +51,7 @@ export const ALERT_CONFIGS: Record<AlertType, AlertConfig> = {
     thresholdEnvVar: 'ALERT_ERROR_RATE_PERCENT',
     defaultThreshold: 5,
     windowMs: ONE_HOUR_MS,
+    windowDescription: '1 hour',
     description: 'AI call error rate (%) over 1-hour rolling window',
   },
   [AlertType.preview_quality]: {
@@ -55,6 +59,7 @@ export const ALERT_CONFIGS: Record<AlertType, AlertConfig> = {
     thresholdEnvVar: 'ALERT_PREVIEW_QUALITY_PERCENT',
     defaultThreshold: 20,
     windowMs: TWENTY_FOUR_HOURS_MS,
+    windowDescription: '24 hours',
     description: 'Preview quality gate failure rate (%) over 24-hour rolling window',
   },
   [AlertType.latency_p95]: {
@@ -62,6 +67,7 @@ export const ALERT_CONFIGS: Record<AlertType, AlertConfig> = {
     thresholdEnvVar: 'ALERT_LATENCY_P95_MS',
     defaultThreshold: 45000,
     windowMs: ONE_HOUR_MS,
+    windowDescription: '1 hour',
     description: 'P95 latency for face-analysis AI calls (ms) over 1-hour rolling window',
   },
 };

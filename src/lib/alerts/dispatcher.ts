@@ -110,8 +110,12 @@ export async function dispatchAlert(payload: AlertPayload): Promise<void> {
 /**
  * Orchestrates the full alert flow:
  * 1. Check if duplicate (already sent within dedup window)
- * 2. If not duplicate: dispatch alert + record in history
+ * 2. If not duplicate: record in history FIRST (guards deduplication), then dispatch
  * 3. Return whether alert was actually dispatched
+ *
+ * Recording is done before dispatching so that even if the serverless function times out
+ * after recording but before/during dispatch, the deduplication window is still honoured
+ * and the alert will not be re-fired on the next cron run.
  */
 export async function processAlert(
   supabase: SupabaseClient,
@@ -124,9 +128,10 @@ export async function processAlert(
     return { dispatched: false };
   }
 
-  // Dispatch and record concurrently — both are best-effort
-  await dispatchAlert(payload);
+  // Record first to ensure deduplication is honoured even if dispatch is slow or fails.
   await recordAlert(supabase, payload);
+  // Dispatch is best-effort — errors are caught and logged inside dispatchAlert.
+  await dispatchAlert(payload);
 
   return { dispatched: true };
 }

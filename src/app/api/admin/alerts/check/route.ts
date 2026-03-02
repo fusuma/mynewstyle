@@ -29,6 +29,8 @@ interface CheckResult {
   triggered: boolean;
   sampleSize: number;
   dispatched: boolean;
+  /** Time window for this check (e.g. '1 hour', '24 hours') — queryable per AC9 */
+  window: string;
 }
 
 export async function GET(request: NextRequest) {
@@ -55,7 +57,7 @@ export async function GET(request: NextRequest) {
         alertType: AlertType.cost,
         metricValue: costMetric.value,
         threshold: costThreshold,
-        windowDescription: '1 hour',
+        windowDescription: costConfig.windowDescription,
         sampleSize: costMetric.sampleSize,
         triggeredAt: now,
       };
@@ -69,6 +71,7 @@ export async function GET(request: NextRequest) {
       triggered: costTriggered,
       sampleSize: costMetric.sampleSize,
       dispatched: costDispatched,
+      window: costConfig.windowDescription,
     };
 
     // --- Check 2: Error Rate Alert ---
@@ -84,7 +87,7 @@ export async function GET(request: NextRequest) {
         alertType: AlertType.error_rate,
         metricValue: errorMetric.value,
         threshold: errorThreshold,
-        windowDescription: '1 hour',
+        windowDescription: errorConfig.windowDescription,
         sampleSize: errorMetric.sampleSize,
         triggeredAt: now,
       };
@@ -98,6 +101,7 @@ export async function GET(request: NextRequest) {
       triggered: errorTriggered,
       sampleSize: errorMetric.sampleSize,
       dispatched: errorDispatched,
+      window: errorConfig.windowDescription,
     };
 
     // --- Check 3: Preview Quality Alert ---
@@ -113,7 +117,7 @@ export async function GET(request: NextRequest) {
         alertType: AlertType.preview_quality,
         metricValue: previewMetric.value,
         threshold: previewThreshold,
-        windowDescription: '24 hours',
+        windowDescription: previewConfig.windowDescription,
         sampleSize: previewMetric.sampleSize,
         triggeredAt: now,
       };
@@ -127,6 +131,7 @@ export async function GET(request: NextRequest) {
       triggered: previewTriggered,
       sampleSize: previewMetric.sampleSize,
       dispatched: previewDispatched,
+      window: previewConfig.windowDescription,
     };
 
     // --- Check 4: Latency P95 Alert ---
@@ -142,7 +147,7 @@ export async function GET(request: NextRequest) {
         alertType: AlertType.latency_p95,
         metricValue: latencyMetric.value,
         threshold: latencyThreshold,
-        windowDescription: '1 hour',
+        windowDescription: latencyConfig.windowDescription,
         sampleSize: latencyMetric.sampleSize,
         triggeredAt: now,
       };
@@ -156,6 +161,7 @@ export async function GET(request: NextRequest) {
       triggered: latencyTriggered,
       sampleSize: latencyMetric.sampleSize,
       dispatched: latencyDispatched,
+      window: latencyConfig.windowDescription,
     };
 
     return NextResponse.json({

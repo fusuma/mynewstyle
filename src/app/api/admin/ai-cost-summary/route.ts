@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { isAuthorized } from '@/lib/admin/auth';
-
-const ALERT_THRESHOLD_CENTS = 25; // €0.25
+import { AlertType, getAlertThreshold } from '@/lib/alerts/config';
 
 type Period = '24h' | '7d' | '30d' | 'all';
 
@@ -219,7 +218,7 @@ export async function GET(request: NextRequest) {
         consultation: avgConsultationCents,
       },
       totalConsultations: totalConsultations ?? 0,
-      alertTriggered: avgCostCentsPerConsultation > ALERT_THRESHOLD_CENTS,
+      alertTriggered: avgCostCentsPerConsultation > getAlertThreshold(AlertType.cost),
       // New fields (additive)
       avgLatencyMsPerStep,
       successRatePerStep,

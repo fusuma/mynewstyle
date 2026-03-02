@@ -1,6 +1,6 @@
 # Story 10.3: Cost & Quality Alerts
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -314,3 +314,4 @@ No blocking issues encountered. All implementations followed TDD (RED → GREEN 
 ## Change Log
 
 - 2026-03-02: Story 10.3 implemented — Cost & Quality Alerts backend infrastructure. Created alert_history database migration with p95 latency RPC function, alert configuration module, metric query functions, alert dispatcher with deduplication, GET /api/admin/alerts/check API route, Vercel cron configuration, shared admin auth utility. 42 new tests added; all 2111 tests pass.
+- 2026-03-02: Code review fixes applied — (1) Security: CRON_SECRET no longer accepted via query param in src/lib/admin/auth.ts to prevent token leakage in logs/referrer headers; (2) Deduplication safety: processAlert now records alert in DB before dispatching to prevent dedup bypass if serverless function times out mid-flight; (3) AC9 compliance: CheckResult response now includes window field for each check so time windows are queryable from JSON; (4) Config-driven windowDescription: hardcoded magic strings replaced with windowDescription field on AlertConfig, derived from config in route; (5) Consistency: ai-cost-summary alertTriggered threshold now uses getAlertThreshold(AlertType.cost) from shared config instead of hardcoded constant. All 2111 tests pass.
