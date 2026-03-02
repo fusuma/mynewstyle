@@ -5,9 +5,8 @@ import { NextRequest } from 'next/server';
 // Mock AI router
 vi.mock('@/lib/ai', () => ({
   getAIRouter: vi.fn(),
-  FaceAnalysisSchema: {
-    safeParse: vi.fn(),
-  },
+  validateFaceAnalysis: vi.fn(),
+  logValidationFailure: vi.fn(),
 }));
 
 // Mock Supabase server client
@@ -16,7 +15,7 @@ vi.mock('@/lib/supabase/server', () => ({
 }));
 
 // Import after mocks
-import { getAIRouter, FaceAnalysisSchema } from '@/lib/ai';
+import { getAIRouter, validateFaceAnalysis, logValidationFailure } from '@/lib/ai';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 
 // Valid FaceAnalysis object (matches FaceAnalysisSchema)
@@ -37,7 +36,7 @@ const validFaceAnalysis = {
   },
 };
 
-// Invalid FaceAnalysis (fails Zod)
+// Invalid FaceAnalysis (fails validation)
 const invalidFaceAnalysis = {
   faceShape: 'pentagon', // invalid enum
   confidence: 1.5, // out of range
@@ -102,8 +101,8 @@ describe('POST /api/consultation/analyze', () => {
       execute: vi.fn().mockResolvedValue(validFaceAnalysis),
     };
     (getAIRouter as ReturnType<typeof vi.fn>).mockReturnValue(mockRouter);
-    (FaceAnalysisSchema.safeParse as ReturnType<typeof vi.fn>)
-      .mockReturnValue({ success: true, data: validFaceAnalysis });
+    (validateFaceAnalysis as ReturnType<typeof vi.fn>)
+      .mockReturnValue({ valid: true, data: validFaceAnalysis });
 
     const request = createRequest(validPayload);
     const response = await POST(request);
@@ -124,9 +123,9 @@ describe('POST /api/consultation/analyze', () => {
     (getAIRouter as ReturnType<typeof vi.fn>).mockReturnValue(mockRouter);
 
     // First call fails validation, second succeeds
-    (FaceAnalysisSchema.safeParse as ReturnType<typeof vi.fn>)
-      .mockReturnValueOnce({ success: false, error: { issues: [{ message: 'Invalid' }] } })
-      .mockReturnValueOnce({ success: true, data: validFaceAnalysis });
+    (validateFaceAnalysis as ReturnType<typeof vi.fn>)
+      .mockReturnValueOnce({ valid: false, reason: 'schema_invalid', details: [{ message: 'Invalid' }] })
+      .mockReturnValueOnce({ valid: true, data: validFaceAnalysis });
 
     const request = createRequest(validPayload);
     const response = await POST(request);
@@ -148,8 +147,8 @@ describe('POST /api/consultation/analyze', () => {
     (getAIRouter as ReturnType<typeof vi.fn>).mockReturnValue(mockRouter);
 
     const zodIssues = [{ message: 'Invalid faceShape' }];
-    (FaceAnalysisSchema.safeParse as ReturnType<typeof vi.fn>)
-      .mockReturnValue({ success: false, error: { issues: zodIssues } });
+    (validateFaceAnalysis as ReturnType<typeof vi.fn>)
+      .mockReturnValue({ valid: false, reason: 'schema_invalid', details: zodIssues });
 
     const request = createRequest(validPayload);
     const response = await POST(request);
@@ -158,6 +157,31 @@ describe('POST /api/consultation/analyze', () => {
     expect(response.status).toBe(422);
     expect(data.error).toBe('AI analysis failed validation');
     expect(data.details).toEqual(zodIssues);
+  });
+
+  it('calls logValidationFailure when both AI attempts fail validation', async () => {
+    const mockSupabase = createMockSupabase();
+    (createServerSupabaseClient as ReturnType<typeof vi.fn>).mockReturnValue(mockSupabase);
+
+    const mockRouter = {
+      execute: vi.fn().mockResolvedValue(invalidFaceAnalysis),
+    };
+    (getAIRouter as ReturnType<typeof vi.fn>).mockReturnValue(mockRouter);
+
+    (validateFaceAnalysis as ReturnType<typeof vi.fn>)
+      .mockReturnValue({ valid: false, reason: 'low_confidence', details: [] });
+
+    const request = createRequest(validPayload);
+    await POST(request);
+
+    expect(logValidationFailure).toHaveBeenCalledWith(
+      expect.objectContaining({
+        context: 'analyze',
+        reason: 'low_confidence',
+        details: [],
+        timestamp: expect.any(String),
+      })
+    );
   });
 
   it('returns 400 when consultationId is missing', async () => {
@@ -218,8 +242,8 @@ describe('POST /api/consultation/analyze', () => {
       execute: vi.fn().mockResolvedValue(validFaceAnalysis),
     };
     (getAIRouter as ReturnType<typeof vi.fn>).mockReturnValue(mockRouter);
-    (FaceAnalysisSchema.safeParse as ReturnType<typeof vi.fn>)
-      .mockReturnValue({ success: true, data: validFaceAnalysis });
+    (validateFaceAnalysis as ReturnType<typeof vi.fn>)
+      .mockReturnValue({ valid: true, data: validFaceAnalysis });
 
     const request = createRequest(validPayload);
     const response = await POST(request);
@@ -239,8 +263,8 @@ describe('POST /api/consultation/analyze', () => {
       execute: vi.fn().mockResolvedValue(validFaceAnalysis),
     };
     (getAIRouter as ReturnType<typeof vi.fn>).mockReturnValue(mockRouter);
-    (FaceAnalysisSchema.safeParse as ReturnType<typeof vi.fn>)
-      .mockReturnValue({ success: true, data: validFaceAnalysis });
+    (validateFaceAnalysis as ReturnType<typeof vi.fn>)
+      .mockReturnValue({ valid: true, data: validFaceAnalysis });
 
     const request = createRequest(payloadWithoutMime);
     const response = await POST(request);
@@ -274,8 +298,8 @@ describe('POST /api/consultation/analyze', () => {
       execute: vi.fn().mockResolvedValue(validFaceAnalysis),
     };
     (getAIRouter as ReturnType<typeof vi.fn>).mockReturnValue(mockRouter);
-    (FaceAnalysisSchema.safeParse as ReturnType<typeof vi.fn>)
-      .mockReturnValue({ success: true, data: validFaceAnalysis });
+    (validateFaceAnalysis as ReturnType<typeof vi.fn>)
+      .mockReturnValue({ valid: true, data: validFaceAnalysis });
 
     const request = createRequest(validPayload);
     await POST(request);

@@ -19,6 +19,10 @@ export type { PromptContent, PromptTask, PromptVersion, PromptParams } from './p
 export { FaceAnalysisSchema, ConsultationSchema } from './schemas';
 export type { FaceAnalysisOutput, ConsultationOutput } from './schemas';
 
+// Validation exports
+export { validateFaceAnalysis, validateConsultation, logValidationFailure } from './validation';
+export type { ValidationResult, ValidationFailureContext } from './validation';
+
 // Re-export AI types from types package
 export type {
   FaceShape,

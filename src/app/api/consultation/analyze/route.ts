@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { getAIRouter, FaceAnalysisSchema } from '@/lib/ai';
+import { getAIRouter, validateFaceAnalysis, logValidationFailure } from '@/lib/ai';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 
 // Max base64 size: ~4MB input photo (base64 is ~33% larger than binary, so 4MB binary → ~5.4MB base64)
@@ -63,25 +63,32 @@ export async function POST(request: NextRequest) {
 
     // First attempt (no temperature override)
     const rawResult = await router.execute((p) => p.analyzeFace(photoBuffer));
-    let validated = FaceAnalysisSchema.safeParse(rawResult);
+    let validated = validateFaceAnalysis(rawResult);
 
     // Retry with lower temperature if validation fails
-    if (!validated.success) {
+    if (!validated.valid) {
       const retryResult = await router.execute((p) =>
         p.analyzeFace(photoBuffer, { temperature: 0.2 })
       );
-      validated = FaceAnalysisSchema.safeParse(retryResult);
+      validated = validateFaceAnalysis(retryResult);
     }
 
     // Both attempts failed validation
-    if (!validated.success) {
+    if (!validated.valid) {
       await supabase
         .from('consultations')
         .update({ status: 'failed' })
         .eq('id', consultationId);
 
+      logValidationFailure({
+        context: 'analyze',
+        reason: validated.reason,
+        details: validated.details,
+        timestamp: new Date().toISOString(),
+      });
+
       return NextResponse.json(
-        { error: 'AI analysis failed validation', details: validated.error.issues },
+        { error: 'AI analysis failed validation', details: validated.details },
         { status: 422 }
       );
     }

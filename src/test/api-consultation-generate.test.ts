@@ -5,9 +5,8 @@ import { NextRequest } from 'next/server';
 // Mock AI router — must be at module top level (Vitest hoists these)
 vi.mock('@/lib/ai', () => ({
   getAIRouter: vi.fn(),
-  ConsultationSchema: {
-    safeParse: vi.fn(),
-  },
+  validateConsultation: vi.fn(),
+  logValidationFailure: vi.fn(),
   getAICallLogs: vi.fn().mockReturnValue([]),
   clearAICallLogs: vi.fn(),
 }));
@@ -18,7 +17,7 @@ vi.mock('@/lib/supabase/server', () => ({
 }));
 
 // Import after mocks
-import { getAIRouter, ConsultationSchema, getAICallLogs } from '@/lib/ai';
+import { getAIRouter, validateConsultation, logValidationFailure, getAICallLogs } from '@/lib/ai';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 
 // Valid ConsultationOutput matching ConsultationSchema
@@ -151,8 +150,8 @@ describe('POST /api/consultation/generate', () => {
 
     const mockRouter = { execute: vi.fn().mockResolvedValue(validConsultation) };
     (getAIRouter as ReturnType<typeof vi.fn>).mockReturnValue(mockRouter);
-    (ConsultationSchema.safeParse as ReturnType<typeof vi.fn>).mockReturnValue({
-      success: true,
+    (validateConsultation as ReturnType<typeof vi.fn>).mockReturnValue({
+      valid: true,
       data: validConsultation,
     });
 
@@ -174,9 +173,9 @@ describe('POST /api/consultation/generate', () => {
     (getAIRouter as ReturnType<typeof vi.fn>).mockReturnValue(mockRouter);
 
     // First call fails validation, second succeeds
-    (ConsultationSchema.safeParse as ReturnType<typeof vi.fn>)
-      .mockReturnValueOnce({ success: false, error: { issues: [{ message: 'Invalid' }] } })
-      .mockReturnValueOnce({ success: true, data: validConsultation });
+    (validateConsultation as ReturnType<typeof vi.fn>)
+      .mockReturnValueOnce({ valid: false, reason: 'schema_invalid', details: [{ message: 'Invalid' }] })
+      .mockReturnValueOnce({ valid: true, data: validConsultation });
 
     const request = createRequest({ consultationId: validConsultationId });
     const response = await POST(request);
@@ -197,9 +196,10 @@ describe('POST /api/consultation/generate', () => {
     (getAIRouter as ReturnType<typeof vi.fn>).mockReturnValue(mockRouter);
 
     const zodIssues = [{ message: 'Invalid consultation structure' }];
-    (ConsultationSchema.safeParse as ReturnType<typeof vi.fn>).mockReturnValue({
-      success: false,
-      error: { issues: zodIssues },
+    (validateConsultation as ReturnType<typeof vi.fn>).mockReturnValue({
+      valid: false,
+      reason: 'schema_invalid',
+      details: zodIssues,
     });
 
     const request = createRequest({ consultationId: validConsultationId });
@@ -209,6 +209,33 @@ describe('POST /api/consultation/generate', () => {
     expect(response.status).toBe(422);
     expect(data.error).toBe('AI consultation failed validation');
     expect(data.details).toEqual(zodIssues);
+  });
+
+  // AC8: calls logValidationFailure when both attempts fail
+  it('calls logValidationFailure when both AI attempts fail validation', async () => {
+    const mockSupabase = createMockSupabase();
+    (createServerSupabaseClient as ReturnType<typeof vi.fn>).mockReturnValue(mockSupabase);
+
+    const mockRouter = { execute: vi.fn().mockResolvedValue({}) };
+    (getAIRouter as ReturnType<typeof vi.fn>).mockReturnValue(mockRouter);
+
+    (validateConsultation as ReturnType<typeof vi.fn>).mockReturnValue({
+      valid: false,
+      reason: 'match_scores_all_equal',
+      details: [],
+    });
+
+    const request = createRequest({ consultationId: validConsultationId });
+    await POST(request);
+
+    expect(logValidationFailure).toHaveBeenCalledWith(
+      expect.objectContaining({
+        context: 'generate',
+        reason: 'match_scores_all_equal',
+        details: [],
+        timestamp: expect.any(String),
+      })
+    );
   });
 
   // AC1: missing consultationId → 400
@@ -301,8 +328,8 @@ describe('POST /api/consultation/generate', () => {
 
     const mockRouter = { execute: vi.fn().mockResolvedValue(validConsultation) };
     (getAIRouter as ReturnType<typeof vi.fn>).mockReturnValue(mockRouter);
-    (ConsultationSchema.safeParse as ReturnType<typeof vi.fn>).mockReturnValue({
-      success: true,
+    (validateConsultation as ReturnType<typeof vi.fn>).mockReturnValue({
+      valid: true,
       data: validConsultation,
     });
 
@@ -345,8 +372,8 @@ describe('POST /api/consultation/generate', () => {
 
     const mockRouter = { execute: vi.fn().mockResolvedValue(validConsultation) };
     (getAIRouter as ReturnType<typeof vi.fn>).mockReturnValue(mockRouter);
-    (ConsultationSchema.safeParse as ReturnType<typeof vi.fn>).mockReturnValue({
-      success: true,
+    (validateConsultation as ReturnType<typeof vi.fn>).mockReturnValue({
+      valid: true,
       data: validConsultation,
     });
 
@@ -381,8 +408,8 @@ describe('POST /api/consultation/generate', () => {
 
     const mockRouter = { execute: vi.fn().mockResolvedValue(validConsultation) };
     (getAIRouter as ReturnType<typeof vi.fn>).mockReturnValue(mockRouter);
-    (ConsultationSchema.safeParse as ReturnType<typeof vi.fn>).mockReturnValue({
-      success: true,
+    (validateConsultation as ReturnType<typeof vi.fn>).mockReturnValue({
+      valid: true,
       data: validConsultation,
     });
 

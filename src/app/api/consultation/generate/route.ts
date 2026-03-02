@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { getAIRouter, ConsultationSchema, getAICallLogs } from '@/lib/ai';
+import { getAIRouter, validateConsultation, logValidationFailure, getAICallLogs } from '@/lib/ai';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import type { FaceAnalysis, QuestionnaireData } from '@/types';
 import type { ConsultationOutput, AIProvider } from '@/lib/ai';
@@ -117,15 +117,15 @@ export async function POST(request: NextRequest) {
     const rawResult = await router.execute((p: AIProvider) =>
       p.generateConsultation(faceAnalysis, questionnaire)
     );
-    let validated = ConsultationSchema.safeParse(rawResult);
+    let validated = validateConsultation(rawResult);
 
     // Retry if validation fails — natural LLM variance may produce valid output on retry
     // NOTE: generateConsultation does not accept temperature param; just call it again
-    if (!validated.success) {
+    if (!validated.valid) {
       const retryResult = await router.execute((p: AIProvider) =>
         p.generateConsultation(faceAnalysis, questionnaire)
       );
-      validated = ConsultationSchema.safeParse(retryResult);
+      validated = validateConsultation(retryResult);
     }
 
     // Compute cumulative Step 2 AI cost from all AI calls made during this request
@@ -136,14 +136,22 @@ export async function POST(request: NextRequest) {
     const existingCostCents = (consultation.ai_cost_cents as number) ?? 0;
     const totalCostCents = existingCostCents + Math.round(step2CostCents);
 
-    // Both attempts failed schema validation
-    if (!validated.success) {
+    // Both attempts failed validation
+    if (!validated.valid) {
       await supabase
         .from('consultations')
         .update({ status: 'failed' })
         .eq('id', consultationId);
+
+      logValidationFailure({
+        context: 'generate',
+        reason: validated.reason,
+        details: validated.details,
+        timestamp: new Date().toISOString(),
+      });
+
       return NextResponse.json(
-        { error: 'AI consultation failed validation', details: validated.error.issues },
+        { error: 'AI consultation failed validation', details: validated.details },
         { status: 422 }
       );
     }
