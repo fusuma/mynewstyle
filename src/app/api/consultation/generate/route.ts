@@ -71,10 +71,10 @@ export async function POST(request: NextRequest) {
   const { consultationId } = parsed.data;
   const supabase = createServerSupabaseClient();
 
-  // 2. Fetch consultation record
+  // 2. Fetch consultation record — include photo_hash, questionnaire_hash, gender for cache lookup
   const { data: consultation, error: fetchError } = await supabase
     .from('consultations')
-    .select('id, status, payment_status, face_analysis, questionnaire_responses, ai_cost_cents')
+    .select('id, status, payment_status, face_analysis, questionnaire_responses, ai_cost_cents, photo_hash, questionnaire_hash, gender')
     .eq('id', consultationId)
     .single();
 
@@ -102,11 +102,92 @@ export async function POST(request: NextRequest) {
     // Status is complete but no recommendations found — fall through to re-generate
   }
 
-  // 5. Extract analysis + questionnaire from DB (do NOT accept these in request body)
+  // 5. Cache lookup — AFTER idempotency check, BEFORE AI call (AC5, AC6)
+  // Only attempt if both hashes are available (backward compat with old consultations)
+  if (consultation.photo_hash && consultation.questionnaire_hash) {
+    try {
+      const { data: cachedConsultation } = await supabase
+        .from('consultations')
+        .select('id')
+        .eq('photo_hash', consultation.photo_hash)
+        .eq('questionnaire_hash', consultation.questionnaire_hash)
+        .eq('gender', consultation.gender)
+        .eq('status', 'complete')
+        .neq('id', consultationId)
+        .limit(1)
+        .maybeSingle();
+
+      if (cachedConsultation) {
+        // Verify it has recommendations (not just a status='complete' with no data)
+        const { data: cachedRecs } = await supabase
+          .from('recommendations')
+          .select('id, rank, style_name, justification, match_score, difficulty_level')
+          .eq('consultation_id', cachedConsultation.id)
+          .order('rank');
+
+        if (cachedRecs && cachedRecs.length > 0) {
+          // Fetch styles_to_avoid and grooming_tips from cached consultation
+          const { data: cachedStylesAvoidData } = await supabase
+            .from('styles_to_avoid')
+            .select('style_name, reason')
+            .eq('consultation_id', cachedConsultation.id);
+
+          const { data: cachedTipsData } = await supabase
+            .from('grooming_tips')
+            .select('category, tip_text, icon')
+            .eq('consultation_id', cachedConsultation.id);
+
+          const cachedStylesAvoid = cachedStylesAvoidData ?? [];
+          const cachedTips = cachedTipsData ?? [];
+
+          // Build ConsultationOutput shape for storeConsultationResults reuse
+          const consultationOutput: ConsultationOutput = {
+            recommendations: cachedRecs.map((r) => ({
+              styleName: r.style_name,
+              justification: r.justification,
+              matchScore: r.match_score,
+              difficultyLevel: r.difficulty_level,
+            })),
+            stylesToAvoid: cachedStylesAvoid.map((s) => ({
+              styleName: s.style_name,
+              reason: s.reason,
+            })),
+            groomingTips: cachedTips.map((t) => ({
+              category: t.category,
+              tipText: t.tip_text,
+              icon: t.icon,
+            })),
+          };
+
+          // Copy cached data into current consultation
+          await storeConsultationResults(supabase, consultationId, consultationOutput);
+
+          const { error: cacheStatusUpdateError } = await supabase
+            .from('consultations')
+            .update({ status: 'complete', completed_at: new Date().toISOString() })
+            .eq('id', consultationId);
+          if (cacheStatusUpdateError) {
+            console.error('[POST /api/consultation/generate] Cache hit status update failed:', cacheStatusUpdateError);
+            // Non-fatal: client receives correct cached data; consultation may not reflect complete status
+          }
+
+          return NextResponse.json(
+            { consultation: consultationOutput, cached: true },
+            { status: 200 }
+          );
+        }
+      }
+    } catch (cacheError) {
+      console.error('[POST /api/consultation/generate] Cache lookup failed, falling through to AI:', cacheError);
+      // Non-fatal: continue to AI call
+    }
+  }
+
+  // 6. Extract analysis + questionnaire from DB (do NOT accept these in request body)
   const faceAnalysis = consultation.face_analysis as FaceAnalysis;
   const questionnaire = consultation.questionnaire_responses as QuestionnaireData;
 
-  // 6. Run AI consultation generation with retry on validation failure
+  // 7. Run AI consultation generation with retry on validation failure
   try {
     const router = getAIRouter();
 
@@ -160,11 +241,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 7. Store in normalized tables (best-effort)
+    // 8. Store in normalized tables (best-effort)
     const consultationData = validated.data;
     await storeConsultationResults(supabase, consultationId, consultationData);
 
-    // 8. Update consultation status to complete and persist Step 2 AI cost (AC9)
+    // 9. Update consultation status to complete and persist Step 2 AI cost (AC9)
     const { error: updateError } = await supabase
       .from('consultations')
       .update({

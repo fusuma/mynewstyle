@@ -61,6 +61,33 @@ const validConsultation = {
   ],
 };
 
+const validConsultationRecordWithHashes = {
+  id: '550e8400-e29b-41d4-a716-446655440000',
+  status: 'analyzing',
+  payment_status: 'paid',
+  face_analysis: {
+    faceShape: 'oval',
+    confidence: 0.92,
+    proportions: {
+      foreheadRatio: 0.78,
+      cheekboneRatio: 1.0,
+      jawRatio: 0.72,
+      faceLength: 1.35,
+    },
+    hairAssessment: {
+      type: 'straight',
+      texture: 'medium',
+      density: 'medium',
+      currentStyle: 'short',
+    },
+  },
+  questionnaire_responses: { gender: 'male', lifestyle: 'active', maintenance: 'low' },
+  ai_cost_cents: 1,
+  photo_hash: 'abc123def456abc123def456abc123def456abc123def456abc123def456abc1',
+  questionnaire_hash: 'def456abc123def456abc123def456abc123def456abc123def456abc123def4',
+  gender: 'male',
+};
+
 const validConsultationRecord = {
   id: '550e8400-e29b-41d4-a716-446655440000',
   status: 'analyzing',
@@ -387,6 +414,197 @@ describe('POST /api/consultation/generate', () => {
     expect(response.status).toBe(200);
     expect(data.consultation).toEqual(validConsultation);
     // generateConsultation should have been called (via execute)
+    expect(mockRouter.execute).toHaveBeenCalledTimes(1);
+  });
+
+  // AC: 5, 6, 8 — cache hit path in generate route returns copied recommendations with no AI call
+  it('returns cached consultation when cache hit found in generate route (no AI call)', async () => {
+    const cachedConsultationId = '660e8400-e29b-41d4-a716-446655440001';
+    const cachedRecs = [
+      {
+        id: 'rec-1',
+        rank: 1,
+        style_name: 'Undercut Clássico',
+        justification: 'Great for oval face',
+        match_score: 0.92,
+        difficulty_level: 'medium',
+      },
+    ];
+    const cachedStylesAvoid = [{ style_name: 'Franja Volumosa', reason: 'Too heavy' }];
+    const cachedTips = [{ category: 'products', tip_text: 'Use pomada', icon: '💆' }];
+
+    const mockUpdateEq = vi.fn().mockResolvedValue({ data: null, error: null });
+    const mockUpdate = vi.fn().mockReturnValue({ eq: mockUpdateEq });
+    const mockInsert = vi.fn().mockResolvedValue({ error: null });
+
+    // Track consultation calls separately (initial fetch vs cache lookup)
+    let consultationsCallCount = 0;
+    let recommendationsCallCount = 0;
+
+    // Helper: build a deep chainable mock that supports .eq().eq().neq().limit().maybeSingle()
+    function buildDeepChain(terminalResult: unknown) {
+      const maybeSingle = vi.fn().mockResolvedValue(terminalResult);
+      const limitFn = vi.fn().mockReturnValue({ maybeSingle });
+      const obj: Record<string, unknown> = {};
+      obj['maybeSingle'] = maybeSingle;
+      obj['limit'] = limitFn;
+      obj['single'] = vi.fn().mockResolvedValue(terminalResult);
+      obj['order'] = vi.fn().mockResolvedValue(terminalResult);
+      // neq always leads to the terminal
+      obj['neq'] = vi.fn().mockReturnValue({ limit: limitFn, maybeSingle });
+      // eq returns the same object for deep chaining (neq will be accessible)
+      obj['eq'] = vi.fn().mockReturnValue(obj);
+      return obj;
+    }
+
+    const mockFrom = vi.fn().mockImplementation((table: string) => {
+      if (table === 'consultations') {
+        consultationsCallCount++;
+        if (consultationsCallCount === 1) {
+          // Initial consultation fetch
+          const chain = buildDeepChain({ data: validConsultationRecordWithHashes, error: null });
+          return { select: vi.fn().mockReturnValue(chain), update: mockUpdate, insert: mockInsert };
+        } else {
+          // Cache lookup — returns cached consultation id
+          const chain = buildDeepChain({ data: { id: cachedConsultationId }, error: null });
+          return { select: vi.fn().mockReturnValue(chain), update: mockUpdate, insert: mockInsert };
+        }
+      } else if (table === 'recommendations') {
+        recommendationsCallCount++;
+        if (recommendationsCallCount === 1) {
+          // Cached recommendations fetch
+          const chain = buildDeepChain({ data: cachedRecs, error: null });
+          return { select: vi.fn().mockReturnValue(chain), update: mockUpdate, insert: mockInsert };
+        } else {
+          // Insert for copied recs
+          return { select: vi.fn(), update: mockUpdate, insert: mockInsert };
+        }
+      } else if (table === 'styles_to_avoid') {
+        const chain = buildDeepChain({ data: cachedStylesAvoid, error: null });
+        return { select: vi.fn().mockReturnValue(chain), update: mockUpdate, insert: mockInsert };
+      } else if (table === 'grooming_tips') {
+        const chain = buildDeepChain({ data: cachedTips, error: null });
+        return { select: vi.fn().mockReturnValue(chain), update: mockUpdate, insert: mockInsert };
+      } else {
+        const chain = buildDeepChain({ data: null, error: null });
+        return { select: vi.fn().mockReturnValue(chain), update: mockUpdate, insert: mockInsert };
+      }
+    });
+
+    (createServerSupabaseClient as ReturnType<typeof vi.fn>).mockReturnValue({
+      from: mockFrom,
+    });
+
+    const request = createRequest({ consultationId: validConsultationId });
+    const response = await POST(request);
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.cached).toBe(true);
+    expect(data.consultation).toBeDefined();
+    // AI should NOT be called on cache hit
+    expect(getAIRouter).not.toHaveBeenCalled();
+    // persistAICallLog should NOT be called
+    expect(persistAICallLog).not.toHaveBeenCalled();
+  });
+
+  // AC: 5 — cache miss path proceeds with normal AI call when no cache found
+  it('proceeds with AI call when cache miss in generate route', async () => {
+    // Use consultation with hashes but no cache hit
+    const consultationWithHashes = {
+      ...validConsultationRecord,
+      photo_hash: 'abc123def456abc123def456abc123def456abc123def456abc123def456abc1',
+      questionnaire_hash: 'def456abc123def456abc123def456abc123def456abc123def456abc123def4',
+      gender: 'male',
+    };
+
+    const mockUpdateEq = vi.fn().mockResolvedValue({ data: null, error: null });
+    const mockUpdate = vi.fn().mockReturnValue({ eq: mockUpdateEq });
+    const mockInsert = vi.fn().mockResolvedValue({ error: null });
+
+    function buildDeepChain(terminalResult: unknown) {
+      const maybeSingle = vi.fn().mockResolvedValue(terminalResult);
+      const limitFn = vi.fn().mockReturnValue({ maybeSingle });
+      const obj: Record<string, unknown> = {};
+      obj['maybeSingle'] = maybeSingle;
+      obj['limit'] = limitFn;
+      obj['single'] = vi.fn().mockResolvedValue(terminalResult);
+      obj['order'] = vi.fn().mockResolvedValue(terminalResult);
+      obj['neq'] = vi.fn().mockReturnValue({ limit: limitFn, maybeSingle });
+      obj['eq'] = vi.fn().mockReturnValue(obj);
+      return obj;
+    }
+
+    let consultationsCallCount = 0;
+
+    const mockFrom = vi.fn().mockImplementation((table: string) => {
+      if (table === 'consultations') {
+        consultationsCallCount++;
+        if (consultationsCallCount === 1) {
+          // Initial consultation fetch
+          const chain = buildDeepChain({ data: consultationWithHashes, error: null });
+          return { select: vi.fn().mockReturnValue(chain), update: mockUpdate, insert: mockInsert };
+        } else {
+          // Cache lookup — returns null (cache miss)
+          const chain = buildDeepChain({ data: null, error: null });
+          return { select: vi.fn().mockReturnValue(chain), update: mockUpdate, insert: mockInsert };
+        }
+      } else {
+        const chain = buildDeepChain({ data: [], error: null });
+        return { select: vi.fn().mockReturnValue(chain), update: mockUpdate, insert: mockInsert };
+      }
+    });
+
+    (createServerSupabaseClient as ReturnType<typeof vi.fn>).mockReturnValue({
+      from: mockFrom,
+    });
+
+    const mockRouter = { execute: vi.fn().mockResolvedValue(validConsultation) };
+    (getAIRouter as ReturnType<typeof vi.fn>).mockReturnValue(mockRouter);
+    (validateConsultation as ReturnType<typeof vi.fn>).mockReturnValue({
+      valid: true,
+      data: validConsultation,
+    });
+
+    const request = createRequest({ consultationId: validConsultationId });
+    const response = await POST(request);
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.consultation).toEqual(validConsultation);
+    expect(data.cached).toBeUndefined();
+    // AI should be called on cache miss
+    expect(mockRouter.execute).toHaveBeenCalledTimes(1);
+  });
+
+  // AC: 6 — consultation with null hashes skips cache lookup entirely
+  it('skips cache lookup when photo_hash is null (backward compat)', async () => {
+    const consultationNoHashes = {
+      ...validConsultationRecord,
+      photo_hash: null,
+      questionnaire_hash: null,
+      gender: 'male',
+    };
+
+    const mockSupabase = createMockSupabase({
+      consultationData: consultationNoHashes,
+    });
+    (createServerSupabaseClient as ReturnType<typeof vi.fn>).mockReturnValue(mockSupabase);
+
+    const mockRouter = { execute: vi.fn().mockResolvedValue(validConsultation) };
+    (getAIRouter as ReturnType<typeof vi.fn>).mockReturnValue(mockRouter);
+    (validateConsultation as ReturnType<typeof vi.fn>).mockReturnValue({
+      valid: true,
+      data: validConsultation,
+    });
+
+    const request = createRequest({ consultationId: validConsultationId });
+    const response = await POST(request);
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.consultation).toEqual(validConsultation);
+    // AI should be called since no hashes to lookup
     expect(mockRouter.execute).toHaveBeenCalledTimes(1);
   });
 

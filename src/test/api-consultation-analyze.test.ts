@@ -65,11 +65,34 @@ function createMockSupabase({
 } = {}) {
   const mockSingle = vi.fn().mockResolvedValue(
     consultationFound
-      ? { data: { id: validPayload.consultationId, status: 'pending' }, error: null }
+      ? {
+          data: {
+            id: validPayload.consultationId,
+            status: 'pending',
+            questionnaire_responses: { gender: 'male', lifestyle: 'active' },
+            gender: 'male',
+          },
+          error: null,
+        }
       : { data: null, error: { message: 'Not found' } }
   );
-  const mockEq = vi.fn().mockReturnValue({ single: mockSingle });
-  const mockSelect = vi.fn().mockReturnValue({ eq: mockEq });
+
+  const mockMaybeSingle = vi.fn().mockResolvedValue({ data: null, error: null });
+  const mockLimit = vi.fn().mockReturnValue({ maybeSingle: mockMaybeSingle });
+  const mockNeq = vi.fn().mockReturnValue({ limit: mockLimit });
+
+  // Build a deeply chainable eq mock that supports both single() and further chaining
+  const buildEqChain = (): Record<string, unknown> => {
+    const chain: Record<string, unknown> = {};
+    chain['single'] = mockSingle;
+    chain['maybeSingle'] = mockMaybeSingle;
+    chain['limit'] = mockLimit;
+    chain['neq'] = vi.fn().mockReturnValue({ limit: mockLimit, maybeSingle: mockMaybeSingle });
+    chain['eq'] = vi.fn().mockReturnValue(chain);
+    return chain;
+  };
+
+  const mockSelect = vi.fn().mockReturnValue(buildEqChain());
 
   const mockUpdateEq = vi.fn().mockResolvedValue({ data: null, error: updateError });
   const mockUpdate = vi.fn().mockReturnValue({ eq: mockUpdateEq });
@@ -87,6 +110,72 @@ function createMockSupabase({
     _mockSingle: mockSingle,
     _mockUpdateEq: mockUpdateEq,
     _mockUpdate: mockUpdate,
+    _mockMaybeSingle: mockMaybeSingle,
+  };
+}
+
+/**
+ * Creates a mock Supabase for cache-hit/miss test scenarios.
+ * Supports multi-call patterns: initial consultation fetch, then cache lookup.
+ */
+function createMockSupabaseForCacheTests({
+  consultationData = {
+    id: validPayload.consultationId,
+    status: 'pending',
+    questionnaire_responses: { gender: 'male', lifestyle: 'active' },
+    gender: 'male',
+  } as Record<string, unknown>,
+  cachedConsultation = null as { face_analysis: unknown } | null,
+  updateError = null as Error | null,
+} = {}) {
+  const mockUpdateEq = vi.fn().mockResolvedValue({ data: null, error: updateError });
+  const mockUpdate = vi.fn().mockReturnValue({ eq: mockUpdateEq });
+
+  // Track call count to differentiate initial fetch vs cache lookup
+  let selectCallCount = 0;
+
+  const mockFrom = vi.fn().mockImplementation((_table: string) => {
+    selectCallCount++;
+    const callNum = selectCallCount;
+
+    const buildChain = (resolvedValue: unknown) => {
+      const mockMaybeSingle = vi.fn().mockResolvedValue(resolvedValue);
+      const mockSingle = vi.fn().mockResolvedValue(resolvedValue);
+      const mockLimit = vi.fn().mockReturnValue({ maybeSingle: mockMaybeSingle });
+      const mockNeq = vi.fn().mockReturnValue({ limit: mockLimit, maybeSingle: mockMaybeSingle });
+      const mockEqChain = vi.fn().mockReturnValue({
+        single: mockSingle,
+        eq: vi.fn().mockReturnThis(),
+        neq: mockNeq,
+        limit: mockLimit,
+        maybeSingle: mockMaybeSingle,
+      });
+      // Build a chainable eq that supports deep chaining
+      const chainable: Record<string, unknown> = {};
+      chainable['eq'] = vi.fn().mockReturnValue(chainable);
+      chainable['neq'] = vi.fn().mockReturnValue({ limit: mockLimit });
+      chainable['limit'] = mockLimit;
+      chainable['single'] = mockSingle;
+      chainable['maybeSingle'] = mockMaybeSingle;
+      void mockEqChain;
+      return chainable;
+    };
+
+    if (callNum === 1) {
+      // First call: initial consultation fetch
+      const chain = buildChain({ data: consultationData, error: null });
+      return { select: vi.fn().mockReturnValue(chain), update: mockUpdate };
+    } else {
+      // Second+ calls: cache lookup
+      const chain = buildChain({ data: cachedConsultation, error: null });
+      return { select: vi.fn().mockReturnValue(chain), update: mockUpdate };
+    }
+  });
+
+  return {
+    from: mockFrom,
+    _mockUpdate: mockUpdate,
+    _mockUpdateEq: mockUpdateEq,
   };
 }
 
@@ -438,5 +527,73 @@ describe('POST /api/consultation/analyze', () => {
 
     expect(response.status).toBe(400);
     expect(data.error).toContain('Photo exceeds maximum allowed size');
+  });
+
+  // AC: 3, 4, 8 — cache hit path returns cached face analysis with no AI call
+  it('returns cached face analysis when cache hit found (no AI call)', async () => {
+    const cachedFaceAnalysis = {
+      faceShape: 'oval',
+      confidence: 0.9,
+      proportions: { foreheadRatio: 0.78, cheekboneRatio: 1.0, jawRatio: 0.72, faceLength: 1.35 },
+      hairAssessment: { type: 'straight', texture: 'medium', density: 'medium', currentStyle: 'short' },
+    };
+
+    const mockSupabase = createMockSupabaseForCacheTests({
+      cachedConsultation: { face_analysis: cachedFaceAnalysis },
+    });
+    (createServerSupabaseClient as ReturnType<typeof vi.fn>).mockReturnValue(mockSupabase);
+
+    const mockRouter = { execute: vi.fn().mockResolvedValue(cachedFaceAnalysis) };
+    (getAIRouter as ReturnType<typeof vi.fn>).mockReturnValue(mockRouter);
+    (validateFaceAnalysis as ReturnType<typeof vi.fn>).mockReturnValue({
+      valid: true,
+      data: cachedFaceAnalysis,
+    });
+
+    const request = createRequest(validPayload);
+    const response = await POST(request);
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.faceAnalysis).toEqual(cachedFaceAnalysis);
+    expect(data.cached).toBe(true);
+    // AI should NOT be called on cache hit
+    expect(mockRouter.execute).not.toHaveBeenCalled();
+    // persistAICallLog should NOT be called on cache hit (ai_cost_cents stays 0)
+    expect(persistAICallLog).not.toHaveBeenCalled();
+  });
+
+  // AC: 1, 2, 3 — cache miss path calls AI and stores hashes
+  it('calls AI and stores hashes when cache miss (no cached consultation found)', async () => {
+    const mockSupabase = createMockSupabaseForCacheTests({
+      cachedConsultation: null,
+    });
+    (createServerSupabaseClient as ReturnType<typeof vi.fn>).mockReturnValue(mockSupabase);
+
+    const mockRouter = { execute: vi.fn().mockResolvedValue(validFaceAnalysis) };
+    (getAIRouter as ReturnType<typeof vi.fn>).mockReturnValue(mockRouter);
+    (validateFaceAnalysis as ReturnType<typeof vi.fn>).mockReturnValue({
+      valid: true,
+      data: validFaceAnalysis,
+    });
+
+    const request = createRequest(validPayload);
+    const response = await POST(request);
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.faceAnalysis).toEqual(validFaceAnalysis);
+    expect(data.cached).toBeUndefined();
+    // AI should be called on cache miss
+    expect(mockRouter.execute).toHaveBeenCalledTimes(1);
+    // DB update should include photo_hash and questionnaire_hash
+    expect(mockSupabase._mockUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        face_analysis: validFaceAnalysis,
+        status: 'complete',
+        photo_hash: expect.stringMatching(/^[0-9a-f]{64}$/),
+        questionnaire_hash: expect.stringMatching(/^[0-9a-f]{64}$/),
+      })
+    );
   });
 });

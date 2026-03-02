@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getAIRouter, validateFaceAnalysis, logValidationFailure, getAICallLogs, persistAICallLog } from '@/lib/ai';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { computePhotoHash, computeQuestionnaireHash } from '@/lib/consultation';
+import type { QuestionnaireData } from '@/types';
 
 // Max base64 size: ~4MB input photo (base64 is ~33% larger than binary, so 4MB binary → ~5.4MB base64)
 const MAX_PHOTO_BASE64_LENGTH = 6 * 1024 * 1024; // 6MB base64 characters
@@ -32,13 +34,12 @@ export async function POST(request: NextRequest) {
   // mimeType is validated but not forwarded to analyzeFace — the prompt hardcodes 'image/jpeg'
   // (see Dev Notes: "CRITICAL: Do NOT modify AnalysisOptions type")
   const { consultationId, photoBase64 } = parsed.data;
-  const photoBuffer = Buffer.from(photoBase64, 'base64');
   const supabase = createServerSupabaseClient();
 
-  // 2. Verify consultation exists in DB
+  // 2. Verify consultation exists in DB and fetch questionnaire_responses + gender for hash computation
   const { data: consultation, error: fetchError } = await supabase
     .from('consultations')
-    .select('id, status')
+    .select('id, status, questionnaire_responses, gender')
     .eq('id', consultationId)
     .single();
 
@@ -54,10 +55,53 @@ export async function POST(request: NextRequest) {
 
   if (analyzingError) {
     console.error('[POST /api/consultation/analyze] Failed to set status=analyzing:', analyzingError);
-    // Non-fatal: continue with AI analysis regardless
+    // Non-fatal: continue with analysis regardless
   }
 
-  // 4. Run AI analysis with retry on validation failure
+  // 4. Compute hashes for cache lookup (AC1, AC2)
+  const photoHash = computePhotoHash(photoBase64);
+  const questionnaireHash = computeQuestionnaireHash(
+    consultation.questionnaire_responses as QuestionnaireData
+  );
+
+  // 5. Cache lookup — BEFORE AI call, AFTER status update to 'analyzing' (AC3)
+  // Wrap in try/catch: cache is an optimization; fall through to AI call on DB error
+  try {
+    const { data: cached } = await supabase
+      .from('consultations')
+      .select('face_analysis')
+      .eq('photo_hash', photoHash)
+      .eq('questionnaire_hash', questionnaireHash)
+      .eq('gender', consultation.gender)
+      .eq('status', 'complete')
+      .neq('id', consultationId)
+      .limit(1)
+      .maybeSingle();
+
+    if (cached?.face_analysis) {
+      // Cache HIT (AC4): update current consultation with cached data + hashes; no AI call
+      const { error: cacheUpdateError } = await supabase
+        .from('consultations')
+        .update({
+          face_analysis: cached.face_analysis,
+          status: 'complete',
+          photo_hash: photoHash,
+          questionnaire_hash: questionnaireHash,
+          // ai_cost_cents intentionally left at 0 (no AI call made)
+        })
+        .eq('id', consultationId);
+      if (cacheUpdateError) {
+        console.error('[POST /api/consultation/analyze] Cache hit DB update failed:', cacheUpdateError);
+        // Non-fatal: client still receives correct cached data; consultation may remain in analyzing state
+      }
+      return NextResponse.json({ faceAnalysis: cached.face_analysis, cached: true }, { status: 200 });
+    }
+  } catch (cacheError) {
+    console.error('[POST /api/consultation/analyze] Cache lookup failed, falling through to AI:', cacheError);
+    // Non-fatal: continue to AI call
+  }
+
+  // 6. Run AI analysis with retry on validation failure (cache miss path)
   try {
     const router = getAIRouter();
 
@@ -66,13 +110,13 @@ export async function POST(request: NextRequest) {
     const logsBefore = getAICallLogs().length;
 
     // First attempt (no temperature override)
-    const rawResult = await router.execute((p) => p.analyzeFace(photoBuffer));
+    const rawResult = await router.execute((p) => p.analyzeFace(Buffer.from(photoBase64, 'base64')));
     let validated = validateFaceAnalysis(rawResult);
 
     // Retry with lower temperature if validation fails
     if (!validated.valid) {
       const retryResult = await router.execute((p) =>
-        p.analyzeFace(photoBuffer, { temperature: 0.2 })
+        p.analyzeFace(Buffer.from(photoBase64, 'base64'), { temperature: 0.2 })
       );
       validated = validateFaceAnalysis(retryResult);
     }
@@ -97,7 +141,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 5. Persist AI call cost to ai_calls table (best-effort) and accumulate Step 1 cost
+    // 7. Persist AI call cost to ai_calls table (best-effort) and accumulate Step 1 cost
     // Use logsBefore/logsAfter slice pattern to correctly attribute logs to this request,
     // handling retries (both initial + retry calls are persisted) and preventing cross-request
     // contamination in warm serverless invocations.
@@ -108,10 +152,16 @@ export async function POST(request: NextRequest) {
       await persistAICallLog(supabase, consultationId, log);
     }
 
-    // 6. Store validated result in DB (including Step 1 AI cost)
+    // 8. Store validated result in DB including photo_hash and questionnaire_hash (AC1, AC2)
     const { error: updateError } = await supabase
       .from('consultations')
-      .update({ face_analysis: validated.data, status: 'complete', ai_cost_cents: Math.round(step1CostCents) })
+      .update({
+        face_analysis: validated.data,
+        status: 'complete',
+        ai_cost_cents: Math.round(step1CostCents),
+        photo_hash: photoHash,
+        questionnaire_hash: questionnaireHash,
+      })
       .eq('id', consultationId);
 
     if (updateError) {
