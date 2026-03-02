@@ -176,6 +176,8 @@ describe('getPrompt', () => {
 
   it('should throw a descriptive error for an unknown version', () => {
     const params = { photoBase64: 'testbase64', mimeType: 'image/jpeg' as const };
-    expect(() => getPrompt('face-analysis', params, 'v99' as any)).toThrow();
+    expect(() => getPrompt('face-analysis', params, 'v99' as any)).toThrow(
+      /unknown prompt version.*v99/i
+    );
   });
 });

@@ -43,9 +43,7 @@ export class GeminiProvider implements AIProvider {
             role: 'user',
             parts: [
               {
-                text: promptContent.systemPrompt
-                  ? `${promptContent.systemPrompt}\n\n${promptContent.userPrompt}`
-                  : promptContent.userPrompt,
+                text: promptContent.userPrompt,
               },
               {
                 inlineData: {
@@ -58,6 +56,9 @@ export class GeminiProvider implements AIProvider {
         ],
         config: {
           responseMimeType: 'application/json',
+          ...(promptContent.systemPrompt && {
+            systemInstruction: promptContent.systemPrompt,
+          }),
           ...(options?.temperature !== undefined && { temperature: options.temperature }),
         },
       });
@@ -141,15 +142,16 @@ export class GeminiProvider implements AIProvider {
             role: 'user',
             parts: [
               {
-                text: promptContent.systemPrompt
-                  ? `${promptContent.systemPrompt}\n\n${promptContent.userPrompt}`
-                  : promptContent.userPrompt,
+                text: promptContent.userPrompt,
               },
             ],
           },
         ],
         config: {
           responseMimeType: 'application/json',
+          ...(promptContent.systemPrompt && {
+            systemInstruction: promptContent.systemPrompt,
+          }),
         },
       });
 

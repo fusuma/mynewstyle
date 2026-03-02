@@ -233,6 +233,18 @@ describe('ConsultationSchema', () => {
     }).not.toThrow();
   });
 
+  it('should fail validation when justification exceeds 500 characters', () => {
+    const invalid = {
+      ...validConsultation,
+      recommendations: [
+        { ...validConsultation.recommendations[0], justification: 'A'.repeat(501) },
+        validConsultation.recommendations[1],
+      ],
+    };
+    const result = ConsultationSchema.safeParse(invalid);
+    expect(result.success).toBe(false);
+  });
+
   it('should pass validation with exactly 3 recommendations', () => {
     const threeRecs = {
       ...validConsultation,

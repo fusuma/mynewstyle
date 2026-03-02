@@ -36,24 +36,23 @@ export class OpenAIProvider implements AIProvider {
     try {
       const promptContent = getPrompt('face-analysis', { photoBase64, mimeType: 'image/jpeg' });
 
-      const textContent = promptContent.systemPrompt
-        ? `${promptContent.systemPrompt}\n\n${promptContent.userPrompt}`
-        : promptContent.userPrompt;
-
       const response = await this.client.chat.completions.create({
         model: this.config.model,
         response_format: { type: 'json_object' },
         ...(options?.temperature !== undefined && { temperature: options.temperature }),
         messages: [
+          ...(promptContent.systemPrompt
+            ? [{ role: 'system' as const, content: promptContent.systemPrompt }]
+            : []),
           {
             role: 'user',
             content: [
               {
-                type: 'text',
-                text: textContent,
+                type: 'text' as const,
+                text: promptContent.userPrompt,
               },
               {
-                type: 'image_url',
+                type: 'image_url' as const,
                 image_url: {
                   url: `data:${promptContent.imageData!.mimeType};base64,${promptContent.imageData!.base64}`,
                 },
@@ -135,17 +134,16 @@ export class OpenAIProvider implements AIProvider {
       const task: PromptTask = gender === 'female' ? 'consultation-female' : 'consultation-male';
       const promptContent = getPrompt(task, { analysis, questionnaire });
 
-      const promptText = promptContent.systemPrompt
-        ? `${promptContent.systemPrompt}\n\n${promptContent.userPrompt}`
-        : promptContent.userPrompt;
-
       const response = await this.client.chat.completions.create({
         model: this.config.model,
         response_format: { type: 'json_object' },
         messages: [
+          ...(promptContent.systemPrompt
+            ? [{ role: 'system' as const, content: promptContent.systemPrompt }]
+            : []),
           {
-            role: 'user',
-            content: promptText,
+            role: 'user' as const,
+            content: promptContent.userPrompt,
           },
         ],
       });

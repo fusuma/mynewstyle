@@ -1,6 +1,6 @@
 # Story 4.2: Prompt Management System
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -13,7 +13,7 @@ so that AI prompts can be tested, rolled back, and A/B tested without changing p
 ## Acceptance Criteria
 
 1. Prompts stored in `src/lib/ai/prompts/v1/` directory with three files: `face-analysis.ts`, `consultation-male.ts`, `consultation-female.ts`
-2. `face-analysis.ts` exports a `getFaceAnalysisPrompt(photoBase64: string): PromptContent` function returning a structured prompt with explicit JSON output instructions matching the `FaceAnalysis` type
+2. `face-analysis.ts` exports a `getFaceAnalysisPrompt(params: FaceAnalysisPromptParams): PromptContent` function returning a structured prompt with explicit JSON output instructions matching the `FaceAnalysis` type
 3. `consultation-male.ts` exports a `getMaleConsultationPrompt(analysis: FaceAnalysis, questionnaire: QuestionnaireData): PromptContent` function with male-specific guidance and "styles to avoid" section
 4. `consultation-female.ts` exports a `getFemaleConsultationPrompt(analysis: FaceAnalysis, questionnaire: QuestionnaireData): PromptContent` function with female-specific guidance and "styles to avoid" section
 5. Zod schemas defined in `src/lib/ai/schemas/`: `face-analysis.schema.ts` (exports `FaceAnalysisSchema`), `consultation.schema.ts` (exports `ConsultationSchema`)
@@ -486,6 +486,33 @@ No blockers encountered. Implementation straightforward following spec exactly.
 - src/test/ai-schemas.test.ts (NEW)
 - src/test/ai-prompts.test.ts (NEW)
 
+## Senior Developer Review (AI)
+
+**Reviewer:** claude-sonnet-4-6 on 2026-03-02
+**Result:** Approved (after fixes applied)
+**Tests:** 789 passed (0 failed)
+
+### Issues Found and Fixed
+
+**HIGH (0 found)**
+
+**MEDIUM (3 fixed):**
+- [FIXED] `consultation-female.ts` had a duplicate `ConsultationPromptParams` interface identical to the one in `consultation-male.ts`. Refactored to re-export from `consultation-male.ts` as the single source of truth. This eliminates a maintenance trap where a shape change would require editing both files.
+- [FIXED] Both `GeminiProvider` and `OpenAIProvider` concatenated `systemPrompt + userPrompt` into a single `user` role message. Updated `OpenAIProvider` to send a proper `{ role: 'system', content: ... }` message first. Updated `GeminiProvider` to use the `systemInstruction` config parameter (the canonical Gemini SDK approach). This ensures the AI model treats system instructions with the correct priority.
+- [FIXED] Test `should throw a descriptive error for an unknown version` only called `toThrow()` with no assertion on the message. Updated to `toThrow(/unknown prompt version.*v99/i)` to verify the error includes the invalid version name. Without this, any error would have passed (even an unrelated crash).
+
+**MEDIUM (1 fixed — test gap):**
+- [FIXED] `ConsultationSchema.justification` has a `.max(500)` constraint that was not tested. Added `should fail validation when justification exceeds 500 characters` test to `ai-schemas.test.ts`. Now 789 tests total.
+
+**LOW (1 fixed):**
+- [FIXED] AC2 in story stated `getFaceAnalysisPrompt(photoBase64: string)` but actual implementation uses a params object `getFaceAnalysisPrompt(params: FaceAnalysisPromptParams)` as per Dev Notes (more extensible). Updated AC2 to match the implementation.
+
+**LOW (1 informational — not fixed, by design):**
+- `consultation-female.ts` uses `barber_tips` as a category option in the prompt template string. While semantically awkward for a women's consultation, the TypeScript type and Zod schema both define `barber_tips` as the third category (shared across genders). Changing this would require a schema/type breaking change (Story 4.5 scope). Added clarifying comment `(use 'barber_tips' for stylist visit tips)` in the female prompt template to guide AI output.
+
+**Git vs Story Discrepancies:** 0 (all changes were committed at review time)
+
 ## Change Log
 
 - 2026-03-02: Implemented Story 4.2 — Prompt Management System. Created Zod validation schemas (FaceAnalysisSchema, ConsultationSchema), versioned prompt files (v1/), prompt version router with getPrompt() and CURRENT_PROMPT_VERSION, updated GeminiProvider and OpenAIProvider to use structured prompts, added 42 new tests. 788 total tests pass.
+- 2026-03-02: Code review pass — Fixed 4 issues: (1) eliminated duplicate ConsultationPromptParams interface in consultation-female.ts, (2) updated OpenAI and Gemini providers to use proper system role/systemInstruction for system prompts instead of concatenation, (3) strengthened error message assertion in version routing test, (4) added missing justification max-length test to ai-schemas.test.ts. 789 total tests pass.

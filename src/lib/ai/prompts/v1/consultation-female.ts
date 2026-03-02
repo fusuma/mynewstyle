@@ -1,10 +1,7 @@
-import type { FaceAnalysis, QuestionnaireData } from '@/types';
 import type { PromptContent } from '../index';
+import type { ConsultationPromptParams } from './consultation-male';
 
-export interface ConsultationPromptParams {
-  analysis: FaceAnalysis;
-  questionnaire: QuestionnaireData;
-}
+export type { ConsultationPromptParams };
 
 export function getFemaleConsultationPrompt(params: ConsultationPromptParams): PromptContent {
   return {
@@ -33,7 +30,7 @@ Return a JSON object with this exact structure:
   ],
   "groomingTips": [
     {
-      "category": "<products|routine|barber_tips>",
+      "category": "<products|routine|barber_tips (use 'barber_tips' for stylist visit tips)>",
       "tipText": "<specific actionable tip for women's hair care and styling>",
       "icon": "<emoji or icon name>"
     }
