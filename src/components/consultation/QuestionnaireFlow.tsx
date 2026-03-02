@@ -4,6 +4,7 @@ import { useCallback, useRef, useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useQuestionnaire } from '@/hooks/useQuestionnaire';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { QuestionInput } from '@/components/consultation/QuestionInput';
 import type { QuestionnaireConfig } from '@/types/questionnaire';
 import type { QuestionnaireResponses } from '@/stores/consultation';
@@ -11,6 +12,16 @@ import type { QuestionnaireResponses } from '@/stores/consultation';
 interface QuestionnaireFlowProps {
   config: QuestionnaireConfig;
   onComplete: (responses: QuestionnaireResponses) => void;
+}
+
+const AVG_SECONDS_PER_QUESTION = 10;
+
+export function getEncouragementMessage(progress: number): string | null {
+  if (progress <= 20) return 'Vamos la!';
+  if (progress <= 50) return null;
+  if (progress < 80) return 'Muito bem, continue!';
+  if (progress < 100) return 'Quase la!';
+  return null;
 }
 
 const variants = {
@@ -29,6 +40,8 @@ export function QuestionnaireFlow({ config, onComplete }: QuestionnaireFlowProps
   const {
     currentQuestion,
     progress,
+    totalActiveQuestions,
+    currentActiveIndex,
     answers,
     isFirstQuestion,
     isLastQuestion,
@@ -40,17 +53,7 @@ export function QuestionnaireFlow({ config, onComplete }: QuestionnaireFlowProps
 
   const [direction, setDirection] = useState(1);
   const hasCalledComplete = useRef(false);
-
-  // Check reduced motion preference
-  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
-  useEffect(() => {
-    if (typeof window === 'undefined' || !window.matchMedia) return;
-    const mql = window.matchMedia('(prefers-reduced-motion: reduce)');
-    setPrefersReducedMotion(mql.matches);
-    const handler = (e: MediaQueryListEvent) => setPrefersReducedMotion(e.matches);
-    mql.addEventListener('change', handler);
-    return () => mql.removeEventListener('change', handler);
-  }, []);
+  const prefersReducedMotion = useReducedMotion();
 
   // Handle completion
   useEffect(() => {
@@ -85,8 +88,13 @@ export function QuestionnaireFlow({ config, onComplete }: QuestionnaireFlowProps
   const currentValue = answers.get(currentQuestion.id) ?? null;
   const hasAnswer = currentValue !== null && currentValue !== undefined;
 
-  // Show "Quase lá!" message when progress >= 80%
-  const showAlmostDone = progress >= 80;
+  // Encouragement message based on progress milestones
+  const encouragementMessage = getEncouragementMessage(progress);
+
+  // Estimated time remaining (hide on last question)
+  const remainingQuestions = totalActiveQuestions - (currentActiveIndex + 1);
+  const estimatedSeconds = remainingQuestions * AVG_SECONDS_PER_QUESTION;
+  const showEstimatedTime = !isLastQuestion && remainingQuestions > 0;
 
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground">
@@ -102,15 +110,27 @@ export function QuestionnaireFlow({ config, onComplete }: QuestionnaireFlowProps
           className="h-2 w-full overflow-hidden rounded-full bg-border"
         >
           <div
-            className="h-full rounded-full bg-accent transition-all duration-300"
+            className={`h-full rounded-full bg-accent transition-all ${prefersReducedMotion ? 'duration-0' : 'duration-300'}`}
             style={{ width: `${progress}%` }}
           />
         </div>
-        {showAlmostDone && (
-          <p className="mt-1 text-center text-xs text-accent" aria-live="polite">
-            Quase lá!
-          </p>
-        )}
+        <div className="mt-1 min-h-[2rem] text-center">
+          <div
+            data-testid="encouragement-message"
+            className="text-xs text-accent"
+            aria-live="polite"
+          >
+            {encouragementMessage}
+          </div>
+          {showEstimatedTime && (
+            <p
+              data-testid="estimated-time"
+              className="text-xs text-muted-foreground"
+            >
+              ~{estimatedSeconds} segundos
+            </p>
+          )}
+        </div>
       </div>
 
       {/* Question area */}

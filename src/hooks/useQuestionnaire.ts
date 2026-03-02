@@ -22,6 +22,8 @@ export interface UseQuestionnaireReturn {
   currentQuestion: QuestionConfig;
   currentIndex: number;
   progress: number;
+  totalActiveQuestions: number;
+  currentActiveIndex: number;
   answers: Map<string, string | string[] | number>;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
@@ -176,6 +178,8 @@ export function useQuestionnaire(config: QuestionnaireConfig): UseQuestionnaireR
     currentQuestion,
     currentIndex,
     progress,
+    totalActiveQuestions: activeQuestions.length,
+    currentActiveIndex,
     answers,
     isFirstQuestion,
     isLastQuestion,
