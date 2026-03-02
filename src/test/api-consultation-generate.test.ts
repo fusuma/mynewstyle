@@ -185,6 +185,8 @@ describe('POST /api/consultation/generate', () => {
     expect(data.consultation).toEqual(validConsultation);
     // execute should be called twice (first attempt + retry)
     expect(mockRouter.execute).toHaveBeenCalledTimes(2);
+    // logValidationFailure should NOT be called when retry succeeds (no 422 returned)
+    expect(logValidationFailure).not.toHaveBeenCalled();
   });
 
   // AC5: Both attempts fail validation → 422

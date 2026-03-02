@@ -228,6 +228,21 @@ describe('validateConsultation', () => {
       expect(result.reason).toBe('schema_invalid');
     }
   });
+
+  it('returns valid:false with reason schema_invalid for single recommendation (schema requires min 2)', () => {
+    const singleRec = {
+      ...validConsultation,
+      recommendations: [
+        { ...validConsultation.recommendations[0] },
+      ],
+    };
+    const result = validateConsultation(singleRec);
+    expect(result.valid).toBe(false);
+    if (!result.valid) {
+      expect(result.reason).toBe('schema_invalid');
+      expect(result.details.length).toBeGreaterThan(0);
+    }
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -236,8 +251,8 @@ describe('validateConsultation', () => {
 
 describe('logValidationFailure', () => {
   beforeEach(() => {
-    vi.spyOn(console, 'error').mockImplementation(() => {});
     vi.clearAllMocks();
+    vi.spyOn(console, 'error').mockImplementation(() => {});
   });
 
   it('calls console.error with [AI Validation Failure] prefix and structured JSON', () => {

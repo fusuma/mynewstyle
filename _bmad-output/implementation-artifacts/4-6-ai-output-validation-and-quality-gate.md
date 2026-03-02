@@ -1,6 +1,6 @@
 # Story 4.6: AI Output Validation & Quality Gate
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -487,3 +487,4 @@ src/test/api-consultation-generate.test.ts (MODIFIED)
 ## Change Log
 
 - 2026-03-02: Implemented Story 4.6 — created `validation.ts` module with `validateFaceAnalysis`, `validateConsultation`, `logValidationFailure`; updated analyze and generate routes to use new validation with `logValidationFailure` on failure; added 18 new validation tests; updated route tests to mock new API. 863 total tests passing.
+- 2026-03-02: Code review fixes — fixed `beforeEach` ordering in `logValidationFailure` test suite (clearAllMocks before spyOn); added missing single-recommendation schema_invalid test case per story spec table; added `logValidationFailure` not-called assertions to retry-success tests in both route test files. 864 total tests passing.

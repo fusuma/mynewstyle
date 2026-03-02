@@ -135,6 +135,8 @@ describe('POST /api/consultation/analyze', () => {
     expect(data.faceAnalysis).toEqual(validFaceAnalysis);
     // execute should be called twice (first attempt + retry)
     expect(mockRouter.execute).toHaveBeenCalledTimes(2);
+    // logValidationFailure should NOT be called when retry succeeds (no 422 returned)
+    expect(logValidationFailure).not.toHaveBeenCalled();
   });
 
   it('returns 422 when both AI attempts fail validation', async () => {
