@@ -2,6 +2,7 @@
 
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
+import type { FaceAnalysisOutput } from '@/lib/ai/schemas';
 
 export interface QuestionnaireResponses {
   [questionId: string]: string | string[] | number;
@@ -16,7 +17,7 @@ export interface ConsultationStore {
 
   // Results (future stories)
   consultationId: string | null;
-  faceAnalysis: unknown | null;
+  faceAnalysis: FaceAnalysisOutput | null;
   consultation: unknown | null;
   previews: Map<string, unknown>;
 
@@ -31,6 +32,7 @@ export interface ConsultationStore {
   setQuestionnaireResponse: (questionId: string, value: string | string[] | number) => void;
   setQuestionnaireComplete: (responses: QuestionnaireResponses) => void;
   setConsultationId: (id: string) => void;
+  setFaceAnalysis: (analysis: FaceAnalysisOutput) => void;
   reset: () => void;
 }
 
@@ -40,7 +42,7 @@ const initialState = {
   photoPreview: null as string | null,
   questionnaire: null as QuestionnaireResponses | null,
   consultationId: null as string | null,
-  faceAnalysis: null as unknown | null,
+  faceAnalysis: null as FaceAnalysisOutput | null,
   consultation: null as unknown | null,
   previews: new Map<string, unknown>(),
   paymentStatus: 'none' as const,
@@ -64,6 +66,7 @@ export const useConsultationStore = create<ConsultationStore>()(
         })),
       setQuestionnaireComplete: (responses) => set({ questionnaire: responses }),
       setConsultationId: (id) => set({ consultationId: id }),
+      setFaceAnalysis: (analysis) => set({ faceAnalysis: analysis }),
       reset: () => set({ ...initialState, previews: new Map<string, unknown>() }),
     }),
     {
