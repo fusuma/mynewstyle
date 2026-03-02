@@ -86,7 +86,7 @@ development_status:
   # E5: Payment Integration (Sprint 3)
   epic-5: in-progress
   5-1-stripe-setup-and-configuration: done
-  5-2-payment-intent-creation: review
+  5-2-payment-intent-creation: done
   5-3-paywall-ui: backlog
   5-4-payment-processing-and-unlock: backlog
   5-5-stripe-webhook-handler: backlog

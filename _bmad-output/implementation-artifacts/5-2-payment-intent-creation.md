@@ -1,6 +1,6 @@
 # Story 5.2: Payment Intent Creation
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -414,6 +414,7 @@ claude-sonnet-4-6
 - Pricing tests (7) passed immediately on first implementation.
 - API route tests initially failed due to missing `STRIPE_SECRET_KEY` env var. Fixed by setting `process.env.STRIPE_SECRET_KEY = 'sk_test_fake_key_for_testing'` at the top of the test file before any module imports.
 - All 926 tests pass after fix (903 existing + 23 new).
+- Code review (2026-03-02): Fixed 3 issues found during adversarial review (see Change Log). All 927 tests pass after review fixes.
 
 ### Completion Notes List
 
@@ -425,15 +426,17 @@ claude-sonnet-4-6
 - Payment types defined locally (not in frozen `src/types/index.ts`).
 - Updated `src/lib/stripe/index.ts` barrel to export pricing utilities.
 - 23 new tests created (7 pricing + 16 API route tests). All 926 tests pass.
+- Code review fixes: `type` field now used in pricing logic (for future auth gate), `client_secret` null-checked with 500 response, redundant `UserPricingType` cast removed. 1 new test added for null client_secret. Total: 927 tests.
 
 ### File List
 
 - `src/lib/stripe/pricing.ts` - NEW: Pricing constants and determinePrice() utility
-- `src/app/api/payment/create-intent/route.ts` - NEW: POST handler for PaymentIntent creation
+- `src/app/api/payment/create-intent/route.ts` - MODIFIED: Fixed type field usage, null client_secret guard, removed redundant cast
 - `src/lib/stripe/index.ts` - MODIFIED: Added pricing exports to barrel
 - `src/test/stripe-pricing.test.ts` - NEW: Unit tests for pricing utility (7 tests)
-- `src/test/payment-create-intent.test.ts` - NEW: Unit tests for API route (16 tests)
+- `src/test/payment-create-intent.test.ts` - MODIFIED: Added null client_secret test, strengthened type field tests (17 tests total)
 
 ## Change Log
 
 - 2026-03-02: Implemented Story 5.2 -- Payment Intent Creation. Created pricing utility, API route, barrel export, and comprehensive tests. All 926 tests pass (903 existing + 23 new).
+- 2026-03-02: Code review fixes applied -- (1) `type` field from request body now used in pricing logic (with auth gate for future Epic 8), (2) null `client_secret` guard added returning 500, (3) redundant `UserPricingType` cast removed from metadata, (4) new test for null client_secret added. All 927 tests pass.

@@ -187,20 +187,26 @@ describe('POST /api/payment/create-intent', () => {
     expect(data).toHaveProperty('error');
   });
 
-  it('accepts optional type field with value "first"', async () => {
+  it('accepts optional type field with value "first" and returns 200', async () => {
     const { POST } = await import('@/app/api/payment/create-intent/route');
     mockConsultations.set(validConsultationId, { id: validConsultationId });
     const request = createRequest({ consultationId: validConsultationId, type: 'first' });
     const response = await POST(request);
     expect(response.status).toBe(200);
+    const data = await response.json();
+    expect(data).toHaveProperty('clientSecret');
+    expect(data).toHaveProperty('amount');
   });
 
-  it('accepts optional type field with value "repeat"', async () => {
+  it('accepts optional type field with value "repeat" and returns 200', async () => {
     const { POST } = await import('@/app/api/payment/create-intent/route');
     mockConsultations.set(validConsultationId, { id: validConsultationId });
     const request = createRequest({ consultationId: validConsultationId, type: 'repeat' });
     const response = await POST(request);
     expect(response.status).toBe(200);
+    const data = await response.json();
+    expect(data).toHaveProperty('clientSecret');
+    expect(data).toHaveProperty('amount');
   });
 
   it('returns 400 for invalid JSON body', async () => {
@@ -221,5 +227,19 @@ describe('POST /api/payment/create-intent', () => {
     const response = await POST(request);
     const data = await response.json();
     expect(data.userType).toBe('guest');
+  });
+
+  it('returns 500 when Stripe returns null client_secret', async () => {
+    const { POST } = await import('@/app/api/payment/create-intent/route');
+    mockCreate.mockResolvedValueOnce({
+      id: 'pi_test_null_secret',
+      client_secret: null,
+    });
+    mockConsultations.set(validConsultationId, { id: validConsultationId });
+    const request = createRequest({ consultationId: validConsultationId });
+    const response = await POST(request);
+    expect(response.status).toBe(500);
+    const data = await response.json();
+    expect(data).toHaveProperty('error');
   });
 });

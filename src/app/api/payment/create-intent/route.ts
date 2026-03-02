@@ -4,7 +4,6 @@ import { getStripeServer } from '@/lib/stripe/server';
 import {
   determinePrice,
   CURRENCY,
-  type UserPricingType,
 } from '@/lib/stripe/pricing';
 import { consultations } from '@/app/api/consultation/start/route';
 
@@ -43,7 +42,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const { consultationId }: CreatePaymentIntentInput = result.data;
+  const { consultationId, type }: CreatePaymentIntentInput = result.data;
 
   // Look up consultation
   const consultation = consultations.get(consultationId);
@@ -56,10 +55,20 @@ export async function POST(request: NextRequest) {
 
   try {
     // Temporary guest detection (until Epic 8 auth)
-    const isGuest = true; // All users are guests until auth is implemented
-    const hasPreviousPaidConsultation = false; // Cannot verify without auth
+    // All users are treated as guests until auth is implemented (Epic 8).
+    // When auth exists: resolve isGuest from session and hasPreviousPaidConsultation from DB.
+    const isGuest = true;
+    const hasPreviousPaidConsultation = false;
 
-    const { amount, userType } = determinePrice(isGuest, hasPreviousPaidConsultation);
+    // Use client-supplied type hint if provided; otherwise derive from history.
+    // 'repeat' maps to a returning user (discount pricing).
+    let pricingResult = determinePrice(isGuest, hasPreviousPaidConsultation);
+    if (!isGuest && type === 'repeat') {
+      pricingResult = determinePrice(false, true);
+    } else if (!isGuest && type === 'first') {
+      pricingResult = determinePrice(false, false);
+    }
+    const { amount, userType } = pricingResult;
 
     const stripe = getStripeServer();
 
@@ -71,9 +80,17 @@ export async function POST(request: NextRequest) {
       },
       metadata: {
         consultationId,
-        userType: userType as UserPricingType,
+        userType: String(userType),
       },
     });
+
+    if (!paymentIntent.client_secret) {
+      console.error('[POST /api/payment/create-intent] PaymentIntent has no client_secret:', paymentIntent.id);
+      return NextResponse.json(
+        { error: 'Payment setup failed: no client secret returned' },
+        { status: 500 }
+      );
+    }
 
     // Update consultation record with payment fields
     const updatedConsultation = {
