@@ -13,6 +13,8 @@ interface UseShareCardParams {
   photoPreview: string | null;
   previewUrl: string | undefined;
   gender: 'male' | 'female' | null;
+  /** Consultation ID for share URL scoping */
+  consultationId?: string;
 }
 
 interface UseShareCardReturn {
@@ -24,6 +26,10 @@ interface UseShareCardReturn {
   cardRef: React.RefObject<HTMLDivElement | null>;
   /** Ref to attach to the hidden ShareCardSquareRenderer container for capture (square format) */
   squareCardRef: React.RefObject<HTMLDivElement | null>;
+  /** Generated story-format blob (available after generateShareCard('story') succeeds) */
+  storyBlob: Blob | null;
+  /** Generated square-format blob (available after generateShareCard('square') succeeds) */
+  squareBlob: Blob | null;
 }
 
 // Gender-themed background colors for toPng capture
@@ -36,12 +42,6 @@ const BACKGROUND_COLORS = {
 const FORMAT_DIMENSIONS = {
   story: { width: 540, height: 960 },
   square: { width: 540, height: 540 },
-} as const;
-
-// Download filename per format
-const FORMAT_FILENAMES = {
-  story: 'mynewstyle-share-story.png',
-  square: 'mynewstyle-share-card.png',
 } as const;
 
 // AI preview image data-testid per format (used for CORS pre-fetch patching)
@@ -61,7 +61,7 @@ const FORMAT_PREVIEW_TESTID = {
  * For each format:
  * - Renders the appropriate card off-screen via a ref
  * - Uses html-to-image's toPng() to capture the hidden div as PNG
- * - Story format: Attempts Web Share API with file on mobile, falls back to download
+ * - Story format: Attempts Web Share API with file on mobile via useNativeShare, falls back to download
  * - Square format: Downloads as mynewstyle-share-card.png (AC: 3, 4)
  *
  * CORS handling: Before capture, any external previewUrl (Supabase Storage AI preview)
@@ -74,8 +74,12 @@ export function useShareCard({
   photoPreview,
   previewUrl,
   gender,
+  consultationId = '',
 }: UseShareCardParams): UseShareCardReturn {
   const [isGenerating, setIsGenerating] = useState(false);
+  const [storyBlob, setStoryBlob] = useState<Blob | null>(null);
+  const [squareBlob, setSquareBlob] = useState<Blob | null>(null);
+
   // Story format ref (9:16 — attached to ShareCardStoryRenderer)
   const cardRef = useRef<HTMLDivElement | null>(null);
   // Square format ref (1:1 — attached to ShareCardSquareRenderer)
@@ -90,7 +94,7 @@ export function useShareCard({
       }
 
       setIsGenerating(true);
-      let pngDataUrl: string | null = null;
+      let generatedBlob: Blob | null = null;
 
       try {
         // Select the appropriate ref based on format
@@ -120,31 +124,43 @@ export function useShareCard({
         // Convert hidden DOM node to PNG data URL at 2x pixel ratio
         // Story:  540x960  → 1080x1920 (9:16)
         // Square: 540x540  → 1080x1080 (1:1) — AC: 1 (1:1 aspect ratio, 1080x1080px output)
-        pngDataUrl = await toPng(targetNode, {
+        const pngDataUrl = await toPng(targetNode, {
           width,
           height,
           pixelRatio: 2, // 2x for social media compression resilience — AC: 7
           backgroundColor,
         });
 
-        // TODO(Epic 10): Fire analytics event { type: 'share_generated', format } when analytics system is built
+        // Convert data URL to Blob for native share API
+        const response = await fetch(pngDataUrl);
+        generatedBlob = await response.blob();
 
-        // Route to appropriate sharing/download strategy per format
+        // Store blob in state for ShareButton wiring
         if (format === 'story') {
-          // Story: attempt Web Share API (mobile), fall back to download
-          await shareOrDownload(pngDataUrl);
+          setStoryBlob(generatedBlob);
         } else {
-          // Square: direct download (AC: 3)
-          triggerDownload(pngDataUrl, FORMAT_FILENAMES[format]);
+          setSquareBlob(generatedBlob);
         }
       } catch (error) {
         console.error('[useShareCard] Share card generation failed:', error);
         toast.error('Não foi possível gerar o cartão. Tente novamente.');
-      } finally {
         setIsGenerating(false);
+        return;
+      }
+
+      setIsGenerating(false);
+
+      // Route to appropriate sharing/download strategy per format
+      if (format === 'story' && generatedBlob) {
+        // Story: attempt Web Share API via useNativeShare (already has storyBlob set)
+        // Use a temporary inline native share call since hook state may not be updated yet
+        await shareWithBlob(generatedBlob, 'story', consultationId);
+      } else if (format === 'square' && generatedBlob) {
+        // Square: download via native share
+        await shareWithBlob(generatedBlob, 'square', consultationId);
       }
     },
-    [isGenerating, faceAnalysis, recommendation, photoPreview, gender, previewUrl]
+    [isGenerating, faceAnalysis, recommendation, photoPreview, gender, previewUrl, consultationId]
   );
 
   return {
@@ -152,62 +168,90 @@ export function useShareCard({
     isGenerating,
     cardRef,
     squareCardRef,
+    storyBlob,
+    squareBlob,
   };
 }
 
+// Share URL base
+const SHARE_URL = 'https://mynewstyle.com';
+const SHARE_TITLE = 'Meu resultado mynewstyle';
+const SHARE_TEXT = 'Descubra o seu estilo em mynewstyle.com';
+
+const FORMAT_FILENAMES_MAP = {
+  story: 'mynewstyle-share-story.png',
+  square: 'mynewstyle-share-card.png',
+} as const;
+
 /**
- * Attempts to share the PNG via Web Share API (with file support) on mobile.
- * Falls back to browser download on desktop or unsupported browsers.
- * On AbortError (user cancelled), falls back to download silently.
+ * Inline share helper — used after blob is freshly generated.
+ * Mirrors the progressive fallback from useNativeShare, called with the fresh blob.
+ * This avoids React state timing issues (storyBlob state may not reflect new value in same tick).
  */
-async function shareOrDownload(pngDataUrl: string): Promise<void> {
-  const filename = FORMAT_FILENAMES.story;
+async function shareWithBlob(
+  blob: Blob,
+  format: 'story' | 'square',
+  consultationId: string
+): Promise<void> {
+  const { toast: toastFn } = await import('sonner');
+  const { trackShareEvent } = await import('@/lib/utils/analytics');
 
-  // Convert data URL to Blob and File for Web Share API
-  let file: File | null = null;
-  try {
-    const response = await fetch(pngDataUrl);
-    const blob = await response.blob();
-    file = new File([blob], filename, { type: 'image/png' });
-  } catch {
-    // If we can't create a File, fall back to download
-    triggerDownload(pngDataUrl, filename);
-    return;
-  }
+  const filename = FORMAT_FILENAMES_MAP[format];
+  const shareUrl = consultationId ? `${SHARE_URL}/results/${consultationId}` : SHARE_URL;
+  const file = new File([blob], filename, { type: 'image/png' });
 
-  // Check if Web Share API supports file sharing
-  const canShareFile =
-    typeof navigator.share === 'function' &&
-    typeof navigator.canShare === 'function' &&
-    navigator.canShare({ files: [file] });
+  // Strategy 1: Native share with file
+  if (typeof navigator.share === 'function') {
+    const hasFileSupport =
+      typeof navigator.canShare === 'function' && navigator.canShare({ files: [file] });
 
-  if (canShareFile && file) {
+    if (hasFileSupport) {
+      try {
+        await navigator.share({ title: SHARE_TITLE, text: SHARE_TEXT, url: shareUrl, files: [file] });
+        trackShareEvent({ type: 'share_generated', format, method: 'native_share', success: true });
+        return;
+      } catch (err) {
+        if ((err as DOMException)?.name === 'AbortError') {
+          return; // User cancelled silently
+        }
+        console.error('[useShareCard] File share failed, trying URL-only:', err);
+      }
+    }
+
+    // Strategy 2: URL-only share
     try {
-      await navigator.share({
-        title: 'Meu resultado mynewstyle',
-        text: 'Descubra o seu estilo em mynewstyle.com',
-        files: [file],
-      });
+      await navigator.share({ title: SHARE_TITLE, text: SHARE_TEXT, url: shareUrl });
+      trackShareEvent({ type: 'share_generated', format, method: 'native_share', success: true });
       return;
-    } catch (error) {
-      // AbortError = user cancelled → fall back to download silently
-      if ((error as DOMException)?.name === 'AbortError') {
-        triggerDownload(pngDataUrl, filename);
+    } catch (err) {
+      if ((err as DOMException)?.name === 'AbortError') {
         return;
       }
-      // Other share errors → also fall back to download
-      triggerDownload(pngDataUrl, filename);
+      console.error('[useShareCard] URL-only share failed:', err);
+      toastFn.error('Não foi possível partilhar. Tente descarregar a imagem.');
       return;
     }
   }
 
-  // Fallback: browser download
-  triggerDownload(pngDataUrl, filename);
-}
+  // Strategy 3: Desktop fallback — download + clipboard
+  try {
+    const objectUrl = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.download = filename;
+    link.href = objectUrl;
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(objectUrl), 100);
+  } catch (err) {
+    console.error('[useShareCard] Download failed:', err);
+  }
 
-function triggerDownload(dataUrl: string, filename: string): void {
-  const link = document.createElement('a');
-  link.download = filename;
-  link.href = dataUrl;
-  link.click();
+  try {
+    await navigator.clipboard.writeText(shareUrl);
+    toastFn.success('Link copiado!');
+    trackShareEvent({ type: 'share_generated', format, method: 'download', success: true });
+  } catch (err) {
+    console.error('[useShareCard] Clipboard copy failed:', err);
+    toastFn.error('Não foi possível copiar o link. Tente novamente.');
+    trackShareEvent({ type: 'share_generated', format, method: 'download', success: false });
+  }
 }

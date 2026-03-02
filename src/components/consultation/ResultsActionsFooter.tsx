@@ -18,7 +18,7 @@ interface ResultsActionsFooterProps {
   consultationId: string;
 }
 
-export function ResultsActionsFooter({ consultationId: _consultationId }: ResultsActionsFooterProps) {
+export function ResultsActionsFooter({ consultationId }: ResultsActionsFooterProps) {
   const router = useRouter();
   const reset = useConsultationStore((state) => state.reset);
   const shouldReduceMotion = useReducedMotion();
@@ -62,6 +62,7 @@ export function ResultsActionsFooter({ consultationId: _consultationId }: Result
     photoPreview,
     previewUrl,
     gender,
+    consultationId,
   });
 
   const animationProps = shouldReduceMotion
