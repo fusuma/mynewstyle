@@ -166,6 +166,19 @@ let mockPhotoPreview: string | null = 'data:image/jpeg;base64,test123';
 let mockConsultationData: typeof mockConsultationWithTips | null = mockConsultationWithTips;
 let mockGender: string = 'male';
 
+// Mock html-to-image (used by BarberCard via ResultsActionsFooter)
+vi.mock('html-to-image', () => ({
+  toPng: vi.fn().mockResolvedValue('data:image/png;base64,mock'),
+}));
+
+// Mock face-shape-labels (used by BarberCard)
+vi.mock('@/lib/consultation/face-shape-labels', () => ({
+  FACE_SHAPE_LABELS: {
+    oval: 'Oval', round: 'Redondo', square: 'Quadrado', oblong: 'Oblongo',
+    heart: 'Coração', diamond: 'Diamante', triangle: 'Triangular',
+  },
+}));
+
 vi.mock('@/stores/consultation', () => ({
   useConsultationStore: (selector: (state: Record<string, unknown>) => unknown) =>
     selector({
@@ -175,6 +188,8 @@ vi.mock('@/stores/consultation', () => ({
       photoPreview: mockPhotoPreview,
       consultation: mockConsultationData,
       gender: mockGender,
+      previews: new Map(),
+      reset: vi.fn(),
       setPaymentStatus: vi.fn(),
     }),
 }));

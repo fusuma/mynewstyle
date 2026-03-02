@@ -92,6 +92,24 @@ vi.mock('@/hooks/usePayment', () => ({
   })),
 }));
 
+// Mock html-to-image (used by BarberCard via ResultsActionsFooter)
+vi.mock('html-to-image', () => ({
+  toPng: vi.fn().mockResolvedValue('data:image/png;base64,mock'),
+}));
+
+// Mock face-shape-labels (used by BarberCard and Paywall)
+vi.mock('@/lib/consultation/face-shape-labels', () => ({
+  FACE_SHAPE_LABELS: {
+    oval: 'Oval', round: 'Redondo', square: 'Quadrado', oblong: 'Oblongo',
+    heart: 'Coração', diamond: 'Diamante', triangle: 'Triangular',
+  },
+  FACE_SHAPE_DESCRIPTIONS: {
+    oval: 'Rosto oval.', round: 'Rosto redondo.', square: 'Rosto quadrado.',
+    oblong: 'Rosto oblongo.', heart: 'Rosto coração.', diamond: 'Rosto diamante.',
+    triangle: 'Rosto triangular.',
+  },
+}));
+
 // Consultation store mock state - mutable object for per-test overrides
 const mockStoreState = {
   consultationId: 'test-uuid-123' as string | null,
@@ -113,6 +131,10 @@ const mockStoreState = {
   } as typeof mockStoreState['faceAnalysis'] | null,
   photoPreview: null as string | null,
   paymentStatus: 'none' as 'none' | 'pending' | 'paid' | 'failed',
+  consultation: null,
+  gender: null as 'male' | 'female' | null,
+  previews: new Map<string, unknown>(),
+  reset: vi.fn(),
   setPaymentStatus: vi.fn(),
 };
 

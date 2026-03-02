@@ -107,6 +107,19 @@ const mockFaceAnalysis = {
   },
 };
 
+// Mock html-to-image (used by BarberCard via ResultsActionsFooter)
+vi.mock('html-to-image', () => ({
+  toPng: vi.fn().mockResolvedValue('data:image/png;base64,mock'),
+}));
+
+// Mock face-shape-labels (used by BarberCard)
+vi.mock('@/lib/consultation/face-shape-labels', () => ({
+  FACE_SHAPE_LABELS: {
+    oval: 'Oval', round: 'Redondo', square: 'Quadrado', oblong: 'Oblongo',
+    heart: 'Coração', diamond: 'Diamante', triangle: 'Triangular',
+  },
+}));
+
 // Store mock state that can be configured per test
 let mockPaymentStatus: string = 'none';
 let mockConsultationId: string | null = validId;
@@ -119,6 +132,10 @@ vi.mock('@/stores/consultation', () => ({
       faceAnalysis: mockFaceAnalysisState,
       paymentStatus: mockPaymentStatus,
       photoPreview: null,
+      consultation: null,
+      gender: null,
+      previews: new Map(),
+      reset: vi.fn(),
       setPaymentStatus: vi.fn(),
     }),
 }));

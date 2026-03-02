@@ -113,7 +113,7 @@ development_status:
   7-4-preview-loading-ux: done
   7-5-preview-display-and-before-after: done
   7-6-preview-fallback-gemini-pro-direct: done
-  7-7-barber-reference-card: ready-for-dev
+  7-7-barber-reference-card: done
   epic-7-retrospective: optional
 
   # E8: Auth & User Profile (Sprint 4-5)

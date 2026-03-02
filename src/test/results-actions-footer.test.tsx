@@ -44,6 +44,12 @@ vi.mock('lucide-react', () => ({
   Home: ({ className, 'aria-hidden': ariaHidden }: React.SVGAttributes<SVGElement>) => (
     <svg data-testid="icon-home" className={className} aria-hidden={ariaHidden} />
   ),
+  Scissors: ({ className, 'aria-hidden': ariaHidden }: React.SVGAttributes<SVGElement>) => (
+    <svg data-testid="icon-scissors" className={className} aria-hidden={ariaHidden} />
+  ),
+  Loader2: ({ className, 'aria-hidden': ariaHidden }: React.SVGAttributes<SVGElement>) => (
+    <svg data-testid="icon-loader" className={className} aria-hidden={ariaHidden} />
+  ),
 }));
 
 // Mock sonner toast
@@ -56,11 +62,36 @@ vi.mock('sonner', () => ({
   toast: mockToast,
 }));
 
-// Mock consultation store
+// Mock html-to-image (used by BarberCard flow)
+vi.mock('html-to-image', () => ({
+  toPng: vi.fn().mockResolvedValue('data:image/png;base64,mock'),
+}));
+
+// Mock face-shape-labels (used by BarberCard)
+vi.mock('@/lib/consultation/face-shape-labels', () => ({
+  FACE_SHAPE_LABELS: {
+    oval: 'Oval',
+    round: 'Redondo',
+    square: 'Quadrado',
+    oblong: 'Oblongo',
+    heart: 'Coração',
+    diamond: 'Diamante',
+    triangle: 'Triangular',
+  },
+}));
+
+// Mock consultation store with all fields used by ResultsActionsFooter
 const mockReset = vi.fn();
 vi.mock('@/stores/consultation', () => ({
-  useConsultationStore: (selector: (state: { reset: () => void }) => unknown) =>
-    selector({ reset: mockReset }),
+  useConsultationStore: (selector: (state: Record<string, unknown>) => unknown) =>
+    selector({
+      reset: mockReset,
+      faceAnalysis: null,
+      photoPreview: null,
+      consultation: null,
+      gender: null,
+      previews: new Map(),
+    }),
 }));
 
 // ---- Tests ----
