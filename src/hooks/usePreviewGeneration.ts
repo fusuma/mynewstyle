@@ -156,6 +156,9 @@ export function usePreviewGeneration(): UsePreviewGenerationReturn {
     [pollStatus, stopPolling, updatePreviewStatus]
   );
 
+  // Track preview start times for duration calculation
+  const previewStartTimes = useRef<Map<string, number>>(new Map());
+
   const startMockGeneration = useCallback(
     (recommendationId: string) => {
       // Simulate 10-second generation delay
@@ -167,9 +170,6 @@ export function usePreviewGeneration(): UsePreviewGenerationReturn {
     },
     [stopPolling, setPreviewUrl]
   );
-
-  // Track preview start times for duration calculation
-  const previewStartTimes = useRef<Map<string, number>>(new Map());
 
   const triggerPreview = useCallback(
     async (recommendationId: string, styleName: string, recommendationRank: number = 1) => {

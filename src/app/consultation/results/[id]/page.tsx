@@ -176,6 +176,16 @@ export default function ResultsPage() {
     paymentStatus === 'paid'
   );
 
+  // Track consultation_completed when results are first seen (Task 7.11)
+  // Must be called before any early returns to satisfy Rules of Hooks
+  useEffect(() => {
+    if (paymentStatus === 'paid' && !consultationCompletedTracked.current) {
+      consultationCompletedTracked.current = true;
+      const durationMs = Date.now() - consultationStartTime.current;
+      trackEvent(AnalyticsEventType.CONSULTATION_COMPLETED, { durationMs });
+    }
+  }, [paymentStatus]);
+
   // While hydrating from profile navigation, show a loading indicator
   if (isHydrating) {
     return (
@@ -188,15 +198,6 @@ export default function ResultsPage() {
   if (!consultationId || !faceAnalysis) {
     return null;
   }
-
-  // Track consultation_completed when results are first seen (Task 7.11)
-  useEffect(() => {
-    if (paymentStatus === 'paid' && !consultationCompletedTracked.current) {
-      consultationCompletedTracked.current = true;
-      const durationMs = Date.now() - consultationStartTime.current;
-      trackEvent(AnalyticsEventType.CONSULTATION_COMPLETED, { durationMs });
-    }
-  }, [paymentStatus]);
 
   const handlePaymentSuccess = () => {
     setPaymentStatus('paid');

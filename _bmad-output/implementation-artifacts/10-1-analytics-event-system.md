@@ -1,6 +1,6 @@
 # Story 10.1: Analytics Event System
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -364,3 +364,41 @@ No debug logs created.
 - `src/components/consultation/ResultsActionsFooter.tsx` — added TODO comment for results_rated (Story 10-5, Task 7.16)
 - `src/test/use-share-card.test.ts` — updated analytics tracking assertion to spy on real trackEvent (regression fix)
 - `_bmad-output/implementation-artifacts/10-1-analytics-event-system.md` — this file (story completion)
+
+## Senior Developer Review (AI)
+
+**Reviewer:** Fusuma (AI) on 2026-03-02
+**Review Result:** APPROVED with fixes applied
+
+### Issues Found and Fixed
+
+**CRITICAL — Rules of Hooks violation in `results/[id]/page.tsx` (FIXED)**
+The `useEffect` for `consultation_completed` tracking (Task 7.11) was placed after a conditional `return null` guard. React requires hooks to be called unconditionally before any early returns. The hook was moved above the `if (!consultationId || !faceAnalysis) return null` guard to comply with React's Rules of Hooks. The logic inside the hook is unchanged — it only fires when `paymentStatus === 'paid'`.
+
+**HIGH — `payment_completed` event sent `amount: 0` (FIXED)**
+In `PaymentForm.tsx`, the `trackEvent(AnalyticsEventType.PAYMENT_COMPLETED, { amount: 0 })` call used a hardcoded `0` placeholder because the payment amount was not available in that component's scope. Fixed by adding an optional `amount` prop to `PaymentFormProps` and passing `displayAmount` from `Paywall.tsx`. This makes the `payment_completed` analytics data actionable for revenue tracking.
+
+**MEDIUM — `questionnaire_abandoned` always sent `lastQuestion: 0` (FIXED)**
+The abandoned event hardcoded `lastQuestion: 0` regardless of how far the user progressed. Fixed by adding an optional `onProgress` callback to `QuestionnaireFlowProps` that reports `currentActiveIndex` whenever the question changes. The questionnaire page now tracks the current index in a `ref` and passes it to the abandoned event. This makes funnel drop-off analysis accurate.
+
+**MEDIUM — `_resetTracker()` leaked event listeners (FIXED)**
+`_resetTracker()` set `listenersRegistered = false` but did not remove the `beforeunload` and `visibilitychange` listeners registered via `registerLifecycleListeners()`. This caused listener duplication in tests when `trackEvent` was called again after a reset. Fixed by storing listener function references in module-level variables (`_beforeUnloadListener`, `_visibilityChangeListener`) and removing them explicitly in `_resetTracker()`.
+
+**LOW — `previewStartTimes` ref declared after first use in `usePreviewGeneration.ts` (FIXED)**
+The `previewStartTimes` ref was declared at line 172 but first referenced inside the `pollStatus` `useCallback` at line 114. While not a runtime error (closures capture the binding, not the value), the code order was confusing and could mislead future maintainers about initialization order. Moved `previewStartTimes` declaration to before `pollStatus` for clarity.
+
+### AC Verification
+
+- AC 1: AnalyticsEventType enum with all 16 values — IMPLEMENTED (`src/lib/analytics/types.ts`)
+- AC 2: Client-side `trackEvent()` at each interaction point — IMPLEMENTED (all 15 live event types instrumented; `results_rated` deferred to Story 10-5 as designed)
+- AC 3: `analytics_events` table with correct columns — IMPLEMENTED (`supabase/migrations/20260302400000_add_analytics_events.sql`)
+- AC 4: Device info captured automatically — IMPLEMENTED (`src/lib/analytics/device-info.ts`)
+- AC 5: Session-based tracking via `getOrCreateGuestSessionId()` — IMPLEMENTED (`src/lib/analytics/tracker.ts`)
+- AC 6: POST `/api/analytics/events` with Zod validation — IMPLEMENTED (`src/app/api/analytics/events/route.ts`)
+- AC 7: Service role client for inserts — IMPLEMENTED
+- AC 8: Fire-and-forget, batching (max 10 / 5s) — IMPLEMENTED
+- AC 9: Existing stubs replaced — IMPLEMENTED (`src/lib/utils/analytics.ts`)
+
+### Test Verification
+
+All 2048 tests pass. 71 new analytics tests added. Zero regressions.

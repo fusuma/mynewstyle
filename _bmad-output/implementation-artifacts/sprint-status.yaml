@@ -137,7 +137,7 @@ development_status:
 
   # E10: Observability & Analytics (Sprint 5)
   epic-10: in-progress
-  10-1-analytics-event-system: review
+  10-1-analytics-event-system: done
   10-2-ai-pipeline-monitoring-dashboard: ready-for-dev
   10-3-cost-and-quality-alerts: ready-for-dev
   10-4-funnel-analytics: ready-for-dev

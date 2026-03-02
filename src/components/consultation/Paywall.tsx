@@ -174,6 +174,7 @@ export function Paywall({
                 onPaymentError={(message) => {
                   setInternalPaymentError(message);
                 }}
+                amount={displayAmount}
               />
             </StripeProvider>
           ) : (

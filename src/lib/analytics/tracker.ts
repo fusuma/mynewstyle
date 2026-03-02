@@ -30,6 +30,10 @@ let eventQueue: QueuedEvent[] = [];
 let flushTimer: ReturnType<typeof setInterval> | null = null;
 let listenersRegistered = false;
 
+// Stored listener references so they can be removed during _resetTracker()
+let _beforeUnloadListener: (() => void) | null = null;
+let _visibilityChangeListener: (() => void) | null = null;
+
 /**
  * Track an analytics event. Fire-and-forget — never throws.
  */
@@ -129,29 +133,33 @@ function flushWithBeacon(): void {
 /**
  * Register page lifecycle event listeners for automatic flushing.
  * Called once when the first event is tracked.
+ * Stores listener references so _resetTracker() can remove them cleanly.
  */
 function registerLifecycleListeners(): void {
   // beforeunload: use sendBeacon for reliability during page teardown
-  window.addEventListener('beforeunload', () => {
+  _beforeUnloadListener = () => {
     // Stop the interval timer
     if (flushTimer !== null) {
       clearInterval(flushTimer);
       flushTimer = null;
     }
     flushWithBeacon();
-  });
+  };
+  window.addEventListener('beforeunload', _beforeUnloadListener);
 
   // visibilitychange: handles mobile browser backgrounding (tab switch, home button)
   // Modern mobile browsers fire visibilitychange but may not fire beforeunload
-  document.addEventListener('visibilitychange', () => {
+  _visibilityChangeListener = () => {
     if (document.hidden) {
       void flushEvents();
     }
-  });
+  };
+  document.addEventListener('visibilitychange', _visibilityChangeListener);
 }
 
 /**
- * Stop the flush timer and reset state. For testing/cleanup only.
+ * Stop the flush timer, remove lifecycle listeners, and reset state.
+ * For testing/cleanup only.
  * @internal
  */
 export function _resetTracker(): void {
@@ -159,6 +167,15 @@ export function _resetTracker(): void {
   if (flushTimer !== null) {
     clearInterval(flushTimer);
     flushTimer = null;
+  }
+  // Remove registered listeners to prevent duplicate registrations in tests
+  if (_beforeUnloadListener !== null) {
+    window.removeEventListener('beforeunload', _beforeUnloadListener);
+    _beforeUnloadListener = null;
+  }
+  if (_visibilityChangeListener !== null) {
+    document.removeEventListener('visibilitychange', _visibilityChangeListener);
+    _visibilityChangeListener = null;
   }
   listenersRegistered = false;
 }

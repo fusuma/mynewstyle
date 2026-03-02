@@ -25,6 +25,8 @@ export default function QuestionnairePage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isSubmittingRef = useRef(false);
   const questionnaireStartTime = useRef<number | null>(null);
+  // Track current question index for questionnaire_abandoned analytics (Task 7.6)
+  const currentQuestionIndexRef = useRef<number>(0);
 
   useEffect(() => {
     if (!gender) {
@@ -45,7 +47,9 @@ export default function QuestionnairePage() {
     if (!gender) return;
     const handleVisibilityChange = () => {
       if (document.hidden && !isSubmittingRef.current) {
-        trackEvent(AnalyticsEventType.QUESTIONNAIRE_ABANDONED, { lastQuestion: 0 });
+        trackEvent(AnalyticsEventType.QUESTIONNAIRE_ABANDONED, {
+          lastQuestion: currentQuestionIndexRef.current,
+        });
       }
     };
     document.addEventListener('visibilitychange', handleVisibilityChange);
@@ -56,6 +60,10 @@ export default function QuestionnairePage() {
     () => (gender ? getQuestionnaireConfig(gender) : null),
     [gender]
   );
+
+  const handleProgress = useCallback((currentIndex: number) => {
+    currentQuestionIndexRef.current = currentIndex;
+  }, []);
 
   const handleComplete = useCallback(
     async (responses: QuestionnaireResponses) => {
@@ -97,6 +105,7 @@ export default function QuestionnairePage() {
       <QuestionnaireFlow
         config={config}
         onComplete={handleComplete}
+        onProgress={handleProgress}
       />
       {isSubmitting && (
         <div

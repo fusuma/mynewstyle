@@ -16,9 +16,11 @@ interface PaymentFormProps {
   onPaymentError: (message: string) => void;
   /** Called immediately when a payment attempt begins — use to clear stale errors from previous attempts. */
   onPaymentStart?: () => void;
+  /** Amount in cents — passed from Paywall for accurate payment_completed analytics. */
+  amount?: number;
 }
 
-export function PaymentForm({ onPaymentSuccess, onPaymentError, onPaymentStart }: PaymentFormProps) {
+export function PaymentForm({ onPaymentSuccess, onPaymentError, onPaymentStart, amount = 0 }: PaymentFormProps) {
   const stripe = useStripe();
   const elements = useElements();
   const [isProcessing, setIsProcessing] = useState(false);
@@ -45,8 +47,8 @@ export function PaymentForm({ onPaymentSuccess, onPaymentError, onPaymentStart }
       onPaymentError(error.message ?? 'Pagamento não processado. Tente outro método.');
       setIsProcessing(false);
     } else {
-      // Track payment_completed (Task 7.9) — amount not available here, use 0 as placeholder
-      trackEvent(AnalyticsEventType.PAYMENT_COMPLETED, { amount: 0 });
+      // Track payment_completed (Task 7.9) — amount in cents from Paywall props
+      trackEvent(AnalyticsEventType.PAYMENT_COMPLETED, { amount });
       setIsProcessing(false);
       onPaymentSuccess();
     }

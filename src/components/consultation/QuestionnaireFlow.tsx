@@ -12,6 +12,8 @@ import type { QuestionnaireResponses } from '@/stores/consultation';
 interface QuestionnaireFlowProps {
   config: QuestionnaireConfig;
   onComplete: (responses: QuestionnaireResponses) => void;
+  /** Called whenever the active question index changes (0-based). Used for analytics. */
+  onProgress?: (currentIndex: number) => void;
 }
 
 const AVG_SECONDS_PER_QUESTION = 10;
@@ -36,7 +38,7 @@ const variants = {
   }),
 };
 
-export function QuestionnaireFlow({ config, onComplete }: QuestionnaireFlowProps) {
+export function QuestionnaireFlow({ config, onComplete, onProgress }: QuestionnaireFlowProps) {
   const {
     currentQuestion,
     progress,
@@ -54,6 +56,11 @@ export function QuestionnaireFlow({ config, onComplete }: QuestionnaireFlowProps
   const [direction, setDirection] = useState(1);
   const hasCalledComplete = useRef(false);
   const prefersReducedMotion = useReducedMotion();
+
+  // Notify parent of question index changes for analytics (abandoned tracking)
+  useEffect(() => {
+    onProgress?.(currentActiveIndex);
+  }, [currentActiveIndex, onProgress]);
 
   // Handle completion
   useEffect(() => {
