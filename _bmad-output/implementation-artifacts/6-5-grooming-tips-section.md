@@ -1,6 +1,6 @@
 # Story 6.5: Grooming Tips Section (Gender-Specific)
 
-Status: ready-for-dev
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -24,42 +24,42 @@ so that I get actionable care and styling advice tailored to my unique profile.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Create `GroomingTips` component (AC: #1, #2, #3, #4, #5, #6, #7, #8, #9)
-  - [ ] 1.1 Create `src/components/consultation/GroomingTips.tsx`
-  - [ ] 1.2 Accept `groomingTips: GroomingTip[]` and `gender: 'male' | 'female'` as props
-  - [ ] 1.3 Group tips by `category` field (`products`, `routine`, `barber_tips`)
-  - [ ] 1.4 Render category sub-headers with Portuguese labels:
+- [x] Task 1: Create `GroomingTips` component (AC: #1, #2, #3, #4, #5, #6, #7, #8, #9)
+  - [x] 1.1 Create `src/components/consultation/GroomingTips.tsx`
+  - [x] 1.2 Accept `groomingTips: GroomingTip[]` and `gender: 'male' | 'female'` as props
+  - [x] 1.3 Group tips by `category` field (`products`, `routine`, `barber_tips`)
+  - [x] 1.4 Render category sub-headers with Portuguese labels:
     - `products` -> "Produtos"
     - `routine` -> "Rotina Diaria"
     - `barber_tips` -> "Dicas para o Barbeiro" (male) / "Dicas para o Cabeleireiro" (female)
-  - [ ] 1.5 Map each tip's `icon` string to a Lucide React icon component (fallback to `Sparkles` if icon not found)
-  - [ ] 1.6 Render each tip as an individual Card (reuse `src/components/ui/card.tsx`)
-  - [ ] 1.7 Apply gender-themed styling via Tailwind theme classes (bg-card, text-card-foreground, border-accent)
-  - [ ] 1.8 Implement 2-column grid on `md:` breakpoint+, single column below
-  - [ ] 1.9 Add Framer Motion `staggerChildren: 0.15` container + `slideUp + fadeIn` per card
-  - [ ] 1.10 Respect `useReducedMotion()` — skip animations when enabled
-  - [ ] 1.11 Add `role="list"` on container, `role="listitem"` on each card, aria-labels on icons
+  - [x] 1.5 Map each tip's `icon` string to a Lucide React icon component (fallback to `Sparkles` if icon not found)
+  - [x] 1.6 Render each tip as an individual Card (reuse `src/components/ui/card.tsx`)
+  - [x] 1.7 Apply gender-themed styling via Tailwind theme classes (bg-card, text-card-foreground, border-accent)
+  - [x] 1.8 Implement 2-column grid on `md:` breakpoint+, single column below
+  - [x] 1.9 Add Framer Motion `staggerChildren: 0.15` container + `slideUp + fadeIn` per card
+  - [x] 1.10 Respect `useReducedMotion()` — skip animations when enabled
+  - [x] 1.11 Add `role="list"` on container, `role="listitem"` on each card, aria-labels on icons
 
-- [ ] Task 2: Create `GroomingTipCard` sub-component (AC: #3, #4, #6, #9)
-  - [ ] 2.1 Create individual tip card with icon, category badge, and tip text
-  - [ ] 2.2 Icon rendered at 24px with theme accent color
-  - [ ] 2.3 Tip text rendered as body text (Inter 400, 16px)
-  - [ ] 2.4 Category badge using `src/components/ui/badge.tsx` with muted variant
-  - [ ] 2.5 Card uses 16px border-radius, standard card shadow (`0 2px 12px rgba(0,0,0,0.08)`)
+- [x] Task 2: Create `GroomingTipCard` sub-component (AC: #3, #4, #6, #9)
+  - [x] 2.1 Create individual tip card with icon, category badge, and tip text
+  - [x] 2.2 Icon rendered at 24px with theme accent color
+  - [x] 2.3 Tip text rendered as body text (Inter 400, 16px)
+  - [x] 2.4 Category badge using `src/components/ui/badge.tsx` with muted variant
+  - [x] 2.5 Card uses 16px border-radius, standard card shadow (`0 2px 12px rgba(0,0,0,0.08)`)
 
-- [ ] Task 3: Write unit tests (AC: all)
-  - [ ] 3.1 Create `src/test/grooming-tips.test.tsx`
-  - [ ] 3.2 Test: renders correct number of tip cards for given data
-  - [ ] 3.3 Test: groups tips by category and renders category headers
-  - [ ] 3.4 Test: male path shows "Dicas para o Barbeiro", female shows "Dicas para o Cabeleireiro"
-  - [ ] 3.5 Test: renders Lucide icons for known icon strings
-  - [ ] 3.6 Test: falls back to Sparkles icon for unknown icon strings
-  - [ ] 3.7 Test: reduced motion disables animations
-  - [ ] 3.8 Test: accessibility — list roles, aria-labels present
+- [x] Task 3: Write unit tests (AC: all)
+  - [x] 3.1 Create `src/test/grooming-tips.test.tsx`
+  - [x] 3.2 Test: renders correct number of tip cards for given data
+  - [x] 3.3 Test: groups tips by category and renders category headers
+  - [x] 3.4 Test: male path shows "Dicas para o Barbeiro", female shows "Dicas para o Cabeleireiro"
+  - [x] 3.5 Test: renders Lucide icons for known icon strings
+  - [x] 3.6 Test: falls back to Sparkles icon for unknown icon strings
+  - [x] 3.7 Test: reduced motion disables animations
+  - [x] 3.8 Test: accessibility — list roles, aria-labels present
 
-- [ ] Task 4: Integration preparation (AC: #8)
-  - [ ] 4.1 Export `GroomingTips` from `src/components/consultation/GroomingTips.tsx`
-  - [ ] 4.2 The results page (`src/app/consultation/results/[id]/page.tsx`) currently renders `PaidResultsPlaceholder` — do NOT modify the results page in this story. The component will be integrated in the animated reveal story (6-8).
+- [x] Task 4: Integration preparation (AC: #8)
+  - [x] 4.1 Export `GroomingTips` from `src/components/consultation/GroomingTips.tsx`
+  - [x] 4.2 The results page (`src/app/consultation/results/[id]/page.tsx`) currently renders `PaidResultsPlaceholder` — do NOT modify the results page in this story. The component will be integrated in the animated reveal story (6-8).
 
 ## Dev Notes
 
@@ -221,10 +221,33 @@ DO NOT hardcode color hex values. The theme handles male (#1A1A2E dark) vs femal
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+claude-sonnet-4-6
 
 ### Debug Log References
 
+- ESLint `react-hooks/static-components` rule flagged `getIcon()` usage inside render — resolved by moving icon resolution to parent (`GroomingTips`) and passing resolved `IconComponent` as a prop to `GroomingTipCard`.
+- Test assertions for category headers used `getByText()` which matched both the h3 heading and the Badge element (both render the same label text) — resolved by using `getByRole('heading', { name: ... })` for precise h3 targeting.
+
 ### Completion Notes List
 
+- Implemented `GroomingTips` component at `src/components/consultation/GroomingTips.tsx` with full TDD (RED → GREEN → REFACTOR cycle).
+- `GroomingTipCard` sub-component co-located in the same file as it is only used internally.
+- Icon mapping uses a static `ICON_MAP` object (no dynamic imports) — 9 icons plus `Sparkles` fallback, as per Dev Notes. The `"comb"` key maps to `Wand2` (replacing the originally specified `Comb` which does not exist in the installed version of `lucide-react`).
+- Category grouping iterates in a fixed order (`products`, `routine`, `barber_tips`) and only renders sections for categories that actually have tips.
+- Animation uses `staggerChildren: 0.15` per container (one container per category group); `useReducedMotion()` collapses both container and item variants to empty objects to fully skip animation.
+- Styling uses only semantic Tailwind theme classes (`bg-card`, `text-card-foreground`, `text-accent-foreground`, `text-muted-foreground`) — no hardcoded hex values.
+- Icons use `aria-hidden="true"` (decorative) — the adjacent `tipText` paragraph provides the accessible label; using `aria-label` would cause redundant screen reader announcements.
+- Card tip keys use `${category}-${index}` composite key for stable React reconciliation.
+- `GroomingTipCard` `gender` prop removed — it was dead weight; `categoryLabel` is pre-resolved by the parent.
+- All 20 unit tests pass; linting and TypeScript type-check pass with no errors.
+- Results page (`src/app/consultation/results/[id]/page.tsx`) intentionally NOT modified — per story task 4.2.
+
 ### File List
+
+- src/components/consultation/GroomingTips.tsx (new)
+- src/test/grooming-tips.test.tsx (new)
+
+## Change Log
+
+- 2026-03-02: Implemented Story 6.5 — created `GroomingTips` component and `GroomingTipCard` sub-component with full unit test coverage (20 tests). All acceptance criteria satisfied.
+- 2026-03-02: Code review fixes — replaced non-existent `Comb` lucide-react import with `Wand2`; fixed icon accessibility to use `aria-hidden="true"`; stabilized React key from bare `index` to `${category}-${index}`; removed dead `gender` prop from `GroomingTipCard`; corrected `"Rotina Diaria"` typo to `"Rotina Diária"`. Updated tests to match all changes. Status → done.
