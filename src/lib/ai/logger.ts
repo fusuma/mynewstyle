@@ -8,6 +8,10 @@ let aiCallLogs: AICallLog[] = [];
 const PRICING: Record<string, { inputPer1M: number; outputPer1M: number }> = {
   'gemini-2.5-flash': { inputPer1M: 0.15, outputPer1M: 0.60 },
   'gpt-4o': { inputPer1M: 2.50, outputPer1M: 10.00 },
+  // Gemini 3 Pro Image uses fixed per-image pricing (~$0.134/image at 1K-2K resolution).
+  // Approximated as ~1,120 output tokens at $120/M = $0.1344 = ~13 cents per image.
+  // Input tokens set to 0 (image gen tasks don't bill input tokens separately).
+  'gemini-3-pro-image-preview': { inputPer1M: 0, outputPer1M: 120.00 },
 };
 
 /**
@@ -16,6 +20,19 @@ const PRICING: Record<string, { inputPer1M: number; outputPer1M: number }> = {
  * Input/output tokens are set to 0 for image generation tasks.
  */
 export const KIE_COST_PER_IMAGE_CENTS = 4;
+
+/**
+ * Approximate cost per image for Gemini 3 Pro Image (1K-2K resolution).
+ * ~$0.134/image = 13 cents. This is 2.5-6x more expensive than Kie.ai.
+ * Calculated as: ~1,120 output tokens * ($120 / 1,000,000) = $0.1344 ≈ 13 cents.
+ */
+export const GEMINI_PRO_IMAGE_COST_PER_IMAGE_CENTS = 13;
+
+/**
+ * Approximate output token count for Gemini 3 Pro Image generation.
+ * Used for cost tracking when logging via persistAICallLog().
+ */
+export const GEMINI_PRO_IMAGE_OUTPUT_TOKENS = 1120;
 
 /**
  * Calculate cost in cents for an AI call based on token usage.

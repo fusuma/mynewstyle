@@ -81,13 +81,15 @@ export class KieClient {
    * @param photoUrl - Publicly accessible signed URL for the user's photo (15-min expiry)
    * @param stylePrompt - Style-specific prompt instructing AI to change only the hairstyle
    * @param callbackUrl - Webhook URL where Kie.ai will POST the completed result
+   * @param signal - Optional AbortSignal for timeout cancellation (Story 7-6)
    * @returns KieTaskResult containing the taskId for tracking
    * @throws KieApiError if Kie.ai returns a non-200 status
    */
   async createPreviewTask(
     photoUrl: string,
     stylePrompt: string,
-    callbackUrl: string
+    callbackUrl: string,
+    signal?: AbortSignal
   ): Promise<KieTaskResult> {
     const requestBody: KieJobRequest = {
       model: 'nano-banana-2',
@@ -109,6 +111,7 @@ export class KieClient {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(requestBody),
+      signal,
     });
 
     if (!response.ok) {

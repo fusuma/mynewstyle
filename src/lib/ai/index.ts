@@ -10,7 +10,14 @@ export { AIRouter, isRetryable } from './provider';
 // Kie.ai preview generation client (separate from text/vision AI providers)
 export { KieClient, KieApiError } from './kie';
 export type { KieJobRequest, KieJobResponse, KieTaskResult } from './kie';
-export { logAICall, getAICallLogs, clearAICallLogs, calculateCost, persistAICallLog, KIE_COST_PER_IMAGE_CENTS } from './logger';
+export { logAICall, getAICallLogs, clearAICallLogs, calculateCost, persistAICallLog, KIE_COST_PER_IMAGE_CENTS, GEMINI_PRO_IMAGE_COST_PER_IMAGE_CENTS, GEMINI_PRO_IMAGE_OUTPUT_TOKENS } from './logger';
+
+// Gemini Pro Image provider for synchronous preview fallback (Story 7-6)
+export { GeminiProImageProvider } from './gemini-image';
+
+// Preview router: Kie.ai primary + Gemini Pro fallback (Story 7-6)
+export { PreviewRouter, BothProvidersFailedError } from './preview-router';
+export type { PreviewResult } from './preview-router';
 export { getAIConfig } from './config';
 export { GeminiProvider } from './gemini';
 export { OpenAIProvider } from './openai';

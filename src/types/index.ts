@@ -118,14 +118,20 @@ export interface PreviewStatus {
 }
 
 export interface PreviewGenerationParams {
-  taskId: string;
-  model: 'nano-banana-2';
-  callbackUrl: string;
-  requestedAt: string;        // ISO timestamp
-  photoStoragePath: string;   // Supabase Storage path (NOT signed URL)
+  taskId?: string;              // Set for Kie.ai async path
+  model: 'nano-banana-2' | 'gemini-3-pro-image-preview';
+  callbackUrl?: string;         // Set for Kie.ai async path only
+  requestedAt: string;          // ISO timestamp
+  photoStoragePath: string;     // Supabase Storage path (NOT signed URL)
   stylePrompt: string;
   styleName: string;
   gender: 'male' | 'female';
+  // Fallback-specific fields (Story 7-6)
+  provider?: 'kie' | 'gemini-pro-image';
+  fallbackReason?: 'kie_error' | 'kie_timeout';
+  completedAt?: string;         // ISO timestamp (set when sync fallback completes)
+  quality_gate_reason?: string; // Set when face similarity check fails
+  similarity_score?: number;    // Face similarity score from quality gate
 }
 
 export interface AIProviderConfig {
