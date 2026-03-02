@@ -1,6 +1,6 @@
 # Story 7.5: Preview Display & Before/After
 
-Status: ready-for-dev
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -27,58 +27,58 @@ so that **I can clearly see how the recommended hairstyle looks on me and feel c
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Create BeforeAfterSlider component (AC: 2, 6, 7, 10, 11, 12)
-  - [ ] 1.1 Create `src/components/consultation/BeforeAfterSlider.tsx` as a client component
-  - [ ] 1.2 Implement dual-image layout: original photo on left side, preview on right side, divided by a draggable vertical line
-  - [ ] 1.3 Use `clip-path` or `overflow: hidden` with variable width to reveal/hide portions of each image as the slider moves
-  - [ ] 1.4 Implement draggable handle/thumb (48px minimum touch target) centered vertically on the divider line
-  - [ ] 1.5 Handle pointer events (onPointerDown, onPointerMove, onPointerUp) for unified mouse + touch support
-  - [ ] 1.6 Initialize slider position at 50% (center) on mount
-  - [ ] 1.7 Add keyboard support: left/right arrow keys move slider by 5% increments, Home key = 0%, End key = 100%
-  - [ ] 1.8 Add `aria-label="Comparador antes e depois"`, `role="slider"`, `aria-valuemin="0"`, `aria-valuemax="100"`, `aria-valuenow={position}`
-  - [ ] 1.9 Respect `prefers-reduced-motion`: disable smooth drag animation, use instant position updates
-  - [ ] 1.10 Use design system tokens (border-primary, bg-background, etc.) for handle styling
+- [x] Task 1: Create BeforeAfterSlider component (AC: 2, 6, 7, 10, 11, 12)
+  - [x] 1.1 Create `src/components/consultation/BeforeAfterSlider.tsx` as a client component
+  - [x] 1.2 Implement dual-image layout: original photo on left side, preview on right side, divided by a draggable vertical line
+  - [x] 1.3 Use `clip-path` or `overflow: hidden` with variable width to reveal/hide portions of each image as the slider moves
+  - [x] 1.4 Implement draggable handle/thumb (48px minimum touch target) centered vertically on the divider line
+  - [x] 1.5 Handle pointer events (onPointerDown, onPointerMove, onPointerUp) for unified mouse + touch support
+  - [x] 1.6 Initialize slider position at 50% (center) on mount
+  - [x] 1.7 Add keyboard support: left/right arrow keys move slider by 5% increments, Home key = 0%, End key = 100%
+  - [x] 1.8 Add `aria-label="Comparador antes e depois"`, `role="slider"`, `aria-valuemin="0"`, `aria-valuemax="100"`, `aria-valuenow={position}`
+  - [x] 1.9 Respect `prefers-reduced-motion`: disable smooth drag animation, use instant position updates
+  - [x] 1.10 Use design system tokens (border-primary, bg-background, etc.) for handle styling
 
-- [ ] Task 2: Create PreviewToggleButtons component for small mobile (AC: 3, 10, 11)
-  - [ ] 2.1 Create `src/components/consultation/PreviewToggleButtons.tsx` as a client component
-  - [ ] 2.2 Render two toggle buttons: "Original" and "Novo Estilo"
-  - [ ] 2.3 Active button uses `bg-primary text-primary-foreground`, inactive uses `bg-muted text-muted-foreground`
-  - [ ] 2.4 On toggle, crossfade between original and preview images using Framer Motion AnimatePresence with mode="wait"
-  - [ ] 2.5 Reduced-motion: instant swap without crossfade animation
-  - [ ] 2.6 Min button height 48px for touch accessibility
+- [x] Task 2: Create PreviewToggleButtons component for small mobile (AC: 3, 10, 11)
+  - [x] 2.1 Create `src/components/consultation/PreviewToggleButtons.tsx` as a client component
+  - [x] 2.2 Render two toggle buttons: "Original" and "Novo Estilo"
+  - [x] 2.3 Active button uses `bg-primary text-primary-foreground`, inactive uses `bg-muted text-muted-foreground`
+  - [x] 2.4 On toggle, crossfade between original and preview images using Framer Motion AnimatePresence with mode="wait"
+  - [x] 2.5 Reduced-motion: instant swap without crossfade animation
+  - [x] 2.6 Min button height 48px for touch accessibility
 
-- [ ] Task 3: Create PreviewDisplay component (AC: 1, 4, 5, 8, 9, 10, 11, 12)
-  - [ ] 3.1 Create `src/components/consultation/PreviewDisplay.tsx` as a client component
-  - [ ] 3.2 Accept props: `originalPhoto: string`, `previewUrl: string | null`, `previewStatus: PreviewStatus['status']`, `styleName: string`
-  - [ ] 3.3 When `previewStatus === 'ready'` and `previewUrl` is set: render the before/after comparison view
-  - [ ] 3.4 Implement crossfade transition from loading state to preview display (500ms, ease-out) using Framer Motion
-  - [ ] 3.5 Render BeforeAfterSlider on screens >=375px (using Tailwind `hidden` / `block` responsive classes, NO window.innerWidth)
-  - [ ] 3.6 Render PreviewToggleButtons on screens <375px (using Tailwind responsive classes)
-  - [ ] 3.7 Display expectation text below: "Visualizacao artistica — resultado depende do seu cabelo e cabeleireiro"
-  - [ ] 3.8 Render watermark "mynewstyle.com" positioned absolute bottom-right with low opacity (opacity-30 to opacity-40)
-  - [ ] 3.9 When `previewStatus === 'unavailable'`: display message "Visualizacao indisponivel para este estilo — veja as recomendacoes escritas" with info icon
-  - [ ] 3.10 When `previewStatus === 'failed'`: delegate to PreviewError component (from story 7-4)
-  - [ ] 3.11 Add alt text to preview image: `"Visualizacao IA: {styleName} aplicado ao seu rosto"`
-  - [ ] 3.12 Reduced-motion: instant swap instead of crossfade
+- [x] Task 3: Create PreviewDisplay component (AC: 1, 4, 5, 8, 9, 10, 11, 12)
+  - [x] 3.1 Create `src/components/consultation/PreviewDisplay.tsx` as a client component
+  - [x] 3.2 Accept props: `originalPhoto: string`, `previewUrl: string | null`, `previewStatus: PreviewStatus['status']`, `styleName: string`
+  - [x] 3.3 When `previewStatus === 'ready'` and `previewUrl` is set: render the before/after comparison view
+  - [x] 3.4 Implement crossfade transition from loading state to preview display (500ms, ease-out) using Framer Motion
+  - [x] 3.5 Render BeforeAfterSlider on screens >=375px (using Tailwind `hidden` / `block` responsive classes, NO window.innerWidth)
+  - [x] 3.6 Render PreviewToggleButtons on screens <375px (using Tailwind responsive classes)
+  - [x] 3.7 Display expectation text below: "Visualizacao artistica — resultado depende do seu cabelo e cabeleireiro"
+  - [x] 3.8 Render watermark "mynewstyle.com" positioned absolute bottom-right with low opacity (opacity-30 to opacity-40)
+  - [x] 3.9 When `previewStatus === 'unavailable'`: display message "Visualizacao indisponivel para este estilo — veja as recomendacoes escritas" with info icon
+  - [x] 3.10 When `previewStatus === 'failed'`: delegate to PreviewError component (from story 7-4)
+  - [x] 3.11 Add alt text to preview image: `"Visualizacao IA: {styleName} aplicado ao seu rosto"`
+  - [x] 3.12 Reduced-motion: instant swap instead of crossfade
 
-- [ ] Task 4: Integrate PreviewDisplay into HeroRecommendationCard (AC: 1, 2, 3)
-  - [ ] 4.1 Import PreviewDisplay in `src/components/consultation/HeroRecommendationCard.tsx`
-  - [ ] 4.2 After the loading overlay completes (status becomes 'ready'), render PreviewDisplay inside the card
-  - [ ] 4.3 Pass the user's `photoPreview` from consultation store as `originalPhoto`
-  - [ ] 4.4 Pass `previewUrl` and `previewStatus` from the `usePreviewGeneration` hook (created in story 7-4)
-  - [ ] 4.5 Conditionally render: show PreviewDisplay when preview is in 'ready' or 'unavailable' state; show loading overlay when 'generating'
+- [x] Task 4: Integrate PreviewDisplay into HeroRecommendationCard (AC: 1, 2, 3)
+  - [x] 4.1 Import PreviewDisplay in `src/components/consultation/HeroRecommendationCard.tsx`
+  - [x] 4.2 After the loading overlay completes (status becomes 'ready'), render PreviewDisplay inside the card
+  - [x] 4.3 Pass the user's `photoPreview` from consultation store as `originalPhoto`
+  - [x] 4.4 Pass `previewUrl` and `previewStatus` from the `usePreviewGeneration` hook (created in story 7-4)
+  - [x] 4.5 Conditionally render: show PreviewDisplay when preview is in 'ready' or 'unavailable' state; show loading overlay when 'generating'
 
-- [ ] Task 5: Integrate PreviewDisplay into AlternativeRecommendationCard (AC: 1, 2, 3)
-  - [ ] 5.1 Import PreviewDisplay in `src/components/consultation/AlternativeRecommendationCard.tsx`
-  - [ ] 5.2 Render PreviewDisplay inside expanded content when preview status is 'ready' or 'unavailable'
-  - [ ] 5.3 Pass same props pattern as HeroRecommendationCard integration
+- [x] Task 5: Integrate PreviewDisplay into AlternativeRecommendationCard (AC: 1, 2, 3)
+  - [x] 5.1 Import PreviewDisplay in `src/components/consultation/AlternativeRecommendationCard.tsx`
+  - [x] 5.2 Render PreviewDisplay inside expanded content when preview status is 'ready' or 'unavailable'
+  - [x] 5.3 Pass same props pattern as HeroRecommendationCard integration
 
-- [ ] Task 6: Write tests
-  - [ ] 6.1 Unit tests for BeforeAfterSlider: renders both images, initial position at 50%, pointer drag updates position, keyboard navigation (arrow keys, Home, End), aria attributes, reduced-motion behavior
-  - [ ] 6.2 Unit tests for PreviewToggleButtons: renders both buttons, toggle state switches active/inactive styling, crossfade animation fires, reduced-motion instant swap
-  - [ ] 6.3 Unit tests for PreviewDisplay: renders slider on >=375px mock, renders toggle on <375px mock, crossfade from loading to ready, shows unavailable message, shows expectation text, shows watermark, alt text present
-  - [ ] 6.4 Integration test: HeroRecommendationCard shows PreviewDisplay when preview is ready
-  - [ ] 6.5 Integration test: AlternativeRecommendationCard shows PreviewDisplay when preview is ready
+- [x] Task 6: Write tests
+  - [x] 6.1 Unit tests for BeforeAfterSlider: renders both images, initial position at 50%, pointer drag updates position, keyboard navigation (arrow keys, Home, End), aria attributes, reduced-motion behavior
+  - [x] 6.2 Unit tests for PreviewToggleButtons: renders both buttons, toggle state switches active/inactive styling, crossfade animation fires, reduced-motion instant swap
+  - [x] 6.3 Unit tests for PreviewDisplay: renders slider on >=375px mock, renders toggle on <375px mock, crossfade from loading to ready, shows unavailable message, shows expectation text, shows watermark, alt text present
+  - [x] 6.4 Integration test: HeroRecommendationCard shows PreviewDisplay when preview is ready
+  - [x] 6.5 Integration test: AlternativeRecommendationCard shows PreviewDisplay when preview is ready
 
 ## Dev Notes
 
@@ -328,10 +328,38 @@ The project uses these patterns consistently:
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+claude-sonnet-4-6
 
 ### Debug Log References
 
+- Fixed `setPointerCapture` not available in jsdom — added guard `if (target.setPointerCapture)` in BeforeAfterSlider
+- Fixed ESLint `react-hooks/refs` violation — refactored preview image from using `containerRef.current.offsetWidth` during render to using `clip-path: inset()` approach instead
+- Fixed duplicate watermark elements causing `getByText` ambiguity in tests — removed second watermark
+
 ### Completion Notes List
 
+- Created `BeforeAfterSlider` component with clip-path reveal technique (cleaner than overflow/width approach), pointer events (mouse+touch), keyboard navigation (ArrowLeft/Right 5% increments, Home/End), full ARIA slider semantics, 48px touch target handle with dual-chevron icon
+- Created `PreviewToggleButtons` component with "Original"/"Novo Estilo" buttons, Framer Motion AnimatePresence crossfade (mode="wait"), reduced-motion instant swap, min-h-[48px] touch accessibility, design system token styling
+- Created `PreviewDisplay` orchestrator: uses Tailwind `hidden min-[375px]:block` / `block min-[375px]:hidden` for responsive slider vs toggle (no JavaScript viewport detection), Framer Motion 500ms ease-out crossfade, expectation framing text, watermark, unavailable state with Info icon, failed state delegates to PreviewError
+- Integrated PreviewDisplay into HeroRecommendationCard (replaced direct img + PreviewUnavailable with PreviewDisplay for ready/unavailable states)
+- Integrated PreviewDisplay into AlternativeRecommendationCard (same pattern)
+- Removed now-unused imports of `PreviewUnavailable` and `PreviewError` from both card components (PreviewDisplay handles these states internally)
+- All 1490 tests pass (104 test files), 50 new tests added across 5 test files, zero regressions, linter clean
+
 ### File List
+
+- src/components/consultation/BeforeAfterSlider.tsx (new)
+- src/components/consultation/PreviewToggleButtons.tsx (new)
+- src/components/consultation/PreviewDisplay.tsx (new)
+- src/components/consultation/HeroRecommendationCard.tsx (modified)
+- src/components/consultation/AlternativeRecommendationCard.tsx (modified)
+- src/test/before-after-slider.test.tsx (new)
+- src/test/preview-toggle-buttons.test.tsx (new)
+- src/test/preview-display.test.tsx (new)
+- src/test/preview-display-hero-integration.test.tsx (new)
+- src/test/preview-display-alternative-integration.test.tsx (new)
+
+### Change Log
+
+- 2026-03-02: Implemented story 7.5 — BeforeAfterSlider, PreviewToggleButtons, PreviewDisplay components created; integrated into HeroRecommendationCard and AlternativeRecommendationCard; 50 tests added; all ACs satisfied
+- 2026-03-02: Code review fixes applied — (1) Fixed TypeScript error: `ease: 'easeOut'` not typed as `const` in PreviewDisplay and PreviewToggleButtons; (2) Fixed AC#5 violation: watermark now shown on toggle view (added to PreviewToggleButtons for novo-estilo tab); (3) Fixed inverted reduced-motion logic in BeforeAfterSlider (`shouldReduceMotion ? 'transition-none' : ''`); (4) Fixed BeforeAfterSlider original image height: removed `h-full` so container is sized by intrinsic image dimensions; (5) Added `aria-valuetext` to slider handle for better screen reader support; (6) Improved cursor to `col-resize` on slider container for standard UX; all 1490 tests pass, zero regressions

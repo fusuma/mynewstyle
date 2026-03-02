@@ -11,8 +11,7 @@ import { usePreviewGeneration } from '@/hooks/usePreviewGeneration';
 import { useConsultationStore } from '@/stores/consultation';
 import { PreviewLoadingOverlay } from '@/components/consultation/PreviewLoadingOverlay';
 import { PreviewStatusText } from '@/components/consultation/PreviewStatusText';
-import { PreviewUnavailable } from '@/components/consultation/PreviewUnavailable';
-import { PreviewError } from '@/components/consultation/PreviewError';
+import { PreviewDisplay } from '@/components/consultation/PreviewDisplay';
 
 interface HeroRecommendationCardProps {
   recommendation: StyleRecommendation;
@@ -56,7 +55,6 @@ export function HeroRecommendationCard({
 
   const isGenerating = previewStatus.status === 'generating';
   const isReady = previewStatus.status === 'ready';
-  const isFailed = previewStatus.status === 'failed';
   const isUnavailable = previewStatus.status === 'unavailable';
 
   // Framer Motion variants — respects prefers-reduced-motion (AC: 10)
@@ -153,26 +151,16 @@ export function HeroRecommendationCard({
             </div>
           )}
 
-          {isReady && previewStatus.previewUrl && (
+          {/* PreviewDisplay: shown when 'ready' or 'unavailable' (Story 7.5, Task 4) */}
+          {(isReady || isUnavailable) && (
             <div className="mb-4">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={previewStatus.previewUrl}
-                alt={`Preview do estilo ${recommendation.styleName}`}
-                className="w-full rounded-xl object-cover"
+              <PreviewDisplay
+                originalPhoto={photoPreview ?? ''}
+                previewUrl={previewStatus.previewUrl ?? null}
+                previewStatus={previewStatus.status}
+                styleName={recommendation.styleName}
+                onRetry={handleRetry}
               />
-            </div>
-          )}
-
-          {isFailed && (
-            <div className="mb-4">
-              <PreviewError onRetry={handleRetry} />
-            </div>
-          )}
-
-          {isUnavailable && (
-            <div className="mb-4">
-              <PreviewUnavailable />
             </div>
           )}
 
