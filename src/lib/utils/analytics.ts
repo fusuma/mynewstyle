@@ -1,11 +1,22 @@
 /**
- * Analytics event tracking utility (Story 9-3, Story 9-4)
+ * Analytics event tracking utility
+ * Story 10.1: Analytics Event System — replaces console.log stubs
  *
- * Tracks user interaction events for analytics purposes.
- * If the analytics_events table (Epic 10) does not yet exist,
- * events are logged to console with a [analytics] prefix for future integration.
+ * This module re-exports from the real analytics implementation in src/lib/analytics/.
+ * Maintains backward-compatible function signatures for existing callers:
+ * - PreviewShareButton.tsx → trackEvent({ type: 'preview_shared', ... })
+ * - useNativeShare.ts     → trackShareEvent({ type: 'share_generated', ... })
+ * - useShareCard.ts       → trackShareEvent({ type: 'share_generated', ... })
  */
 
+export { trackEvent as trackEventBase, flushEvents } from '@/lib/analytics/tracker';
+export type { DeviceInfo, AnalyticsEventRecord } from '@/lib/analytics/types';
+import { AnalyticsEventType } from '@/lib/analytics/types';
+import { trackEvent as _trackEvent } from '@/lib/analytics/tracker';
+
+/**
+ * Payload for share events (backward-compatible type preserved from Stories 9-3 / 9-4).
+ */
 export interface ShareEventPayload {
   type: 'share_generated';
   format: 'story' | 'square';
@@ -13,7 +24,11 @@ export interface ShareEventPayload {
   success: boolean;
 }
 
-/** Story 9-4: Preview image share/download event (AC: 7) */
+/**
+ * Payload for preview shared events (backward-compatible type from Story 9-4).
+ * NOTE: 'preview_shared' is not a standard AnalyticsEventType enum value —
+ * it is a legacy type used in PreviewShareButton. The standard type is 'share_generated'.
+ */
 export interface PreviewSharedEventPayload {
   type: 'preview_shared';
   recommendationRank: number;
@@ -21,22 +36,27 @@ export interface PreviewSharedEventPayload {
   styleName: string;
 }
 
+/**
+ * Union of all analytics event payload types (backward-compatible).
+ * Superset of the new typed union from src/lib/analytics/types.ts.
+ */
 export type AnalyticsEvent = ShareEventPayload | PreviewSharedEventPayload;
 
 /**
  * Track a share event.
- * Currently logs to console with [analytics] prefix for Epic 10 integration.
+ * Delegates to the real analytics tracker with fire-and-forget semantics.
  */
 export function trackShareEvent(event: ShareEventPayload): void {
-  // TODO(Epic 10): Replace with analytics_events table insert when analytics system is built
-  console.log('[analytics]', event);
+  const { type, ...eventData } = event;
+  _trackEvent(type as AnalyticsEventType, eventData);
 }
 
 /**
- * Track any analytics event.
- * Currently logs to console with [analytics] prefix for Epic 10 integration.
+ * Track any analytics event (backward-compatible overload).
+ * Accepts the legacy AnalyticsEvent union shape (ShareEventPayload | PreviewSharedEventPayload).
+ * Delegates to the real analytics tracker with fire-and-forget semantics.
  */
 export function trackEvent(event: AnalyticsEvent): void {
-  // TODO(Epic 10): Replace with analytics_events table insert when analytics system is built
-  console.log('[analytics]', event);
+  const { type, ...eventData } = event;
+  _trackEvent(type as AnalyticsEventType, eventData);
 }

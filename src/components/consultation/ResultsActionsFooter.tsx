@@ -1,5 +1,7 @@
 'use client';
 
+// TODO(Story 10-5): Add trackEvent(AnalyticsEventType.RESULTS_RATED, { rating }) when user submits a rating
+// This will be implemented in Story 10-5 (Post-Consultation Rating).
 import { motion, useReducedMotion } from 'framer-motion';
 import { Share2, Bookmark, PlusCircle, Home, Scissors, Loader2, Image, UserPlus } from 'lucide-react';
 import { useRouter } from 'next/navigation';

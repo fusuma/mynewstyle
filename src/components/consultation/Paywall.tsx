@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { ShieldCheck } from 'lucide-react';
 import type { FaceAnalysisOutput } from '@/lib/ai/schemas';
@@ -12,6 +12,8 @@ import {
   FACE_SHAPE_DESCRIPTIONS,
 } from '@/lib/consultation/face-shape-labels';
 import { FIRST_CONSULTATION_PRICE } from '@/lib/stripe/pricing';
+import { trackEvent } from '@/lib/analytics/tracker';
+import { AnalyticsEventType } from '@/lib/analytics/types';
 
 interface PaywallProps {
   faceAnalysis: FaceAnalysisOutput;
@@ -67,6 +69,15 @@ export function Paywall({
   const displayAmount = amount ?? FIRST_CONSULTATION_PRICE;
   const priceDisplay = formatPrice(displayAmount);
   const pricingDescription = isReturning ? 'Nova consultoria' : 'Consultoria completa';
+
+  // Track paywall_shown on mount (Task 7.8)
+  useEffect(() => {
+    trackEvent(AnalyticsEventType.PAYWALL_SHOWN, {
+      price: displayAmount,
+      isReturning,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const fadeIn = shouldReduceMotion
     ? {}

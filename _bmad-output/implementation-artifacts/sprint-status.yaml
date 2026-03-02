@@ -136,12 +136,12 @@ development_status:
   epic-9-retrospective: optional
 
   # E10: Observability & Analytics (Sprint 5)
-  epic-10: backlog
-  10-1-analytics-event-system: backlog
-  10-2-ai-pipeline-monitoring-dashboard: backlog
-  10-3-cost-and-quality-alerts: backlog
-  10-4-funnel-analytics: backlog
-  10-5-post-consultation-rating: backlog
+  epic-10: in-progress
+  10-1-analytics-event-system: review
+  10-2-ai-pipeline-monitoring-dashboard: ready-for-dev
+  10-3-cost-and-quality-alerts: ready-for-dev
+  10-4-funnel-analytics: ready-for-dev
+  10-5-post-consultation-rating: ready-for-dev
   epic-10-retrospective: optional
 
   # E11: LGPD Compliance (Sprint 3 parallel)

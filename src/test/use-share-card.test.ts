@@ -135,8 +135,11 @@ describe('useShareCard - generation with DOM node', () => {
   });
 
   it('tracks analytics event on successful share (Story 9-3 AC: 4)', async () => {
-    // Analytics is tracked via console.log('[analytics]', event) as placeholder for Epic 10
-    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    // Story 10-1: analytics tracking now uses real implementation (trackShareEvent → fetch)
+    // Verify trackShareEvent is called (through the analytics tracker module)
+    const trackerModule = await import('@/lib/analytics/tracker');
+    const trackEventSpy = vi.spyOn(trackerModule, 'trackEvent');
+
     const { useShareCard } = await import('@/hooks/useShareCard');
     mockToPng.mockResolvedValueOnce('data:image/png;base64,iVBORw0KGgo=');
 
@@ -151,12 +154,12 @@ describe('useShareCard - generation with DOM node', () => {
       await result.current.generateShareCard('story');
     });
 
-    // Analytics console.log should fire (Story 9-3: trackShareEvent uses console.log as placeholder)
-    expect(consoleSpy).toHaveBeenCalledWith(
-      '[analytics]',
-      expect.objectContaining({ type: 'share_generated' })
+    // trackEvent (via trackShareEvent) should be called with share_generated
+    expect(trackEventSpy).toHaveBeenCalledWith(
+      'share_generated',
+      expect.objectContaining({ format: 'story' })
     );
-    consoleSpy.mockRestore();
+    trackEventSpy.mockRestore();
   });
 
   it('shows toast error on toPng failure', async () => {

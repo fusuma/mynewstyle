@@ -10,6 +10,8 @@ import { CameraPermissionPrompt } from "./CameraPermissionPrompt";
 import { WebViewBlocker } from "./WebViewBlocker";
 import { FaceOvalOverlay } from "./FaceOvalOverlay";
 import { CameraGuidanceTips } from "./CameraGuidanceTips";
+import { trackEvent } from "@/lib/analytics/tracker";
+import { AnalyticsEventType } from "@/lib/analytics/types";
 
 type CaptureState =
   | "webview-blocked"
@@ -135,7 +137,13 @@ export function PhotoCapture({ onCapture, onSwitchToGallery }: PhotoCaptureProps
     const blob = await capturePhoto(videoRef);
     if (blob) {
       stopCamera();
+      trackEvent(AnalyticsEventType.PHOTO_CAPTURED, {
+        method: 'camera',
+        sizeKb: Math.round(blob.size / 1024),
+      });
       onCapture?.(blob);
+    } else {
+      trackEvent(AnalyticsEventType.PHOTO_REJECTED, { reason: 'capture_failed' });
     }
   }, [capturePhoto, stopCamera, onCapture]);
 

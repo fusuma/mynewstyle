@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { useConsultationStore } from '@/stores/consultation';
 import type { PreviewStatus } from '@/types/index';
+import { trackEvent } from '@/lib/analytics/tracker';
+import { AnalyticsEventType } from '@/lib/analytics/types';
 
 /**
  * Mock mode: set NEXT_PUBLIC_PREVIEW_MOCK=true to simulate preview generation
@@ -24,7 +26,7 @@ interface UsePreviewGenerationReturn {
   /** True if any preview is currently in 'generating' state */
   isAnyGenerating: boolean;
   /** Start preview generation for a recommendation */
-  triggerPreview: (recommendationId: string, styleName: string) => Promise<void>;
+  triggerPreview: (recommendationId: string, styleName: string, recommendationRank?: number) => Promise<void>;
   /** Get current preview status for a recommendation */
   getPreviewStatus: (recommendationId: string) => PreviewStatus;
 }
@@ -108,6 +110,14 @@ export function usePreviewGeneration(): UsePreviewGenerationReturn {
 
         if (data.status === 'ready' && data.previewUrl) {
           stopPolling(recommendationId);
+          // Track preview_completed with duration (Task 7.13)
+          const startTime = previewStartTimes.current.get(recommendationId);
+          const durationMs = startTime ? Date.now() - startTime : 0;
+          previewStartTimes.current.delete(recommendationId);
+          trackEvent(AnalyticsEventType.PREVIEW_COMPLETED, {
+            durationMs,
+            qualityGate: 'pass',
+          });
           setPreviewUrl(recommendationId, data.previewUrl);
         } else if (data.status === 'failed' || data.status === 'unavailable') {
           stopPolling(recommendationId);
@@ -158,8 +168,11 @@ export function usePreviewGeneration(): UsePreviewGenerationReturn {
     [stopPolling, setPreviewUrl]
   );
 
+  // Track preview start times for duration calculation
+  const previewStartTimes = useRef<Map<string, number>>(new Map());
+
   const triggerPreview = useCallback(
-    async (recommendationId: string, styleName: string) => {
+    async (recommendationId: string, styleName: string, recommendationRank: number = 1) => {
       // Sequential queue: block if another preview is generating
       for (const [, status] of previews) {
         if (status.status === 'generating') {
@@ -169,6 +182,10 @@ export function usePreviewGeneration(): UsePreviewGenerationReturn {
 
       // Mark as generating in store
       startPreview(recommendationId);
+
+      // Track preview_requested (Task 7.12)
+      previewStartTimes.current.set(recommendationId, Date.now());
+      trackEvent(AnalyticsEventType.PREVIEW_REQUESTED, { recommendationRank });
 
       if (IS_MOCK_MODE) {
         startMockGeneration(recommendationId);

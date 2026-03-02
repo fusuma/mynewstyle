@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useConsultationStore } from '@/stores/consultation';
@@ -11,6 +11,8 @@ import { usePayment } from '@/hooks/usePayment';
 import { useConsultationStatus } from '@/hooks/useConsultationStatus';
 import type { FaceAnalysisOutput } from '@/lib/ai/schemas';
 import type { Consultation } from '@/types';
+import { trackEvent } from '@/lib/analytics/tracker';
+import { AnalyticsEventType } from '@/lib/analytics/types';
 
 /**
  * Results page route: /consultation/results/[id]
@@ -67,6 +69,8 @@ export default function ResultsPage() {
   // Track hydration state when navigating from profile history
   const [isHydrating, setIsHydrating] = useState(false);
   const [hydrationFailed, setHydrationFailed] = useState(false);
+  const consultationStartTime = useRef<number>(Date.now());
+  const consultationCompletedTracked = useRef(false);
 
   const consultationId = useConsultationStore((state) => state.consultationId);
   const faceAnalysis = useConsultationStore((state) => state.faceAnalysis);
@@ -184,6 +188,15 @@ export default function ResultsPage() {
   if (!consultationId || !faceAnalysis) {
     return null;
   }
+
+  // Track consultation_completed when results are first seen (Task 7.11)
+  useEffect(() => {
+    if (paymentStatus === 'paid' && !consultationCompletedTracked.current) {
+      consultationCompletedTracked.current = true;
+      const durationMs = Date.now() - consultationStartTime.current;
+      trackEvent(AnalyticsEventType.CONSULTATION_COMPLETED, { durationMs });
+    }
+  }, [paymentStatus]);
 
   const handlePaymentSuccess = () => {
     setPaymentStatus('paid');

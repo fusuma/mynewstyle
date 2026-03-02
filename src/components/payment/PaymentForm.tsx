@@ -8,6 +8,8 @@ import {
   useElements,
 } from '@stripe/react-stripe-js';
 import type { StripeExpressCheckoutElementConfirmEvent } from '@stripe/stripe-js';
+import { trackEvent } from '@/lib/analytics/tracker';
+import { AnalyticsEventType } from '@/lib/analytics/types';
 
 interface PaymentFormProps {
   onPaymentSuccess: () => void;
@@ -36,9 +38,15 @@ export function PaymentForm({ onPaymentSuccess, onPaymentError, onPaymentStart }
     });
 
     if (error) {
+      // Track payment_failed (Task 7.10)
+      trackEvent(AnalyticsEventType.PAYMENT_FAILED, {
+        reason: error.message ?? 'unknown',
+      });
       onPaymentError(error.message ?? 'Pagamento não processado. Tente outro método.');
       setIsProcessing(false);
     } else {
+      // Track payment_completed (Task 7.9) — amount not available here, use 0 as placeholder
+      trackEvent(AnalyticsEventType.PAYMENT_COMPLETED, { amount: 0 });
       setIsProcessing(false);
       onPaymentSuccess();
     }

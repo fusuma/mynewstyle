@@ -5,6 +5,8 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import type { FaceAnalysisOutput } from '@/lib/ai/schemas';
 import type { PreviewStatus } from '@/types/index';
 import { getOrCreateGuestSessionId } from '@/lib/guest-session';
+import { trackEvent } from '@/lib/analytics/tracker';
+import { AnalyticsEventType } from '@/lib/analytics/types';
 
 export interface QuestionnaireResponses {
   [questionId: string]: string | string[] | number;
@@ -79,7 +81,10 @@ export const useConsultationStore = create<ConsultationStore>()(
       // guestSessionId is initialised separately so reset() won't touch it
       guestSessionId: initialGuestSessionId,
 
-      setGender: (gender) => set({ gender }),
+      setGender: (gender) => {
+        set({ gender });
+        trackEvent(AnalyticsEventType.GENDER_SELECTED, { gender });
+      },
       setPhoto: (photo) => set({ photo }),
       setPhotoPreview: (preview) => set({ photoPreview: preview }),
       setQuestionnaireResponse: (questionId, value) =>

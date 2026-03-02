@@ -6,6 +6,8 @@ import { useConsultationStore } from '@/stores/consultation';
 import type { FaceAnalysisOutput } from '@/lib/ai/schemas';
 import { ProcessingScreen } from '@/components/consultation/ProcessingScreen';
 import { FaceShapeReveal } from '@/components/consultation/FaceShapeReveal';
+import { trackEvent } from '@/lib/analytics/tracker';
+import { AnalyticsEventType } from '@/lib/analytics/types';
 
 type PageState = 'loading' | 'revealed' | 'error';
 
@@ -78,6 +80,12 @@ export default function ProcessingPage() {
 
       const data = (await response.json()) as { faceAnalysis: FaceAnalysisOutput };
       const analysis = data.faceAnalysis;
+
+      // Track face_analysis_completed (Task 7.7)
+      trackEvent(AnalyticsEventType.FACE_ANALYSIS_COMPLETED, {
+        faceShape: analysis.faceShape,
+        confidence: analysis.confidence,
+      });
 
       setFaceAnalysis(analysis); // Store in Zustand
       setFaceAnalysisResult(analysis); // Local state for render

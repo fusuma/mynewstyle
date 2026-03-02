@@ -6,6 +6,8 @@ import { toast } from 'sonner';
 import type { FaceAnalysisOutput } from '@/lib/ai/schemas';
 import type { StyleRecommendation, GroomingTip } from '@/types/index';
 import { toDataUrl } from '@/lib/utils/image';
+import { trackEvent } from '@/lib/analytics/tracker';
+import { AnalyticsEventType } from '@/lib/analytics/types';
 
 interface UseBarberCardParams {
   faceAnalysis: FaceAnalysisOutput | null;
@@ -85,6 +87,9 @@ export function useBarberCard({
         pixelRatio: 2, // Retina sharpness
         backgroundColor: '#FFFFFF',
       });
+
+      // Track barber_card_generated (Task 7.14)
+      trackEvent(AnalyticsEventType.BARBER_CARD_GENERATED);
 
       // Trigger browser download
       const link = document.createElement('a');
