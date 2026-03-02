@@ -1,6 +1,6 @@
 # Story 7.2: Kie.ai Webhook Handler
 
-Status: ready-for-dev
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -23,33 +23,33 @@ so that generated previews are downloaded, stored, and linked to recommendations
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Create webhook route handler (AC: #1, #8)
-  - [ ] 1.1 Create `src/app/api/webhook/kie/route.ts` with POST handler
-  - [ ] 1.2 Parse raw body as JSON from callback
-  - [ ] 1.3 Always return 200 for verified webhooks (match Stripe webhook pattern)
-- [ ] Task 2: Implement webhook signature verification (AC: #2)
-  - [ ] 2.1 Create `src/lib/kie/webhooks.ts` with `verifyKieWebhook()` function
-  - [ ] 2.2 Extract X-Webhook-Timestamp and X-Webhook-Signature headers
-  - [ ] 2.3 Reconstruct signature: HMAC-SHA256(taskId + "." + timestamp, KIE_WEBHOOK_HMAC_KEY) then Base64 encode
-  - [ ] 2.4 Compare using crypto.timingSafeEqual to prevent timing attacks
-  - [ ] 2.5 Return 401 on signature mismatch
-- [ ] Task 3: Implement image download and storage (AC: #3, #4)
-  - [ ] 3.1 Query task details from recordInfo endpoint to get resultUrls (callback payload only contains taskId, not output URLs)
-  - [ ] 3.2 Download image from first resultUrl (Kie.ai CDN, URLs expire after 24h)
-  - [ ] 3.3 Upload to Supabase Storage `preview-images` bucket: `previews/{consultationId}/{recommendationId}.jpg`
-  - [ ] 3.4 Handle download failures gracefully (CDN timeout, 404)
-- [ ] Task 4: Update recommendation record (AC: #5, #6)
-  - [ ] 4.1 Look up recommendation by taskId stored in preview_generation_params
-  - [ ] 4.2 On success: set preview_url = storage path, preview_status = "ready"
-  - [ ] 4.3 On failure: set preview_status = "failed", store error details in preview_generation_params
-- [ ] Task 5: Idempotency handling (AC: #7)
-  - [ ] 5.1 Before processing, check if recommendation already has preview_status = "ready"
-  - [ ] 5.2 If already processed, return 200 immediately (no-op)
-  - [ ] 5.3 Log duplicate callback for monitoring
-- [ ] Task 6: Environment variables and configuration
-  - [ ] 6.1 Add KIE_WEBHOOK_HMAC_KEY to .env.local / .env.example
-  - [ ] 6.2 Add KIE_API_KEY for recordInfo API calls (reuse from 7-1 if already set)
-  - [ ] 6.3 Document env vars in the env.example
+- [x] Task 1: Create webhook route handler (AC: #1, #8)
+  - [x] 1.1 Create `src/app/api/webhook/kie/route.ts` with POST handler
+  - [x] 1.2 Parse raw body as JSON from callback
+  - [x] 1.3 Always return 200 for verified webhooks (match Stripe webhook pattern)
+- [x] Task 2: Implement webhook signature verification (AC: #2)
+  - [x] 2.1 Create `src/lib/kie/webhooks.ts` with `verifyKieWebhook()` function
+  - [x] 2.2 Extract X-Webhook-Timestamp and X-Webhook-Signature headers
+  - [x] 2.3 Reconstruct signature: HMAC-SHA256(taskId + "." + timestamp, KIE_WEBHOOK_HMAC_KEY) then Base64 encode
+  - [x] 2.4 Compare using crypto.timingSafeEqual to prevent timing attacks
+  - [x] 2.5 Return 401 on signature mismatch
+- [x] Task 3: Implement image download and storage (AC: #3, #4)
+  - [x] 3.1 Query task details from recordInfo endpoint to get resultUrls (callback payload only contains taskId, not output URLs)
+  - [x] 3.2 Download image from first resultUrl (Kie.ai CDN, URLs expire after 24h)
+  - [x] 3.3 Upload to Supabase Storage `preview-images` bucket: `previews/{consultationId}/{recommendationId}.jpg`
+  - [x] 3.4 Handle download failures gracefully (CDN timeout, 404)
+- [x] Task 4: Update recommendation record (AC: #5, #6)
+  - [x] 4.1 Look up recommendation by taskId stored in preview_generation_params
+  - [x] 4.2 On success: set preview_url = storage path, preview_status = "ready"
+  - [x] 4.3 On failure: set preview_status = "failed", store error details in preview_generation_params
+- [x] Task 5: Idempotency handling (AC: #7)
+  - [x] 5.1 Before processing, check if recommendation already has preview_status = "ready"
+  - [x] 5.2 If already processed, return 200 immediately (no-op)
+  - [x] 5.3 Log duplicate callback for monitoring
+- [x] Task 6: Environment variables and configuration
+  - [x] 6.1 Add KIE_WEBHOOK_HMAC_KEY to .env.local / .env.example
+  - [x] 6.2 Add KIE_API_KEY for recordInfo API calls (reuse from 7-1 if already set)
+  - [x] 6.3 Document env vars in the env.example
 
 ## Dev Notes
 
@@ -234,8 +234,47 @@ src/
 
 ### Agent Model Used
 
+claude-sonnet-4-6
+
 ### Debug Log References
+
+No blocking issues encountered. Implementation followed Stripe webhook pattern exactly.
 
 ### Completion Notes List
 
+- Implemented `verifyKieWebhook()` in `src/lib/kie/webhooks.ts` using Node.js `crypto` module: HMAC-SHA256(taskId + "." + timestamp, KIE_WEBHOOK_HMAC_KEY) then base64 encode, compared via `timingSafeEqual` to prevent timing attacks.
+- Implemented `processKieCallback()` in `src/lib/kie/webhooks.ts` covering the full async flow: recordInfo fetch → image download → Supabase Storage upload → recommendation DB update.
+- Route handler in `src/app/api/webhook/kie/route.ts` is intentionally thin — all logic in the library module, following the Stripe pattern exactly.
+- Idempotency implemented at two levels: (1) early check for `preview_status = "ready"` returns no-op; (2) storage upload uses `upsert: true` so duplicate uploads overwrite harmlessly.
+- All error paths (recordInfo failure, CDN download failure, storage upload failure, DB update failure) set `preview_status = "failed"` with error details in `preview_generation_params` and return 200 to prevent Kie.ai retry storms.
+- Orphaned task callbacks (no matching recommendation in DB) log a warning and return 200.
+- `src/lib/kie/` directory created as sibling to `src/lib/stripe/` following project structure conventions.
+- `KIE_API_KEY` was already established by story 7-1; `KIE_WEBHOOK_HMAC_KEY` added as new env var.
+- 24 new tests added across 2 test files covering all ACs, including signature validity/invalidity, idempotency, success path, and all error paths.
+- All 1374 tests pass with zero regressions.
+- **Code review fixes applied (2026-03-02):**
+  - Added empty/missing `taskId` guard in route.ts (returns 400) — prevents empty-string DB queries and ambiguous HMAC computations.
+  - Added replay attack protection in `verifyKieWebhook()` — timestamps older than 5 minutes (or non-numeric) are rejected, preventing webhook replay attacks.
+  - Added SSRF protection in `downloadImage()` via `validateCdnUrl()` — rejects non-HTTPS URLs and URLs from untrusted hostnames (must be `*.cdn.kie.ai`).
+  - Fixed `processKieCallback()` to return `status: 'error'` on internal processing failures (recordInfo, CDN download, storage upload, DB update) instead of always returning `'ok'` — enables proper error differentiation in the route handler log.
+  - Fixed DB update failure after successful upload: now calls `markPreviewFailed()` to set `preview_status='failed'` instead of leaving the recommendation stuck in `'generating'` state permanently.
+  - Updated `TIMESTAMP` in route test to use `Math.floor(Date.now() / 1000)` so tests are not broken by the new replay-attack timestamp freshness check.
+  - 9 new tests added for: replay attack, stale timestamp, non-numeric timestamp, empty taskId (400), SSRF HTTP URL, SSRF untrusted domain, `status='error'` on recordInfo failure/CDN failure, and DB update failure marking `failed`.
+  - All 1383 tests pass with zero regressions.
+
 ### File List
+
+- src/app/api/webhook/kie/route.ts (NEW)
+- src/lib/kie/webhooks.ts (NEW)
+- src/test/kie-webhooks.test.ts (NEW)
+- src/test/kie-webhook-route.test.ts (NEW)
+- .env.example (MODIFIED — added KIE_API_KEY and KIE_WEBHOOK_HMAC_KEY)
+- _bmad-output/implementation-artifacts/sprint-status.yaml (MODIFIED — status: review)
+- _bmad-output/implementation-artifacts/7-2-kie-ai-webhook-handler.md (MODIFIED — story file)
+
+## Change Log
+
+| Date | Change | Author |
+|------|--------|--------|
+| 2026-03-02 | Implemented Kie.ai webhook handler: POST /api/webhook/kie with HMAC-SHA256 signature verification, recordInfo API call, CDN image download, Supabase Storage upload, recommendation DB update, idempotency, and comprehensive error handling. 24 new tests. | Dev Agent (claude-sonnet-4-6) |
+| 2026-03-02 | Code review fixes: added empty taskId guard (400), replay attack protection (5-min timestamp window), SSRF protection (HTTPS + cdn.kie.ai hostname validation), corrected status='error' returns on failure paths, fixed stuck-in-generating bug after upload+DB-update failure. 9 new tests. 1383 total passing. | Code Review Agent (claude-sonnet-4-6) |
