@@ -47,8 +47,11 @@ vi.mock('lucide-react', () => ({
   Scissors: ({ className, 'aria-hidden': ariaHidden }: React.SVGAttributes<SVGElement>) => (
     <svg data-testid="icon-scissors" className={className} aria-hidden={ariaHidden} />
   ),
-  Loader2: ({ className, 'aria-hidden': ariaHidden }: React.SVGAttributes<SVGElement>) => (
-    <svg data-testid="icon-loader" className={className} aria-hidden={ariaHidden} />
+  Loader2: ({ className, 'aria-hidden': ariaHidden, 'data-testid': testId }: React.SVGAttributes<SVGElement> & { 'data-testid'?: string }) => (
+    <svg data-testid={testId ?? 'icon-loader'} className={className} aria-hidden={ariaHidden} />
+  ),
+  Image: ({ className, 'aria-hidden': ariaHidden }: React.SVGAttributes<SVGElement>) => (
+    <svg data-testid="icon-image" className={className} aria-hidden={ariaHidden} />
   ),
 }));
 
@@ -80,6 +83,7 @@ vi.mock('@/hooks/useShareCard', () => ({
     generateShareCard: mockGenerateShareCard,
     get isGenerating() { return mockShareCardState.isGenerating; },
     cardRef: { current: null },
+    squareCardRef: { current: null },
   }),
 }));
 
@@ -195,21 +199,23 @@ describe('ResultsActionsFooter - share handler (now generates share card image)'
     render(<ResultsActionsFooter consultationId="test-id-123" />);
     const shareButton = screen.getByRole('button', { name: /partilhar resultado/i });
     expect(shareButton).not.toBeDisabled();
-    expect(screen.queryByTestId('icon-loader')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('icon-loader-share')).not.toBeInTheDocument();
   });
 
   it('"Partilhar resultado" button shows Loader2 icon when isGenerating is true', async () => {
     mockShareCardState.isGenerating = true;
     const { ResultsActionsFooter } = await import('@/components/consultation/ResultsActionsFooter');
     render(<ResultsActionsFooter consultationId="test-id-123" />);
-    expect(screen.getByTestId('icon-loader')).toBeInTheDocument();
+    // Share button has data-testid="icon-loader-share" when loading
+    expect(screen.getByTestId('icon-loader-share')).toBeInTheDocument();
   });
 
   it('"Partilhar resultado" button is disabled when isGenerating is true', async () => {
     mockShareCardState.isGenerating = true;
     const { ResultsActionsFooter } = await import('@/components/consultation/ResultsActionsFooter');
     render(<ResultsActionsFooter consultationId="test-id-123" />);
-    const shareButton = screen.getByRole('button', { name: /a gerar cartão/i });
+    // When loading, aria-label changes to "A gerar cartão de partilha…"
+    const shareButton = screen.getByRole('button', { name: /a gerar cartão de partilha/i });
     expect(shareButton).toBeDisabled();
   });
 });

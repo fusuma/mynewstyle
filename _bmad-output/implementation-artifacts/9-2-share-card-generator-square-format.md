@@ -1,6 +1,6 @@
 # Story 9.2: Share Card Generator (Square Format)
 
-Status: ready-for-dev
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -25,53 +25,53 @@ so that **I can share my consultation results as visually appealing 1:1 images o
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Create ShareCardSquare component (AC: 1, 2, 5, 8, 10)
-  - [ ] 1.1 Create `src/components/share/ShareCardSquare.tsx` as a hidden render target (NOT displayed on screen, only used for PNG generation)
-  - [ ] 1.2 Layout: fixed-size container (1080x1080px internally, rendered at 540x540px with 2x pixelRatio) for consistent PNG output
-  - [ ] 1.3 Include user's photo (circular, bordered with gender accent color)
-  - [ ] 1.4 Include AI preview image if available (prominent placement, rounded corners)
-  - [ ] 1.5 Include face shape badge (e.g., "Rosto Oval") with gender-themed accent background
-  - [ ] 1.6 Include top recommended style name as prominent heading
-  - [ ] 1.7 Include match score (e.g., "93% compativel com o seu rosto")
-  - [ ] 1.8 Include branding footer: "Descubra o seu estilo em mynewstyle.com"
-  - [ ] 1.9 Handle layout variant when AI preview is NOT available (center photo, expand text area, show additional context)
-  - [ ] 1.10 Use gender-themed design: dark background + amber accent for male, warm white background + dusty rose accent for female
-  - [ ] 1.11 All text must meet WCAG 4.5:1 contrast ratio (lesson from story 7-7 review)
+- [x] Task 1: Create ShareCardSquare component (AC: 1, 2, 5, 8, 10)
+  - [x] 1.1 Create `src/components/share/ShareCardSquare.tsx` as a hidden render target (NOT displayed on screen, only used for PNG generation)
+  - [x] 1.2 Layout: fixed-size container (1080x1080px internally, rendered at 540x540px with 2x pixelRatio) for consistent PNG output
+  - [x] 1.3 Include user's photo (circular, bordered with gender accent color)
+  - [x] 1.4 Include AI preview image if available (prominent placement, rounded corners)
+  - [x] 1.5 Include face shape badge (e.g., "Rosto Oval") with gender-themed accent background
+  - [x] 1.6 Include top recommended style name as prominent heading
+  - [x] 1.7 Include match score (e.g., "93% compativel com o seu rosto")
+  - [x] 1.8 Include branding footer: "Descubra o seu estilo em mynewstyle.com"
+  - [x] 1.9 Handle layout variant when AI preview is NOT available (center photo, expand text area, show additional context)
+  - [x] 1.10 Use gender-themed design: dark background + amber accent for male, warm white background + dusty rose accent for female
+  - [x] 1.11 All text must meet WCAG 4.5:1 contrast ratio (lesson from story 7-7 review)
 
-- [ ] Task 2: Create ShareCardSquareRenderer hidden container (AC: 6)
-  - [ ] 2.1 Create `src/components/share/ShareCardSquareRenderer.tsx` wrapper
-  - [ ] 2.2 Renders ShareCardSquare into a hidden div (position absolute, off-screen, pointer-events-none, aria-hidden)
-  - [ ] 2.3 Exposes ref for html-to-image capture
-  - [ ] 2.4 Does NOT render if minimum data is missing (faceAnalysis, recommendation, photoPreview, gender)
+- [x] Task 2: Create ShareCardSquareRenderer hidden container (AC: 6)
+  - [x] 2.1 Create `src/components/share/ShareCardSquareRenderer.tsx` wrapper
+  - [x] 2.2 Renders ShareCardSquare into a hidden div (position absolute, off-screen, pointer-events-none, aria-hidden)
+  - [x] 2.3 Exposes ref for html-to-image capture
+  - [x] 2.4 Does NOT render if minimum data is missing (faceAnalysis, recommendation, photoPreview, gender)
 
-- [ ] Task 3: Create useShareCard hook (AC: 3, 7, 9)
-  - [ ] 3.1 Create `src/hooks/useShareCard.ts`
-  - [ ] 3.2 Hook accepts same params as useBarberCard: faceAnalysis, recommendation, photoPreview, previewUrl, gender, groomingTips
-  - [ ] 3.3 Uses html-to-image toPng() with 2x pixelRatio to capture hidden div as PNG
-  - [ ] 3.4 Triggers browser download with filename: `mynewstyle-share-card.png`
-  - [ ] 3.5 Returns `{ generateShareCard, isGenerating, shareCardRef }`
-  - [ ] 3.6 Handles CORS for external preview images (pre-fetch and convert to data URL, same pattern as useBarberCard)
-  - [ ] 3.7 Handle errors gracefully: toast error message if generation fails
+- [x] Task 3: Create useShareCard hook (AC: 3, 7, 9)
+  - [x] 3.1 Create `src/hooks/useShareCard.ts` — extended existing hook to support both 'story' and 'square' formats
+  - [x] 3.2 Hook accepts same params as useBarberCard: faceAnalysis, recommendation, photoPreview, previewUrl, gender, groomingTips
+  - [x] 3.3 Uses html-to-image toPng() with 2x pixelRatio to capture hidden div as PNG (540x540 → 1080x1080)
+  - [x] 3.4 Triggers browser download with filename: `mynewstyle-share-card.png`
+  - [x] 3.5 Returns `{ generateShareCard, isGenerating, cardRef, squareCardRef }`
+  - [x] 3.6 Handles CORS for external preview images (pre-fetch and convert to data URL, same pattern as useBarberCard)
+  - [x] 3.7 Handle errors gracefully: toast error message if generation fails
 
-- [ ] Task 4: Integrate into ResultsActionsFooter (AC: 3, 4, 9)
-  - [ ] 4.1 Update `src/components/consultation/ResultsActionsFooter.tsx`
-  - [ ] 4.2 Replace or enhance the existing "Partilhar resultado" button to offer share card download
-  - [ ] 4.3 Option A (recommended): Add a dropdown/menu on the "Partilhar resultado" button with options: "Copiar link", "Cartao Instagram (1:1)", allowing share card download alongside existing link-share behavior
-  - [ ] 4.4 Option B (simpler alternative): Add a separate "Cartao Instagram" button (secondary variant, Image icon) next to the share button
-  - [ ] 4.5 Mount ShareCardSquareRenderer off-screen in the footer component (same pattern as BarberCardRenderer)
-  - [ ] 4.6 Wire button/menu-item to useShareCard hook's generateShareCard function
-  - [ ] 4.7 Show loading state while card generates (spinner replaces icon, button disabled, aria-busy)
-  - [ ] 4.8 Pass required data from consultation store to the hook
+- [x] Task 4: Integrate into ResultsActionsFooter (AC: 3, 4, 9)
+  - [x] 4.1 Update `src/components/consultation/ResultsActionsFooter.tsx`
+  - [x] 4.2 Added "Cartão Instagram" button (Option B — separate secondary button with Image icon)
+  - [x] 4.3 Option A considered; chose Option B (simpler, cleaner UX without dropdown complexity)
+  - [x] 4.4 Added "Cartão Instagram" button (secondary variant, Image icon) next to share button
+  - [x] 4.5 Mount ShareCardSquareRenderer off-screen in the footer component (same pattern as BarberCardRenderer)
+  - [x] 4.6 Wire button to useShareCard hook's generateShareCard('square') function
+  - [x] 4.7 Show loading state while card generates (spinner replaces icon, button disabled, aria-busy)
+  - [x] 4.8 Pass required data from consultation store to the hook (uses same store data as story format)
 
-- [ ] Task 5: Write tests (AC: all)
-  - [ ] 5.1 Unit test: ShareCardSquare renders all required elements (photo, face shape, style name, match score, branding)
-  - [ ] 5.2 Unit test: ShareCardSquare renders correctly without AI preview (graceful fallback layout)
-  - [ ] 5.3 Unit test: ShareCardSquare applies gender-themed design (male dark + amber, female light + dusty rose)
-  - [ ] 5.4 Unit test: ShareCardSquare has correct container dimensions (540x540px internal, 1080x1080px at 2x)
-  - [ ] 5.5 Unit test: All text meets WCAG 4.5:1 contrast on card background
-  - [ ] 5.6 Unit test: useShareCard hook returns isGenerating state correctly
-  - [ ] 5.7 Integration test: Share card option appears in ResultsActionsFooter
-  - [ ] 5.8 Integration test: Triggering share card generates and downloads PNG
+- [x] Task 5: Write tests (AC: all)
+  - [x] 5.1 Unit test: ShareCardSquare renders all required elements (photo, face shape, style name, match score, branding)
+  - [x] 5.2 Unit test: ShareCardSquare renders correctly without AI preview (graceful fallback layout)
+  - [x] 5.3 Unit test: ShareCardSquare applies gender-themed design (male dark + amber, female light + dusty rose)
+  - [x] 5.4 Unit test: ShareCardSquare has correct container dimensions (540x540px internal, 1080x1080px at 2x)
+  - [x] 5.5 Unit test: All text meets WCAG 4.5:1 contrast on card background (dark badge text on accent backgrounds)
+  - [x] 5.6 Unit test: useShareCard hook returns isGenerating state correctly for 'square' format
+  - [x] 5.7 Integration test: Share card option appears in ResultsActionsFooter
+  - [x] 5.8 Integration test: Triggering share card generates and downloads PNG
 
 ## Dev Notes
 
@@ -319,10 +319,39 @@ If both share card stories need similar infrastructure, consider extracting:
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+claude-sonnet-4-6
 
 ### Debug Log References
 
+- Fixed existing test mocks (barber-card-integration.test.tsx, results-actions-footer.test.tsx, results-actions-footer-share.test.tsx) to include the new `Image` lucide icon and `squareCardRef` from the extended `useShareCard` hook.
+- Used distinct aria-labels for share button loading state ("A gerar cartão de partilha…") and square button loading state ("A gerar cartão Instagram…") to prevent test `getByRole` ambiguity when both buttons use `isGeneratingShareCard`.
+- Extended existing `useShareCard` hook rather than creating a new `useShareCardSquare` hook — both formats share the same state (one generates at a time), keeping UX coherent.
+
 ### Completion Notes List
 
+- Implemented `ShareCardSquare` component (540x540px, captured at 2x → 1080x1080px PNG) following the BarberCard inline-styles-only pattern for html-to-image compatibility.
+- Implemented `ShareCardSquareRenderer` hidden off-screen wrapper following the BarberCardRenderer pattern.
+- Extended `useShareCard` hook to support both `'story'` and `'square'` formats via a `format` parameter. Added `squareCardRef` for the square card renderer. Story format uses Web Share API with download fallback; square format uses direct download.
+- Added "Cartão Instagram (1:1)" button (secondary variant, Image icon) to `ResultsActionsFooter.tsx`, mounting `ShareCardSquareRenderer` off-screen alongside existing renderers.
+- All WCAG 4.5:1 contrast requirements met: dark badge text (#1A1A2E) on amber (#F5A623) = 8.42:1; dark badge text (#1A1A2E) on dusty rose (#C4787A) = 5.13:1.
+- 39 new tests added across 4 test files; 0 regressions in 1873 total tests.
+
 ### File List
+
+- src/components/share/ShareCardSquare.tsx (new)
+- src/components/share/ShareCardSquareRenderer.tsx (new)
+- src/hooks/useShareCard.ts (modified — added 'square' format support, squareCardRef)
+- src/components/consultation/ResultsActionsFooter.tsx (modified — added Cartão Instagram button + ShareCardSquareRenderer)
+- src/test/share-card-square.test.tsx (new)
+- src/test/share-card-square-renderer.test.tsx (new)
+- src/test/use-share-card-square.test.ts (new)
+- src/test/share-card-square-integration.test.tsx (new)
+- src/test/results-actions-footer.test.tsx (modified — updated mocks for Image icon, squareCardRef, loading aria-labels)
+- src/test/results-actions-footer-share.test.tsx (modified — updated mocks for Image icon, squareCardRef, Loader2 data-testid passthrough)
+- src/test/barber-card-integration.test.tsx (modified — added Image icon to lucide-react mock)
+- _bmad-output/implementation-artifacts/sprint-status.yaml (modified — status: review)
+
+## Change Log
+
+- 2026-03-02: Implemented story 9-2 (Share Card Generator — Square Format). Created ShareCardSquare component, ShareCardSquareRenderer, extended useShareCard hook with 'square' format support and squareCardRef, integrated "Cartão Instagram (1:1)" button into ResultsActionsFooter. All 10 ACs satisfied. 39 new tests, 0 regressions.
+- 2026-03-02: Code review completed. Fixed 5 issues: (1) removed console.log analytics placeholder (replaced with TODO comment for Epic 10); (2) added test asserting pixelRatio:2 in toPng call for AC7; (3) added test verifying squareCardRef returned by hook (Task 3.5); (4) added 5 new tests for WCAG subtext/branding contrast (Task 5.5); (5) updated use-share-card.test.ts analytics assertion to match new behavior. Total tests: 1880, 0 regressions. Status: done.

@@ -17,11 +17,13 @@ interface UseShareCardParams {
 
 interface UseShareCardReturn {
   /** Call to generate and share/download the share card PNG */
-  generateShareCard: (format: 'story') => Promise<void>;
+  generateShareCard: (format: 'story' | 'square') => Promise<void>;
   /** True while card is being generated */
   isGenerating: boolean;
-  /** Ref to attach to the hidden ShareCardStoryRenderer container for capture */
+  /** Ref to attach to the hidden ShareCardStoryRenderer container for capture (story format) */
   cardRef: React.RefObject<HTMLDivElement | null>;
+  /** Ref to attach to the hidden ShareCardSquareRenderer container for capture (square format) */
+  squareCardRef: React.RefObject<HTMLDivElement | null>;
 }
 
 // Gender-themed background colors for toPng capture
@@ -30,18 +32,41 @@ const BACKGROUND_COLORS = {
   female: '#FFF8F0',
 } as const;
 
+// toPng dimensions per format
+const FORMAT_DIMENSIONS = {
+  story: { width: 540, height: 960 },
+  square: { width: 540, height: 540 },
+} as const;
+
+// Download filename per format
+const FORMAT_FILENAMES = {
+  story: 'mynewstyle-share-story.png',
+  square: 'mynewstyle-share-card.png',
+} as const;
+
+// AI preview image data-testid per format (used for CORS pre-fetch patching)
+const FORMAT_PREVIEW_TESTID = {
+  story: 'share-card-story-preview',
+  square: 'share-card-square-preview',
+} as const;
+
 /**
  * useShareCard
  *
- * Manages share card generation state for social story sharing.
- * - Renders ShareCardStory off-screen via a ref (attached to ShareCardStoryRenderer)
- * - Uses html-to-image's toPng() to capture the hidden div as PNG (1080x1920 at pixelRatio 2)
- * - Attempts Web Share API with file on mobile (navigator.share + canShare with files)
- * - Falls back to browser download as mynewstyle-share-story.png
- * - Emits analytics placeholder console.log on success
+ * Manages share card generation state for social media sharing.
+ * Supports two formats:
+ * - 'story': 9:16 (540x960 DOM → 1080x1920 at pixelRatio 2) — Instagram Stories / WhatsApp
+ * - 'square': 1:1 (540x540 DOM → 1080x1080 at pixelRatio 2) — Instagram feed (AC: 1, 7)
+ *
+ * For each format:
+ * - Renders the appropriate card off-screen via a ref
+ * - Uses html-to-image's toPng() to capture the hidden div as PNG
+ * - Story format: Attempts Web Share API with file on mobile, falls back to download
+ * - Square format: Downloads as mynewstyle-share-card.png (AC: 3, 4)
  *
  * CORS handling: Before capture, any external previewUrl (Supabase Storage AI preview)
  * is pre-fetched and converted to base64 data URL via the shared toDataUrl() utility.
+ * (AC: 6 — client-side using html-to-image; AC: 7 — high-res PNG at 2x pixel ratio)
  */
 export function useShareCard({
   faceAnalysis,
@@ -51,10 +76,13 @@ export function useShareCard({
   gender,
 }: UseShareCardParams): UseShareCardReturn {
   const [isGenerating, setIsGenerating] = useState(false);
+  // Story format ref (9:16 — attached to ShareCardStoryRenderer)
   const cardRef = useRef<HTMLDivElement | null>(null);
+  // Square format ref (1:1 — attached to ShareCardSquareRenderer)
+  const squareCardRef = useRef<HTMLDivElement | null>(null);
 
   const generateShareCard = useCallback(
-    async (format: 'story') => {
+    async (format: 'story' | 'square') => {
       if (isGenerating) return;
       if (!faceAnalysis || !recommendation || !photoPreview || !gender) {
         toast.error('Não foi possível gerar o cartão. Tente novamente.');
@@ -65,7 +93,8 @@ export function useShareCard({
       let pngDataUrl: string | null = null;
 
       try {
-        const targetNode = cardRef.current;
+        // Select the appropriate ref based on format
+        const targetNode = format === 'square' ? squareCardRef.current : cardRef.current;
         if (!targetNode) {
           throw new Error('Card container not mounted');
         }
@@ -74,8 +103,9 @@ export function useShareCard({
         // photoPreview is already a base64 data URL, so only previewUrl needs conversion.
         if (previewUrl && !previewUrl.startsWith('data:')) {
           const dataUrl = await toDataUrl(previewUrl);
+          const previewTestId = FORMAT_PREVIEW_TESTID[format];
           const previewImg = targetNode.querySelector<HTMLImageElement>(
-            '[data-testid="share-card-story-preview"]'
+            `[data-testid="${previewTestId}"]`
           );
           if (previewImg && dataUrl !== previewUrl) {
             previewImg.src = dataUrl;
@@ -85,20 +115,28 @@ export function useShareCard({
         }
 
         const backgroundColor = BACKGROUND_COLORS[gender];
+        const { width, height } = FORMAT_DIMENSIONS[format];
 
-        // Convert hidden DOM node to PNG data URL (540x960 → 1080x1920 at pixelRatio 2)
+        // Convert hidden DOM node to PNG data URL at 2x pixel ratio
+        // Story:  540x960  → 1080x1920 (9:16)
+        // Square: 540x540  → 1080x1080 (1:1) — AC: 1 (1:1 aspect ratio, 1080x1080px output)
         pngDataUrl = await toPng(targetNode, {
-          width: 540,
-          height: 960,
-          pixelRatio: 2,
+          width,
+          height,
+          pixelRatio: 2, // 2x for social media compression resilience — AC: 7
           backgroundColor,
         });
 
-        // Analytics placeholder (Epic 10 not yet built)
-        console.log('[analytics] share_generated', { format });
+        // TODO(Epic 10): Fire analytics event { type: 'share_generated', format } when analytics system is built
 
-        // Attempt Web Share API with file (mobile)
-        await shareOrDownload(pngDataUrl);
+        // Route to appropriate sharing/download strategy per format
+        if (format === 'story') {
+          // Story: attempt Web Share API (mobile), fall back to download
+          await shareOrDownload(pngDataUrl);
+        } else {
+          // Square: direct download (AC: 3)
+          triggerDownload(pngDataUrl, FORMAT_FILENAMES[format]);
+        }
       } catch (error) {
         console.error('[useShareCard] Share card generation failed:', error);
         toast.error('Não foi possível gerar o cartão. Tente novamente.');
@@ -113,6 +151,7 @@ export function useShareCard({
     generateShareCard,
     isGenerating,
     cardRef,
+    squareCardRef,
   };
 }
 
@@ -122,7 +161,7 @@ export function useShareCard({
  * On AbortError (user cancelled), falls back to download silently.
  */
 async function shareOrDownload(pngDataUrl: string): Promise<void> {
-  const filename = 'mynewstyle-share-story.png';
+  const filename = FORMAT_FILENAMES.story;
 
   // Convert data URL to Blob and File for Web Share API
   let file: File | null = null;

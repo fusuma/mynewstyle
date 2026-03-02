@@ -1,7 +1,7 @@
 'use client';
 
 import { motion, useReducedMotion } from 'framer-motion';
-import { Share2, Bookmark, PlusCircle, Home, Scissors, Loader2 } from 'lucide-react';
+import { Share2, Bookmark, PlusCircle, Home, Scissors, Loader2, Image } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -11,6 +11,7 @@ import { useBarberCard } from '@/hooks/useBarberCard';
 import { useShareCard } from '@/hooks/useShareCard';
 import { BarberCardRenderer } from '@/components/consultation/BarberCardRenderer';
 import { ShareCardStoryRenderer } from '@/components/share/ShareCardStoryRenderer';
+import { ShareCardSquareRenderer } from '@/components/share/ShareCardSquareRenderer';
 import type { Consultation } from '@/types/index';
 
 interface ResultsActionsFooterProps {
@@ -49,11 +50,12 @@ export function ResultsActionsFooter({ consultationId: _consultationId }: Result
     groomingTips,
   });
 
-  // Share card hook (primary action — "Partilhar resultado")
+  // Share card hook (primary action — "Partilhar resultado" + square "Cartão Instagram")
   const {
     generateShareCard,
     isGenerating: isGeneratingShareCard,
     cardRef: shareCardRef,
+    squareCardRef,
   } = useShareCard({
     faceAnalysis,
     recommendation: topRecommendation,
@@ -72,6 +74,10 @@ export function ResultsActionsFooter({ consultationId: _consultationId }: Result
 
   const handleShare = async () => {
     await generateShareCard('story');
+  };
+
+  const handleShareSquare = async () => {
+    await generateShareCard('square');
   };
 
   const handleSave = () => {
@@ -108,9 +114,19 @@ export function ResultsActionsFooter({ consultationId: _consultationId }: Result
         groomingTips={groomingTips}
       />
 
-      {/* Hidden ShareCardStoryRenderer — off-screen capture target for share card */}
+      {/* Hidden ShareCardStoryRenderer — off-screen capture target for story share card (9:16) */}
       <ShareCardStoryRenderer
         cardRef={shareCardRef}
+        faceAnalysis={faceAnalysis}
+        recommendation={topRecommendation}
+        photoPreview={photoPreview}
+        previewUrl={previewUrl}
+        gender={gender}
+      />
+
+      {/* Hidden ShareCardSquareRenderer — off-screen capture target for square share card (1:1) */}
+      <ShareCardSquareRenderer
+        cardRef={squareCardRef}
         faceAnalysis={faceAnalysis}
         recommendation={topRecommendation}
         photoPreview={photoPreview}
@@ -131,21 +147,38 @@ export function ResultsActionsFooter({ consultationId: _consultationId }: Result
       >
         <div className="mx-auto max-w-2xl px-4 py-4 md:py-8">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-center">
-            {/* Primary: Share — generates branded share card image */}
+            {/* Primary: Share — generates story-format branded share card image */}
             <Button
               variant="default"
               onClick={handleShare}
               disabled={isGeneratingShareCard}
-              aria-label={isGeneratingShareCard ? 'A gerar cartão…' : 'Partilhar resultado'}
+              aria-label={isGeneratingShareCard ? 'A gerar cartão de partilha…' : 'Partilhar resultado'}
               aria-busy={isGeneratingShareCard}
               className="w-full md:w-auto"
             >
               {isGeneratingShareCard ? (
-                <Loader2 className="animate-spin" aria-hidden="true" />
+                <Loader2 data-testid="icon-loader-share" className="animate-spin" aria-hidden="true" />
               ) : (
                 <Share2 aria-hidden="true" />
               )}
               Partilhar resultado
+            </Button>
+
+            {/* Secondary: Cartão Instagram — generates 1:1 square share card for Instagram feed */}
+            <Button
+              variant="secondary"
+              onClick={handleShareSquare}
+              disabled={isGeneratingShareCard}
+              aria-label={isGeneratingShareCard ? 'A gerar cartão Instagram…' : 'Cartão Instagram (1:1)'}
+              aria-busy={isGeneratingShareCard}
+              className="w-full md:w-auto"
+            >
+              {isGeneratingShareCard ? (
+                <Loader2 data-testid="icon-loader-square" className="animate-spin" aria-hidden="true" />
+              ) : (
+                <Image aria-hidden="true" />
+              )}
+              Cartão Instagram
             </Button>
 
             {/* Secondary: Mostrar ao barbeiro */}

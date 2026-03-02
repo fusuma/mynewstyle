@@ -112,7 +112,9 @@ describe('useShareCard - generation with DOM node', () => {
     );
   });
 
-  it('emits analytics console.log on success', async () => {
+  it('does NOT emit a console.log analytics call on success (analytics is a TODO for Epic 10)', async () => {
+    // The analytics event is tracked as a TODO comment in useShareCard.ts.
+    // A console.log in production code is a code smell — Epic 10 will implement proper analytics.
     const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     const { useShareCard } = await import('@/hooks/useShareCard');
     mockToPng.mockResolvedValueOnce('data:image/png;base64,iVBORw0KGgo=');
@@ -128,7 +130,11 @@ describe('useShareCard - generation with DOM node', () => {
       await result.current.generateShareCard('story');
     });
 
-    expect(consoleSpy).toHaveBeenCalledWith('[analytics] share_generated', { format: 'story' });
+    // No analytics console.log should fire — it's been replaced with a TODO comment
+    expect(consoleSpy).not.toHaveBeenCalledWith(
+      expect.stringContaining('[analytics]'),
+      expect.anything()
+    );
     consoleSpy.mockRestore();
   });
 

@@ -3,29 +3,8 @@ import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
 import React from 'react';
 
 // Mock html-to-image
-const mockToPng = vi.fn().mockResolvedValue('data:image/png;base64,mockedpng');
 vi.mock('html-to-image', () => ({
-  toPng: mockToPng,
-}));
-
-// Mock image utility (used by useBarberCard)
-vi.mock('@/lib/utils/image', () => ({
-  toDataUrl: vi.fn().mockImplementation((url: string) => Promise.resolve(url)),
-}));
-
-// Mock useShareCard to control generation state
-const mockGenerateShareCard = vi.fn().mockResolvedValue(undefined);
-const mockShareCardState = { isGenerating: false };
-const mockShareCardRef = { current: null };
-const mockSquareCardRef = { current: null };
-
-vi.mock('@/hooks/useShareCard', () => ({
-  useShareCard: () => ({
-    generateShareCard: mockGenerateShareCard,
-    get isGenerating() { return mockShareCardState.isGenerating; },
-    cardRef: mockShareCardRef,
-    squareCardRef: mockSquareCardRef,
-  }),
+  toPng: vi.fn().mockResolvedValue('data:image/png;base64,mockedpng'),
 }));
 
 // Mock next/navigation
@@ -40,13 +19,13 @@ vi.mock('framer-motion', () => ({
     div: ({ children, ...props }: Record<string, unknown> & { children?: React.ReactNode }) => {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { initial, animate, exit, transition, variants, whileHover, whileTap, ...rest } = props;
-      return <div {...(rest as React.HTMLAttributes<HTMLDivElement>)}>{children}</div>;
+      return <div {...rest}>{children}</div>;
     },
   },
   useReducedMotion: () => false,
 }));
 
-// Mock lucide-react
+// Mock lucide-react icons
 vi.mock('lucide-react', () => ({
   Share2: ({ 'aria-hidden': ariaHidden }: React.SVGAttributes<SVGElement>) => (
     <svg data-testid="icon-share2" aria-hidden={ariaHidden} />
@@ -63,11 +42,17 @@ vi.mock('lucide-react', () => ({
   Scissors: ({ 'aria-hidden': ariaHidden }: React.SVGAttributes<SVGElement>) => (
     <svg data-testid="icon-scissors" aria-hidden={ariaHidden} />
   ),
-  Loader2: ({ className, 'aria-hidden': ariaHidden, 'data-testid': testId }: React.SVGAttributes<SVGElement> & { 'data-testid'?: string }) => (
-    <svg data-testid={testId ?? 'icon-loader'} className={className as string} aria-hidden={ariaHidden} />
+  Loader2: ({ className, 'aria-hidden': ariaHidden }: React.SVGAttributes<SVGElement>) => (
+    <svg data-testid="icon-loader" className={className as string} aria-hidden={ariaHidden} />
   ),
   Image: ({ 'aria-hidden': ariaHidden }: React.SVGAttributes<SVGElement>) => (
     <svg data-testid="icon-image" aria-hidden={ariaHidden} />
+  ),
+  Download: ({ 'aria-hidden': ariaHidden }: React.SVGAttributes<SVGElement>) => (
+    <svg data-testid="icon-download" aria-hidden={ariaHidden} />
+  ),
+  ChevronDown: ({ 'aria-hidden': ariaHidden }: React.SVGAttributes<SVGElement>) => (
+    <svg data-testid="icon-chevron-down" aria-hidden={ariaHidden} />
   ),
 }));
 
@@ -88,7 +73,7 @@ vi.mock('@/lib/consultation/face-shape-labels', () => ({
   },
 }));
 
-// Consultation store mock with complete data to enable share card generation
+// Consultation store mock
 const mockStoreState = {
   reset: vi.fn(),
   faceAnalysis: {
@@ -108,7 +93,13 @@ const mockStoreState = {
       },
     ],
     stylesToAvoid: [],
-    groomingTips: [],
+    groomingTips: [
+      {
+        category: 'barber_tips',
+        tipText: 'Peça ao barbeiro textura no topo',
+        icon: 'scissors',
+      },
+    ],
   },
   gender: 'male' as const,
   previews: new Map(),
@@ -119,71 +110,94 @@ vi.mock('@/stores/consultation', () => ({
     selector(mockStoreState),
 }));
 
-// ---- Integration Tests: Share Card Generation via "Partilhar resultado" ----
+// ---- Integration Tests: Share Card Square in ResultsActionsFooter ----
 
-describe('ResultsActionsFooter - share button triggers share card generation', () => {
+describe('ResultsActionsFooter - square share card option', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockShareCardState.isGenerating = false;
-    mockGenerateShareCard.mockResolvedValue(undefined);
   });
 
-  it('renders "Partilhar resultado" button', async () => {
-    const { ResultsActionsFooter } = await import('@/components/consultation/ResultsActionsFooter');
-    render(<ResultsActionsFooter consultationId="test-id-123" />);
-    expect(screen.getByRole('button', { name: /partilhar resultado/i })).toBeInTheDocument();
-  });
-
-  it('"Partilhar resultado" button triggers share card generation (calls generateShareCard)', async () => {
+  it('renders a share card option for Instagram (Cartão Instagram) in the footer', async () => {
     const { ResultsActionsFooter } = await import('@/components/consultation/ResultsActionsFooter');
     render(<ResultsActionsFooter consultationId="test-id-123" />);
 
-    const shareButton = screen.getByRole('button', { name: /partilhar resultado/i });
-    fireEvent.click(shareButton);
+    // Should have a button referencing Instagram card
+    expect(
+      screen.getByRole('button', { name: /cart[aã]o instagram.*1:1/i })
+    ).toBeInTheDocument();
+  });
 
+  it('share card square renderer is mounted off-screen in footer', async () => {
+    const { ResultsActionsFooter } = await import('@/components/consultation/ResultsActionsFooter');
+    render(<ResultsActionsFooter consultationId="test-id-123" />);
+
+    // The ShareCardSquareRenderer should be in the DOM (off-screen)
+    expect(screen.getByTestId('share-card-square-renderer')).toBeInTheDocument();
+  });
+
+  it('square share card option triggers card generation on click', async () => {
+    const { toPng } = await import('html-to-image');
+    vi.mocked(toPng).mockResolvedValue('data:image/png;base64,done');
+
+    const { ResultsActionsFooter } = await import('@/components/consultation/ResultsActionsFooter');
+    render(<ResultsActionsFooter consultationId="test-id-123" />);
+
+    // Find button that triggers square card generation (aria-label: "Cartão Instagram (1:1)")
+    const squareButton = screen.getByRole('button', { name: /cart[aã]o instagram.*1:1/i });
+    fireEvent.click(squareButton);
+
+    // Should have called toPng at some point (for the square card)
     await waitFor(() => {
-      expect(mockGenerateShareCard).toHaveBeenCalledTimes(1);
-      expect(mockGenerateShareCard).toHaveBeenCalledWith('story');
+      expect(toPng).toHaveBeenCalled();
     });
   });
 
-  it('"Partilhar resultado" button shows loading spinner while generating', async () => {
-    // Set the mock to report isGenerating=true
-    mockShareCardState.isGenerating = true;
+  it('toPng is called with correct square dimensions and pixelRatio:2 for social media compression (AC1, AC7)', async () => {
+    const { toPng } = await import('html-to-image');
+    vi.mocked(toPng).mockResolvedValue('data:image/png;base64,done');
 
     const { ResultsActionsFooter } = await import('@/components/consultation/ResultsActionsFooter');
     render(<ResultsActionsFooter consultationId="test-id-123" />);
 
-    // When isGenerating is true, loader should be visible (for share button specifically)
-    expect(screen.getByTestId('icon-loader-share')).toBeInTheDocument();
+    const squareButton = screen.getByRole('button', { name: /cart[aã]o instagram.*1:1/i });
+    fireEvent.click(squareButton);
+
+    await waitFor(() => {
+      expect(toPng).toHaveBeenCalledWith(
+        expect.any(HTMLDivElement),
+        expect.objectContaining({
+          width: 540,
+          height: 540,
+          pixelRatio: 2, // 2x → 1080x1080 output for social media compression resilience (AC7)
+        })
+      );
+    });
   });
 
-  it('"Partilhar resultado" button is disabled while generating', async () => {
-    // Set the mock to report isGenerating=true
-    mockShareCardState.isGenerating = true;
+  it('square card button shows loading state during generation', async () => {
+    const { toPng } = await import('html-to-image');
+
+    let resolvePromise: (value: string) => void;
+    vi.mocked(toPng).mockReturnValueOnce(
+      new Promise<string>((resolve) => {
+        resolvePromise = resolve;
+      })
+    );
 
     const { ResultsActionsFooter } = await import('@/components/consultation/ResultsActionsFooter');
     render(<ResultsActionsFooter consultationId="test-id-123" />);
 
-    // The share button should have aria-label indicating loading
-    const shareButton = screen.getByRole('button', { name: /a gerar cartão de partilha/i });
-    expect(shareButton).toBeDisabled();
-  });
+    // aria-label when not loading: "Cartão Instagram (1:1)"
+    const squareButton = screen.getByRole('button', { name: /cart[aã]o instagram.*1:1/i });
+    fireEvent.click(squareButton);
 
-  it('"Partilhar resultado" button is not disabled when not generating', async () => {
-    mockShareCardState.isGenerating = false;
+    // Button should be disabled during loading
+    await waitFor(() => {
+      expect(squareButton).toBeDisabled();
+    });
 
-    const { ResultsActionsFooter } = await import('@/components/consultation/ResultsActionsFooter');
-    render(<ResultsActionsFooter consultationId="test-id-123" />);
-
-    const shareButton = screen.getByRole('button', { name: /partilhar resultado/i });
-    expect(shareButton).not.toBeDisabled();
-  });
-
-  it('"Mostrar ao barbeiro" button still works independently', async () => {
-    const { ResultsActionsFooter } = await import('@/components/consultation/ResultsActionsFooter');
-    render(<ResultsActionsFooter consultationId="test-id-123" />);
-    expect(screen.getByRole('button', { name: /mostrar ao barbeiro/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /mostrar ao barbeiro/i })).not.toBeDisabled();
+    await act(async () => {
+      resolvePromise!('data:image/png;base64,done');
+    });
   });
 });
