@@ -1,7 +1,5 @@
 'use client';
 
-import React from 'react';
-
 interface BlurredRecommendationCardProps {
   rank: number; // 1, 2, or 3
 }

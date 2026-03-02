@@ -25,8 +25,16 @@ vi.mock('@/components/payment/StripeProvider', () => ({
 // Mock BlurredRecommendationCard
 vi.mock('@/components/consultation/BlurredRecommendationCard', () => ({
   BlurredRecommendationCard: ({ rank }: { rank: number }) => (
-    <div data-testid={`blurred-card-${rank}`}>Recomendacao #{rank}</div>
+    <div data-testid={`blurred-card-${rank}`}>Recomendação #{rank}</div>
   ),
+}));
+
+// Mock stripe pricing so the import in Paywall resolves in test environment
+vi.mock('@/lib/stripe/pricing', () => ({
+  FIRST_CONSULTATION_PRICE: 599,
+  RETURNING_CONSULTATION_PRICE: 299,
+  CURRENCY: 'eur',
+  determinePrice: vi.fn(),
 }));
 
 const defaultProps = {
@@ -108,19 +116,26 @@ describe('Paywall', () => {
     expect(screen.getByText(/Nova consultoria/i)).toBeDefined();
   });
 
+  it('displays pricing using fallback when amount is null (pre-API-call state)', async () => {
+    const { Paywall } = await import('@/components/consultation/Paywall');
+    render(<Paywall {...defaultProps} amount={null} userType={null} />);
+    // Should display default guest price (€5.99) even before API call
+    expect(screen.getByText(/€5\.99/)).toBeDefined();
+  });
+
   it('displays feature list with all 4 features', async () => {
     const { Paywall } = await import('@/components/consultation/Paywall');
     render(<Paywall {...defaultProps} />);
     expect(screen.getByText(/2-3 cortes recomendados/i)).toBeDefined();
-    expect(screen.getByText(/Visualizacao IA/i)).toBeDefined();
-    expect(screen.getByText(/Cartao para o barbeiro/i)).toBeDefined();
+    expect(screen.getByText(/Visualização IA/i)).toBeDefined();
+    expect(screen.getByText(/Cartão para o barbeiro/i)).toBeDefined();
     expect(screen.getByText(/Dicas de styling/i)).toBeDefined();
   });
 
   it('displays trust badge with refund guarantee text', async () => {
     const { Paywall } = await import('@/components/consultation/Paywall');
     render(<Paywall {...defaultProps} />);
-    expect(screen.getByText(/Reembolso automatico se a IA falhar/i)).toBeDefined();
+    expect(screen.getByText(/Reembolso automático se a IA falhar/i)).toBeDefined();
   });
 
   it('calls onInitiatePayment when unlock button is clicked (no clientSecret)', async () => {
@@ -132,12 +147,13 @@ describe('Paywall', () => {
     expect(onInitiatePayment).toHaveBeenCalledOnce();
   });
 
-  it('shows loading state when isLoadingPayment is true', async () => {
+  it('shows loading text and disabled state when isLoadingPayment is true', async () => {
     const { Paywall } = await import('@/components/consultation/Paywall');
     render(<Paywall {...defaultProps} isLoadingPayment={true} />);
-    // Loading indicator -- button disabled or loading text shown
-    const button = screen.getByText(/Desbloquear consultoria completa/i);
+    // Button should show loading text
+    const button = screen.getByText(/A processar/i);
     expect(button.closest('button')?.getAttribute('disabled')).not.toBeNull();
+    expect(button.closest('button')?.getAttribute('aria-busy')).toBe('true');
   });
 
   it('shows error message when paymentError is set', async () => {
@@ -178,5 +194,11 @@ describe('Paywall', () => {
     expect(matches.length).toBeGreaterThanOrEqual(1);
     const badge = matches.find((el) => el.tagName === 'SPAN');
     expect(badge).toBeDefined();
+  });
+
+  it('shows correct secondary button label with proper Portuguese text', async () => {
+    const { Paywall } = await import('@/components/consultation/Paywall');
+    render(<Paywall {...defaultProps} clientSecret="pi_test_secret_xyz" />);
+    expect(screen.getByText(/Cartão de crédito\/débito/i)).toBeDefined();
   });
 });

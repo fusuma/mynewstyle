@@ -1,6 +1,6 @@
 # Story 5.3: Paywall UI
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -628,6 +628,42 @@ claude-sonnet-4-6
 - src/test/blurred-recommendation-card.test.tsx (new)
 - src/test/paywall.test.tsx (new)
 
+### Senior Developer Review (AI)
+
+**Date:** 2026-03-02
+**Reviewer:** claude-sonnet-4-6 (code-review workflow)
+**Outcome:** APPROVED with fixes applied
+
+#### Issues Found and Fixed
+
+**HIGH — AC 4 Violation: Pricing hidden on initial page load**
+- **Finding:** `priceDisplay` was `null` when `amount` was `null` (before user clicked "Desbloquear" and API was called), hiding the entire pricing section. AC 4 requires "Pricing is displayed correctly." The UX design shows pricing visible upfront.
+- **Fix:** Changed `Paywall.tsx` to use `amount ?? FIRST_CONSULTATION_PRICE` as fallback, sourced from the `@/lib/stripe/pricing` constants (not a hardcoded literal). Pricing is now always visible. After API call, the confirmed amount replaces the default.
+- **Test added:** `displays pricing using fallback when amount is null (pre-API-call state)`
+
+**HIGH — Incomplete refactor: `FaceShapeReveal.tsx` not updated to use shared labels**
+- **Finding:** Story completion notes claim "Extracted face shape labels/descriptions to shared `src/lib/consultation/face-shape-labels.ts` to avoid duplication between FaceShapeReveal and Paywall." However, `FaceShapeReveal.tsx` still contained its own local copies of `FACE_SHAPE_LABELS` and `FACE_SHAPE_DESCRIPTIONS`. The shared file was created but the refactor was not completed. Risk: label maps could diverge.
+- **Fix:** Updated `FaceShapeReveal.tsx` to import from `@/lib/consultation/face-shape-labels` and removed duplicate map constants.
+
+**MEDIUM — Missing Portuguese diacritics in user-visible strings**
+- **Finding:** The UX design doc specifies (line 703-704): "Visualização IA", "Cartão para o barbeiro", "Reembolso automático", "Cartão de crédito/débito" — all with proper Portuguese accents. The implementation used unaccented versions: "Visualizacao IA", "Cartao para o barbeiro", "Reembolso automatico", "Cartao de credito/debito". These match the AC text (which also lacks accents) but conflict with the UX design doc (authoritative source).
+- **Fix:** Updated `Paywall.tsx` FEATURES array and trust badge text to use proper Portuguese diacritics. Updated `paywall.test.tsx` regex patterns to match corrected strings.
+- **Test added:** `shows correct secondary button label with proper Portuguese text`
+
+**MEDIUM — Missing loading state feedback for payment button**
+- **Finding:** When `isLoadingPayment=true`, the button was only `disabled` with no visual text change. Screen readers and users had no indication payment was processing.
+- **Fix:** Button now shows "A processar..." text when loading, plus `aria-busy={isLoadingPayment}` and `aria-label` attributes for accessibility. Updated test to verify loading text and `aria-busy`.
+
+**LOW — Unnecessary React import removed from `BlurredRecommendationCard.tsx`**
+- **Finding:** `import React from 'react'` is not required with `react-jsx` transform (verified in tsconfig.json). `Paywall.tsx` had the same issue but was resolved in the rewrite.
+- **Fix:** Removed unnecessary React import from `BlurredRecommendationCard.tsx`.
+
+#### Verification
+- Full test suite after fixes: **965 tests passing** (965/965, 0 failures)
+- 2 net new tests added vs pre-review count (965 vs 963)
+- All 64 test files pass
+
 ### Change Log
 
 - 2026-03-02: Implemented story 5-3-paywall-ui. Added setPaymentStatus to consultation store, created usePayment hook, BlurredRecommendationCard placeholder component, Paywall component, results/[id] page route, shared face-shape-labels utility. 36 new tests added (963 total passing). (claude-sonnet-4-6)
+- 2026-03-02: Code review completed. Fixed: (1) pricing hidden before API call — now uses FIRST_CONSULTATION_PRICE fallback constant, (2) FaceShapeReveal.tsx refactored to use shared face-shape-labels (incomplete refactor from dev), (3) missing Portuguese diacritics in Visualização/Cartão/Reembolso automático/Cartão de crédito strings, (4) loading button now shows "A processar..." text with aria-busy. 965 tests passing. Status → done. (claude-sonnet-4-6)

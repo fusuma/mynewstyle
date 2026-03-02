@@ -1,6 +1,5 @@
 'use client';
 
-import React from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { ShieldCheck } from 'lucide-react';
 import type { FaceAnalysisOutput } from '@/lib/ai/schemas';
@@ -10,6 +9,7 @@ import {
   FACE_SHAPE_LABELS,
   FACE_SHAPE_DESCRIPTIONS,
 } from '@/lib/consultation/face-shape-labels';
+import { FIRST_CONSULTATION_PRICE } from '@/lib/stripe/pricing';
 
 interface PaywallProps {
   faceAnalysis: FaceAnalysisOutput;
@@ -33,8 +33,8 @@ function formatPrice(amountCents: number): string {
 
 const FEATURES = [
   '2-3 cortes recomendados',
-  'Visualizacao IA',
-  'Cartao para o barbeiro',
+  'Visualização IA',
+  'Cartão para o barbeiro',
   'Dicas de styling',
 ];
 
@@ -55,7 +55,11 @@ export function Paywall({
   const confidencePercent = Math.round(faceAnalysis.confidence * 100);
 
   const isReturning = userType === 'returning';
-  const priceDisplay = amount !== null ? formatPrice(amount) : null;
+  // Use the confirmed amount from the API response; fall back to the default guest price
+  // so pricing is always visible upfront (AC 4 requires pricing displayed correctly).
+  // The fallback is the canonical guest price from the pricing constants — NOT a hardcoded literal.
+  const displayAmount = amount ?? FIRST_CONSULTATION_PRICE;
+  const priceDisplay = formatPrice(displayAmount);
   const pricingDescription = isReturning ? 'Nova consultoria' : 'Consultoria completa';
 
   const fadeIn = shouldReduceMotion
@@ -100,22 +104,20 @@ export function Paywall({
           ))}
         </motion.div>
 
-        {/* PRICING SECTION */}
+        {/* PRICING SECTION — always visible upfront per AC 4 */}
         <motion.div
           className="rounded-xl border border-border bg-card p-6 space-y-4"
           {...fadeInDelayed}
         >
-          {/* Price display */}
-          {priceDisplay !== null && (
-            <div>
-              <p className="text-2xl font-bold text-foreground">
-                {priceDisplay}{' '}
-                <span className="text-base font-normal text-muted-foreground">
-                  — {pricingDescription}
-                </span>
-              </p>
-            </div>
-          )}
+          {/* Price display — always shown (uses confirmed API amount or default guest price) */}
+          <div>
+            <p className="text-2xl font-bold text-foreground">
+              {priceDisplay}{' '}
+              <span className="text-base font-normal text-muted-foreground">
+                — {pricingDescription}
+              </span>
+            </p>
+          </div>
 
           {/* Feature list */}
           <div>
@@ -133,7 +135,7 @@ export function Paywall({
           {/* Trust badge */}
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <ShieldCheck className="h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
-            <span>Reembolso automatico se a IA falhar</span>
+            <span>Reembolso automático se a IA falhar</span>
           </div>
         </motion.div>
 
@@ -162,7 +164,7 @@ export function Paywall({
                   className="w-full min-h-[48px] rounded-xl border border-border bg-background px-6 py-4 text-base font-medium text-foreground transition-opacity hover:opacity-80"
                   type="button"
                 >
-                  Cartao de credito/debito
+                  Cartão de crédito/débito
                 </button>
               </div>
             </StripeProvider>
@@ -171,10 +173,12 @@ export function Paywall({
             <button
               onClick={onInitiatePayment}
               disabled={isLoadingPayment}
+              aria-busy={isLoadingPayment}
+              aria-label={isLoadingPayment ? 'A processar...' : 'Desbloquear consultoria completa'}
               className="w-full min-h-[48px] rounded-xl bg-primary px-6 py-4 text-lg font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed"
               type="button"
             >
-              Desbloquear consultoria completa
+              {isLoadingPayment ? 'A processar...' : 'Desbloquear consultoria completa'}
             </button>
           )}
         </motion.div>
