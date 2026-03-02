@@ -11,6 +11,14 @@ export { getAIConfig } from './config';
 export { GeminiProvider } from './gemini';
 export { OpenAIProvider } from './openai';
 
+// Prompt system exports
+export { getPrompt, CURRENT_PROMPT_VERSION } from './prompts';
+export type { PromptContent, PromptTask, PromptVersion, PromptParams } from './prompts';
+
+// Schema exports
+export { FaceAnalysisSchema, ConsultationSchema } from './schemas';
+export type { FaceAnalysisOutput, ConsultationOutput } from './schemas';
+
 // Re-export AI types from types package
 export type {
   FaceShape,

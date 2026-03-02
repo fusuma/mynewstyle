@@ -8,6 +8,8 @@ import type {
 } from '@/types';
 import type { AIProvider } from './provider';
 import { logAICall, calculateCost } from './logger';
+import { getPrompt } from './prompts';
+import type { PromptTask } from './prompts';
 
 /**
  * OpenAIProvider implements the AIProvider interface using the openai SDK.
@@ -32,6 +34,12 @@ export class OpenAIProvider implements AIProvider {
     let outputTokens = 0;
 
     try {
+      const promptContent = getPrompt('face-analysis', { photoBase64, mimeType: 'image/jpeg' });
+
+      const textContent = promptContent.systemPrompt
+        ? `${promptContent.systemPrompt}\n\n${promptContent.userPrompt}`
+        : promptContent.userPrompt;
+
       const response = await this.client.chat.completions.create({
         model: this.config.model,
         response_format: { type: 'json_object' },
@@ -42,12 +50,12 @@ export class OpenAIProvider implements AIProvider {
             content: [
               {
                 type: 'text',
-                text: 'Analyze this face and return a JSON object with faceShape, confidence, proportions (foreheadRatio, cheekboneRatio, jawRatio, faceLength), and hairAssessment (type, texture, density, currentStyle).',
+                text: textContent,
               },
               {
                 type: 'image_url',
                 image_url: {
-                  url: `data:image/jpeg;base64,${photoBase64}`,
+                  url: `data:${promptContent.imageData!.mimeType};base64,${promptContent.imageData!.base64}`,
                 },
               },
             ],
@@ -123,13 +131,21 @@ export class OpenAIProvider implements AIProvider {
     let outputTokens = 0;
 
     try {
+      const gender = (questionnaire['gender'] as string) ?? 'male';
+      const task: PromptTask = gender === 'female' ? 'consultation-female' : 'consultation-male';
+      const promptContent = getPrompt(task, { analysis, questionnaire });
+
+      const promptText = promptContent.systemPrompt
+        ? `${promptContent.systemPrompt}\n\n${promptContent.userPrompt}`
+        : promptContent.userPrompt;
+
       const response = await this.client.chat.completions.create({
         model: this.config.model,
         response_format: { type: 'json_object' },
         messages: [
           {
             role: 'user',
-            content: `Based on this face analysis and questionnaire data, generate a hairstyle consultation as a JSON object with recommendations (styleName, justification, matchScore, difficultyLevel), stylesToAvoid (styleName, reason), and groomingTips (category, tipText, icon).\n\nFace Analysis: ${JSON.stringify(analysis)}\n\nQuestionnaire: ${JSON.stringify(questionnaire)}`,
+            content: promptText,
           },
         ],
       });

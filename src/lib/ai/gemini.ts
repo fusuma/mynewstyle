@@ -8,6 +8,8 @@ import type {
 } from '@/types';
 import type { AIProvider } from './provider';
 import { logAICall, calculateCost } from './logger';
+import { getPrompt } from './prompts';
+import type { PromptTask } from './prompts';
 
 /**
  * GeminiProvider implements the AIProvider interface using the @google/genai SDK.
@@ -32,6 +34,8 @@ export class GeminiProvider implements AIProvider {
     let outputTokens = 0;
 
     try {
+      const promptContent = getPrompt('face-analysis', { photoBase64, mimeType: 'image/jpeg' });
+
       const response = await this.client.models.generateContent({
         model: this.config.model,
         contents: [
@@ -39,12 +43,14 @@ export class GeminiProvider implements AIProvider {
             role: 'user',
             parts: [
               {
-                text: 'Analyze this face and return a JSON object with faceShape, confidence, proportions (foreheadRatio, cheekboneRatio, jawRatio, faceLength), and hairAssessment (type, texture, density, currentStyle).',
+                text: promptContent.systemPrompt
+                  ? `${promptContent.systemPrompt}\n\n${promptContent.userPrompt}`
+                  : promptContent.userPrompt,
               },
               {
                 inlineData: {
-                  mimeType: 'image/jpeg',
-                  data: photoBase64,
+                  mimeType: promptContent.imageData!.mimeType,
+                  data: promptContent.imageData!.base64,
                 },
               },
             ],
@@ -124,6 +130,10 @@ export class GeminiProvider implements AIProvider {
     let outputTokens = 0;
 
     try {
+      const gender = (questionnaire['gender'] as string) ?? 'male';
+      const task: PromptTask = gender === 'female' ? 'consultation-female' : 'consultation-male';
+      const promptContent = getPrompt(task, { analysis, questionnaire });
+
       const response = await this.client.models.generateContent({
         model: this.config.model,
         contents: [
@@ -131,7 +141,9 @@ export class GeminiProvider implements AIProvider {
             role: 'user',
             parts: [
               {
-                text: `Based on this face analysis and questionnaire data, generate a hairstyle consultation as a JSON object with recommendations (styleName, justification, matchScore, difficultyLevel), stylesToAvoid (styleName, reason), and groomingTips (category, tipText, icon).\n\nFace Analysis: ${JSON.stringify(analysis)}\n\nQuestionnaire: ${JSON.stringify(questionnaire)}`,
+                text: promptContent.systemPrompt
+                  ? `${promptContent.systemPrompt}\n\n${promptContent.userPrompt}`
+                  : promptContent.userPrompt,
               },
             ],
           },

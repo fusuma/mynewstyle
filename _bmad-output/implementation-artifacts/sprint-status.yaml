@@ -74,7 +74,7 @@ development_status:
   # E4: AI Pipeline - Analysis + Consultation (Sprint 2-3)
   epic-4: in-progress
   4-1-ai-provider-abstraction-layer: done
-  4-2-prompt-management-system: backlog
+  4-2-prompt-management-system: review
   4-3-face-analysis: backlog
   4-4-instant-face-shape-reveal: backlog
   4-5-consultation-generation: backlog
