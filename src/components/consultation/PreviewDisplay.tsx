@@ -7,6 +7,7 @@ import type { PreviewStatus } from '@/types/index';
 import { BeforeAfterSlider } from '@/components/consultation/BeforeAfterSlider';
 import { PreviewToggleButtons } from '@/components/consultation/PreviewToggleButtons';
 import { PreviewError } from '@/components/consultation/PreviewError';
+import { PreviewShareButton } from '@/components/consultation/PreviewShareButton';
 
 interface PreviewDisplayProps {
   /** The user's original photo URL (from consultation store photoPreview) */
@@ -17,6 +18,8 @@ interface PreviewDisplayProps {
   previewStatus: PreviewStatus['status'];
   /** Style name for alt text */
   styleName: string;
+  /** Recommendation rank for analytics (1 = top, 2 = second, etc.) */
+  recommendationRank?: number;
   /** Optional retry callback for failed state */
   onRetry?: () => void;
   /** Optional className */
@@ -44,6 +47,7 @@ export function PreviewDisplay({
   previewUrl,
   previewStatus,
   styleName,
+  recommendationRank = 1,
   onRetry,
   className,
 }: PreviewDisplayProps) {
@@ -145,6 +149,16 @@ export function PreviewDisplay({
           <p className="text-xs text-center text-muted-foreground leading-relaxed">
             Visualizacao artistica — resultado depende do seu cabelo e cabeleireiro
           </p>
+
+          {/* Share/Download button (Story 9.4 AC: 1, 2, 4) — aligned right */}
+          <div className="flex justify-end">
+            <PreviewShareButton
+              previewUrl={previewUrl}
+              previewStatus={previewStatus}
+              styleName={styleName}
+              recommendationRank={recommendationRank}
+            />
+          </div>
         </motion.div>
       </AnimatePresence>
     );

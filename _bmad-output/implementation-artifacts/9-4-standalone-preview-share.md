@@ -1,6 +1,6 @@
 # Story 9.4: Standalone Preview Share
 
-Status: ready-for-dev
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -23,44 +23,44 @@ so that I can save the preview to my device, send it to my barber, or share it o
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Create PreviewShareButton component (AC: 4, 5, 6)
-  - [ ] 1.1 Create `src/components/consultation/PreviewShareButton.tsx`
-  - [ ] 1.2 Accept props: `previewUrl: string`, `previewStatus: PreviewStatus['status']`, `styleName: string`, `recommendationRank: number`
-  - [ ] 1.3 Render a share/download icon button (use Lucide `Share2` icon, matching existing ResultsActionsFooter pattern)
-  - [ ] 1.4 Show button only when `previewStatus === 'ready'` and `previewUrl` is truthy; hide for idle/unavailable; disable for generating
-  - [ ] 1.5 On click: attempt `navigator.share({ files: [imageFile] })` first; if unsupported or fails, fall back to programmatic download via anchor element with `download` attribute
-  - [ ] 1.6 For share: fetch the preview image, convert to `File` object with `image/jpeg` MIME type, then pass to `navigator.share`
-  - [ ] 1.7 For download fallback: create a temporary `<a>` element with `href=previewUrl`, `download="mynewstyle-preview-{styleName}.jpg"`, trigger click, remove element
-  - [ ] 1.8 Handle errors gracefully (toast on failure via Sonner)
+- [x] Task 1: Create PreviewShareButton component (AC: 4, 5, 6)
+  - [x] 1.1 Create `src/components/consultation/PreviewShareButton.tsx`
+  - [x] 1.2 Accept props: `previewUrl: string`, `previewStatus: PreviewStatus['status']`, `styleName: string`, `recommendationRank: number`
+  - [x] 1.3 Render a share/download icon button (use Lucide `Share2` icon, matching existing ResultsActionsFooter pattern)
+  - [x] 1.4 Show button only when `previewStatus === 'ready'` and `previewUrl` is truthy; hide for idle/unavailable; disable for generating
+  - [x] 1.5 On click: attempt `navigator.share({ files: [imageFile] })` first; if unsupported or fails, fall back to programmatic download via anchor element with `download` attribute
+  - [x] 1.6 For share: fetch the preview image, convert to `File` object with `image/jpeg` MIME type, then pass to `navigator.share`
+  - [x] 1.7 For download fallback: create a temporary `<a>` element with `href=previewUrl`, `download="mynewstyle-preview-{styleName}.jpg"`, trigger click, remove element
+  - [x] 1.8 Handle errors gracefully (toast on failure via Sonner)
 
-- [ ] Task 2: Integrate PreviewShareButton into PreviewDisplay (AC: 1, 2, 4)
-  - [ ] 2.1 Import PreviewShareButton into `src/components/consultation/PreviewDisplay.tsx`
-  - [ ] 2.2 Add PreviewShareButton below the expectation framing text, aligned right
-  - [ ] 2.3 Pass through `previewUrl`, `previewStatus`, `styleName`, and `recommendationRank` (add `recommendationRank` prop to PreviewDisplay)
-  - [ ] 2.4 Ensure the existing watermark ("mynewstyle.com") renders on the preview image itself — the watermark is already part of the on-screen display; for the downloaded image, the watermark comes from the server-side generated preview (Kie.ai or Gemini output stored in Supabase Storage), so no client-side watermark stamping is needed
+- [x] Task 2: Integrate PreviewShareButton into PreviewDisplay (AC: 1, 2, 4)
+  - [x] 2.1 Import PreviewShareButton into `src/components/consultation/PreviewDisplay.tsx`
+  - [x] 2.2 Add PreviewShareButton below the expectation framing text, aligned right
+  - [x] 2.3 Pass through `previewUrl`, `previewStatus`, `styleName`, and `recommendationRank` (add `recommendationRank` prop to PreviewDisplay)
+  - [x] 2.4 Ensure the existing watermark ("mynewstyle.com") renders on the preview image itself — the watermark is already part of the on-screen display; for the downloaded image, the watermark comes from the server-side generated preview (Kie.ai or Gemini output stored in Supabase Storage), so no client-side watermark stamping is needed
 
-- [ ] Task 3: Ensure preview images support native long-press save (AC: 3)
-  - [ ] 3.1 Verify that `previewUrl` in `PreviewDisplay` (and its child components `BeforeAfterSlider`, `PreviewToggleButtons`) uses an HTTPS URL (Supabase Storage signed URL), not a blob/data URI
-  - [ ] 3.2 If the current implementation uses blob URLs, refactor to use signed HTTPS URLs from Supabase Storage so that mobile long-press "Save Image" works natively
-  - [ ] 3.3 No custom long-press handler needed — standard `<img src="https://...">` supports native save on iOS Safari and Chrome Android
+- [x] Task 3: Ensure preview images support native long-press save (AC: 3)
+  - [x] 3.1 Verify that `previewUrl` in `PreviewDisplay` (and its child components `BeforeAfterSlider`, `PreviewToggleButtons`) uses an HTTPS URL (Supabase Storage signed URL), not a blob/data URI
+  - [x] 3.2 If the current implementation uses blob URLs, refactor to use signed HTTPS URLs from Supabase Storage so that mobile long-press "Save Image" works natively
+  - [x] 3.3 No custom long-press handler needed — standard `<img src="https://...">` supports native save on iOS Safari and Chrome Android
 
-- [ ] Task 4: Analytics event for preview share/download (AC: 7)
-  - [ ] 4.1 Define `preview_shared` event type in the analytics event system (if not already defined)
-  - [ ] 4.2 Emit event in PreviewShareButton on successful share or download with payload: `{ type: 'preview_shared', recommendationRank, method: 'share' | 'download', styleName }`
-  - [ ] 4.3 Follow existing analytics patterns from ResultsActionsFooter and other components
+- [x] Task 4: Analytics event for preview share/download (AC: 7)
+  - [x] 4.1 Define `preview_shared` event type in the analytics event system (if not already defined)
+  - [x] 4.2 Emit event in PreviewShareButton on successful share or download with payload: `{ type: 'preview_shared', recommendationRank, method: 'share' | 'download', styleName }`
+  - [x] 4.3 Follow existing analytics patterns from ResultsActionsFooter and other components
 
-- [ ] Task 5: Tests (all ACs)
-  - [ ] 5.1 Create `src/test/preview-share-button.test.tsx`
-  - [ ] 5.2 Test: button renders only when previewStatus='ready' and previewUrl is truthy
-  - [ ] 5.3 Test: button is hidden when previewStatus='idle' or 'unavailable'
-  - [ ] 5.4 Test: button is disabled when previewStatus='generating'
-  - [ ] 5.5 Test: click triggers navigator.share when available with correct File object
-  - [ ] 5.6 Test: click falls back to download when navigator.share is unavailable
-  - [ ] 5.7 Test: click falls back to download when navigator.share rejects (non-AbortError)
-  - [ ] 5.8 Test: analytics event emitted on successful share
-  - [ ] 5.9 Test: analytics event emitted on successful download
-  - [ ] 5.10 Test: error toast shown on share/download failure
-  - [ ] 5.11 Test: accessibility — button has correct aria-label
+- [x] Task 5: Tests (all ACs)
+  - [x] 5.1 Create `src/test/preview-share-button.test.tsx`
+  - [x] 5.2 Test: button renders only when previewStatus='ready' and previewUrl is truthy
+  - [x] 5.3 Test: button is hidden when previewStatus='idle' or 'unavailable'
+  - [x] 5.4 Test: button is disabled when previewStatus='generating'
+  - [x] 5.5 Test: click triggers navigator.share when available with correct File object
+  - [x] 5.6 Test: click falls back to download when navigator.share is unavailable
+  - [x] 5.7 Test: click falls back to download when navigator.share rejects (non-AbortError)
+  - [x] 5.8 Test: analytics event emitted on successful share
+  - [x] 5.9 Test: analytics event emitted on successful download
+  - [x] 5.10 Test: error toast shown on share/download failure
+  - [x] 5.11 Test: accessibility — button has correct aria-label
 
 ## Dev Notes
 
@@ -161,10 +161,32 @@ so that I can save the preview to my device, send it to my barber, or share it o
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+claude-sonnet-4-6
 
 ### Debug Log References
 
+No blocking issues encountered. Pre-existing TypeScript errors in unrelated files (profile routes, framer-motion types) were not introduced by this story.
+
 ### Completion Notes List
 
+- Implemented `PreviewShareButton` component at `src/components/consultation/PreviewShareButton.tsx` following the same patterns as `ResultsActionsFooter`. The component uses Web Share API with file sharing (`navigator.share({ files: [imageFile] })`) with a fetch-blob-anchor download fallback for cross-origin Supabase Storage URLs.
+- Button visibility logic: null for `idle`/`unavailable`, null for `ready` without URL, disabled (still rendered) for `generating`, active for `ready` with URL — satisfying AC 4 and 6.
+- AbortError from `navigator.share` is handled silently (user cancelled); other share errors fall back to download instead of showing a toast.
+- Analytics `trackEvent` function added to `src/lib/utils/analytics.ts` alongside the existing `trackShareEvent`, with a new `PreviewSharedEventPayload` type — satisfying AC 7.
+- Integrated into `PreviewDisplay.tsx` with a new optional `recommendationRank` prop (defaults to 1). Button rendered below expectation framing text, aligned right — satisfying AC 1 and 2.
+- Task 3 (AC 3): Verified that `BeforeAfterSlider` and `PreviewToggleButtons` use standard `<img src="...">` elements with Supabase Storage HTTPS signed URLs. No blob/data URIs used. No code changes required — native long-press save already works.
+- Watermark strategy confirmed: the on-screen CSS watermark overlay serves the display; the downloaded file's watermark is baked in server-side by Kie.ai/Gemini webhook (Story 7-2). No client-side watermark stamping needed — satisfying AC 2 and 8.
+- 14 new tests written using TDD (RED → GREEN), all passing. Full regression suite: 1928 tests, 0 failures.
+- Code review (2026-03-02): Fixed 4 issues — (1) eliminated duplicated inline download logic in `navigator.share` failure path by refactoring `triggerDownload` to accept an optional pre-fetched `blob` parameter, avoiding redundant network requests; (2) reordered `fetchImageBlob` definition before `triggerDownload` to eliminate temporal dead zone; (3) removed redundant `isDisabled` variable (was same expression as `isGenerating`); (4) simplified the share/no-share conditional to a single `if/else` branch. Added test 5.7b (AbortError: no download, no analytics, no toast). Full suite: 1929 tests, 0 failures.
+
 ### File List
+
+- `src/components/consultation/PreviewShareButton.tsx` (new)
+- `src/test/preview-share-button.test.tsx` (new)
+- `src/components/consultation/PreviewDisplay.tsx` (modified — added PreviewShareButton import, recommendationRank prop, share button integration)
+- `src/lib/utils/analytics.ts` (modified — added PreviewSharedEventPayload type and trackEvent function)
+
+## Change Log
+
+- 2026-03-02: Story 9-4 implemented — PreviewShareButton component created, integrated into PreviewDisplay, analytics event added, 14 tests written (all passing). Status: review.
+- 2026-03-02: Code review complete — refactored triggerDownload to accept pre-fetched blob (eliminating duplicate network requests and duplicated inline anchor logic), removed redundant isDisabled variable, simplified share conditional, added AbortError test (5.7b). 15 tests, 1929 total, 0 failures. Status: done.
