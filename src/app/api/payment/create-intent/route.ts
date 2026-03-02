@@ -6,6 +6,7 @@ import {
   CURRENCY,
 } from '@/lib/stripe/pricing';
 import { consultations } from '@/app/api/consultation/start/route';
+import { validateGuestSessionHeader } from '@/lib/supabase/guest-context';
 
 // Local type extension for payment fields (src/types/index.ts is frozen)
 interface PaymentConsultationRecord {
@@ -46,6 +47,22 @@ export async function POST(request: NextRequest) {
 
   const { consultationId, type, email }: CreatePaymentIntentInput = result.data;
 
+  // Validate x-guest-session-id header if present (Story 8.4, Task 7.1)
+  // Reject with 400 if header exists but is not a valid UUID
+  const rawGuestHeader = request.headers.get('x-guest-session-id');
+  if (rawGuestHeader !== null) {
+    const validatedGuestId = validateGuestSessionHeader(rawGuestHeader);
+    if (!validatedGuestId) {
+      return NextResponse.json(
+        { error: 'x-guest-session-id must be a valid UUID' },
+        { status: 400 }
+      );
+    }
+  }
+  const guestSessionId = rawGuestHeader
+    ? validateGuestSessionHeader(rawGuestHeader)
+    : null;
+
   // Look up consultation
   const consultation = consultations.get(consultationId);
   if (!consultation) {
@@ -56,10 +73,13 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    // Temporary guest detection (until Epic 8 auth)
-    // All users are treated as guests until auth is implemented (Epic 8).
-    // When auth exists: resolve isGuest from session and hasPreviousPaidConsultation from DB.
-    const isGuest = true;
+    // Guest detection (Story 8.4, Task 7.1):
+    // - If x-guest-session-id header is present → guest user
+    // - If no auth session exists (pre-auth) → also treated as guest
+    // When Supabase Auth is active (Stories 8-1/8-2/8-3), this logic should
+    // additionally check for a valid auth session cookie. For now, all users
+    // without an auth session are guests.
+    const isGuest = true; // All users are guests until auth is implemented (Epic 8 Stories 8-1..8-3)
     const hasPreviousPaidConsultation = false;
 
     // Use client-supplied type hint if provided; otherwise derive from history.
@@ -83,6 +103,8 @@ export async function POST(request: NextRequest) {
       metadata: {
         consultationId,
         userType: String(userType),
+        // Store guest_session_id in metadata for reconciliation (Story 8.4, Task 7.3)
+        ...(guestSessionId ? { guestSessionId } : {}),
       },
       // Stripe automatically sends receipt email on successful payment when set
       ...(email ? { receipt_email: email } : {}),

@@ -4,6 +4,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import type { FaceAnalysisOutput } from '@/lib/ai/schemas';
 import type { PreviewStatus } from '@/types/index';
+import { getOrCreateGuestSessionId } from '@/lib/guest-session';
 
 export interface QuestionnaireResponses {
   [questionId: string]: string | string[] | number;
@@ -26,6 +27,9 @@ export interface ConsultationStore {
   paymentStatus: 'none' | 'pending' | 'paid' | 'failed' | 'refunded';
   isReturningUser: boolean;
 
+  // Guest session (Story 8.4)
+  guestSessionId: string | null;
+
   // Actions
   setGender: (gender: 'male' | 'female') => void;
   setPhoto: (photo: Blob) => void;
@@ -35,6 +39,7 @@ export interface ConsultationStore {
   setConsultationId: (id: string) => void;
   setFaceAnalysis: (analysis: FaceAnalysisOutput) => void;
   setPaymentStatus: (status: 'none' | 'pending' | 'paid' | 'failed' | 'refunded') => void;
+  setGuestSessionId: (id: string) => void;
   reset: () => void;
 
   // Preview actions (Story 7.4)
@@ -45,6 +50,11 @@ export interface ConsultationStore {
   // Preview selectors (Story 7.4)
   isAnyPreviewGenerating: () => boolean;
 }
+
+// Compute guestSessionId on module load (client-side only).
+// On the server, this returns a temporary UUID (not persisted to localStorage).
+const initialGuestSessionId =
+  typeof window !== 'undefined' ? getOrCreateGuestSessionId() : null;
 
 const initialState = {
   gender: null as 'male' | 'female' | null,
@@ -57,12 +67,16 @@ const initialState = {
   previews: new Map<string, PreviewStatus>(),
   paymentStatus: 'none' as const,
   isReturningUser: false,
+  // guestSessionId intentionally NOT in initialState so reset() doesn't clear it
 };
 
 export const useConsultationStore = create<ConsultationStore>()(
   persist(
     (set, get) => ({
       ...initialState,
+
+      // guestSessionId is initialised separately so reset() won't touch it
+      guestSessionId: initialGuestSessionId,
 
       setGender: (gender) => set({ gender }),
       setPhoto: (photo) => set({ photo }),
@@ -78,7 +92,17 @@ export const useConsultationStore = create<ConsultationStore>()(
       setConsultationId: (id) => set({ consultationId: id }),
       setFaceAnalysis: (analysis) => set({ faceAnalysis: analysis }),
       setPaymentStatus: (status) => set({ paymentStatus: status }),
-      reset: () => set({ ...initialState, previews: new Map<string, PreviewStatus>() }),
+      setGuestSessionId: (id) => set({ guestSessionId: id }),
+
+      reset: () => {
+        // Preserve guestSessionId — it must survive across consultations
+        const { guestSessionId } = get();
+        set({
+          ...initialState,
+          previews: new Map<string, PreviewStatus>(),
+          guestSessionId,
+        });
+      },
 
       // Preview actions (Story 7.4, Task 6)
       startPreview: (recommendationId) =>
@@ -129,6 +153,7 @@ export const useConsultationStore = create<ConsultationStore>()(
         consultationId: state.consultationId,
         paymentStatus: state.paymentStatus,
         isReturningUser: state.isReturningUser,
+        guestSessionId: state.guestSessionId,
         // EXCLUDE: photo (Blob -- cannot serialize to JSON, handled by IndexedDB in Story 2.7)
         // EXCLUDE: faceAnalysis, consultation, previews (future stories, re-fetched from API)
       }),

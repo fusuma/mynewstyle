@@ -1,6 +1,8 @@
-import { describe, it, expect, vi, afterEach } from 'vitest';
+import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 import { submitConsultation, ConsultationSubmissionError } from '@/lib/consultation/submit';
 import type { ConsultationStartPayload } from '@/types';
+
+const GUEST_UUID = 'f47ac10b-58cc-4372-a567-0e02b2c3d479';
 
 const validPayload: ConsultationStartPayload = {
   gender: 'male',
@@ -15,8 +17,13 @@ const validPayload: ConsultationStartPayload = {
 const fastRetry = { retryDelayMs: 0 };
 
 describe('submitConsultation', () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
   afterEach(() => {
     vi.restoreAllMocks();
+    localStorage.clear();
   });
 
   it('returns consultationId on successful submission', async () => {
@@ -30,7 +37,8 @@ describe('submitConsultation', () => {
     expect(result).toEqual({ consultationId: mockId });
   });
 
-  it('sends correct payload to the API endpoint', async () => {
+  it('sends correct payload to the API endpoint (no guest session)', async () => {
+    // No guest session in localStorage → no x-guest-session-id header or body field
     global.fetch = vi.fn().mockResolvedValueOnce({
       ok: true,
       json: async () => ({ consultationId: 'test-id' }),
@@ -38,11 +46,30 @@ describe('submitConsultation', () => {
 
     await submitConsultation(validPayload, fastRetry);
 
-    expect(global.fetch).toHaveBeenCalledWith('/api/consultation/start', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(validPayload),
+    const callArgs = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+    expect(callArgs[0]).toBe('/api/consultation/start');
+    expect(callArgs[1].method).toBe('POST');
+    expect(callArgs[1].headers['Content-Type']).toBe('application/json');
+    // No guest header when localStorage is empty
+    expect(callArgs[1].headers['x-guest-session-id']).toBeUndefined();
+    const sentBody = JSON.parse(callArgs[1].body);
+    expect(sentBody).not.toHaveProperty('guestSessionId');
+  });
+
+  it('sends x-guest-session-id header and guestSessionId in body when guest session exists (Story 8.4, AC #2)', async () => {
+    localStorage.setItem('mynewstyle-guest-session-id', GUEST_UUID);
+
+    global.fetch = vi.fn().mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ consultationId: 'guest-test-id' }),
     });
+
+    await submitConsultation(validPayload, fastRetry);
+
+    const callArgs = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+    expect(callArgs[1].headers['x-guest-session-id']).toBe(GUEST_UUID);
+    const sentBody = JSON.parse(callArgs[1].body);
+    expect(sentBody.guestSessionId).toBe(GUEST_UUID);
   });
 
   it('retries on first failure, succeeds on second attempt', async () => {

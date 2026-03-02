@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import type { ConsultationRecord } from '@/types';
 
+const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 const ConsultationStartSchema = z.object({
   gender: z.enum(['male', 'female']),
   photoUrl: z.string().min(1),
@@ -9,6 +12,15 @@ const ConsultationStartSchema = z.object({
     z.string(),
     z.union([z.string(), z.array(z.string()), z.number()])
   ),
+  /**
+   * Optional guest session UUID (Story 8.4).
+   * When provided, must be a valid UUID v4. Stored on the consultation record
+   * so RLS policies and API routes can grant guest access.
+   */
+  guestSessionId: z
+    .string()
+    .regex(UUID_REGEX, 'guestSessionId must be a valid UUID')
+    .optional(),
 });
 
 // Refine to ensure questionnaire is non-empty
@@ -32,7 +44,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { gender, photoUrl, questionnaire } = result.data;
+    const { gender, photoUrl, questionnaire, guestSessionId } = result.data;
     const consultationId = crypto.randomUUID();
 
     const record: ConsultationRecord = {
@@ -42,6 +54,7 @@ export async function POST(request: NextRequest) {
       questionnaireResponses: questionnaire,
       status: 'pending',
       createdAt: new Date().toISOString(),
+      guest_session_id: guestSessionId ?? null,
     };
 
     consultations.set(consultationId, record);

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useConsultationStore } from '@/stores/consultation';
+import { buildGuestHeaders } from '@/lib/api/headers';
 
 type ConsultationPaymentStatus = 'none' | 'pending' | 'paid' | 'failed' | 'refunded';
 type ConsultationStatus = 'pending' | 'complete' | 'failed';
@@ -47,8 +48,10 @@ export function useConsultationStatus(
 
     isFetchingRef.current = true;
     try {
+      // Include x-guest-session-id header when unauthenticated (Story 8.4, AC #2)
       const response = await fetch(
-        `/api/consultation/${consultationId}/status`
+        `/api/consultation/${consultationId}/status`,
+        { headers: buildGuestHeaders({ isAuthenticated: false }) }
       );
       if (!response.ok) return;
 

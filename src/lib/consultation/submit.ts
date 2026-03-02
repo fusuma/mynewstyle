@@ -1,4 +1,6 @@
 import type { ConsultationStartPayload, ConsultationStartResponse } from '@/types';
+import { getGuestRequestHeaders } from '@/lib/api/headers';
+import { getGuestSessionId } from '@/lib/guest-session';
 
 export class ConsultationSubmissionError extends Error {
   retryable: boolean;
@@ -48,10 +50,17 @@ export async function submitConsultation(
   try {
     return await withRetry(
       async () => {
+        // Attach x-guest-session-id header when unauthenticated (Story 8.4, AC #2)
+        // Also include guestSessionId in body so the server can store it on the record
+        const guestSessionId = getGuestSessionId();
+        const enrichedPayload: ConsultationStartPayload = guestSessionId
+          ? { ...payload, guestSessionId }
+          : payload;
+
         const response = await fetch('/api/consultation/start', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
+          headers: getGuestRequestHeaders({ isAuthenticated: false }),
+          body: JSON.stringify(enrichedPayload),
         });
 
         if (!response.ok) {

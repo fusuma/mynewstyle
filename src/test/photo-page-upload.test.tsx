@@ -424,7 +424,7 @@ describe('Photo Page Upload Integration', () => {
   // ----------------------------------------------------------
   // Guest session ID is generated and persisted to localStorage
   // ----------------------------------------------------------
-  it('generates and persists guest session ID to localStorage', async () => {
+  it('generates and persists guest session ID to localStorage using canonical key', async () => {
     const { default: PhotoPage } = await import('@/app/consultation/photo/page');
     render(<PhotoPage />);
 
@@ -437,9 +437,10 @@ describe('Photo Page Upload Integration', () => {
       expect(mockUploadPhoto).toHaveBeenCalledTimes(1);
     });
 
-    // localStorage.setItem should have been called with the guest session key
+    // localStorage.setItem should have been called with the canonical guest session key
+    // (Story 8.4 uses 'mynewstyle-guest-session-id' with hyphens, not underscores)
     expect(window.localStorage.setItem).toHaveBeenCalledWith(
-      'mynewstyle_guest_session_id',
+      'mynewstyle-guest-session-id',
       expect.any(String)
     );
   });
@@ -448,7 +449,8 @@ describe('Photo Page Upload Integration', () => {
   // Reuses existing guest session ID from localStorage
   // ----------------------------------------------------------
   it('reuses existing guest session ID from localStorage', async () => {
-    const existingSessionId = 'existing-session-id-999';
+    // Must be a valid UUID for getOrCreateGuestSessionId to reuse it (Story 8.4, Task 1.5)
+    const existingSessionId = 'f47ac10b-58cc-4372-a567-0e02b2c3d479';
     (window.localStorage.getItem as ReturnType<typeof vi.fn>).mockReturnValue(
       existingSessionId
     );
@@ -472,7 +474,7 @@ describe('Photo Page Upload Integration', () => {
       expect.any(String)
     );
 
-    // Should NOT have called setItem (because existing ID was found)
+    // Should NOT have called setItem (because existing valid UUID was found)
     expect(window.localStorage.setItem).not.toHaveBeenCalled();
   });
 });

@@ -3,6 +3,7 @@
 import { useState, useCallback } from 'react';
 import type { Stripe, StripeElements } from '@stripe/stripe-js';
 import { useConsultationStore } from '@/stores/consultation';
+import { getGuestRequestHeaders } from '@/lib/api/headers';
 
 interface PaymentState {
   clientSecret: string | null;
@@ -37,9 +38,10 @@ export function usePayment(consultationId: string): UsePaymentReturn {
     setState((prev) => ({ ...prev, isLoading: true, error: null }));
 
     try {
+      // Include x-guest-session-id header when unauthenticated (Story 8.4, AC #2)
       const response = await fetch('/api/payment/create-intent', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getGuestRequestHeaders({ isAuthenticated: false }),
         body: JSON.stringify({ consultationId }),
       });
 

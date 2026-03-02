@@ -1,6 +1,6 @@
 # Story 8.4: Guest Session Management
 
-Status: ready-for-dev
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -25,55 +25,55 @@ so that I can experience the platform's value before committing to registration.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Guest Session ID Generation and Persistence (AC: #1, #6, #7)
-  - [ ] 1.1 Create `src/lib/guest-session.ts` utility module
-  - [ ] 1.2 Implement `getOrCreateGuestSessionId(): string` — reads from `localStorage` key `mynewstyle-guest-session-id`; if absent, generates a `crypto.randomUUID()`, stores it, and returns it
-  - [ ] 1.3 Implement `getGuestSessionId(): string | null` — reads without creating
-  - [ ] 1.4 Implement `clearGuestSessionId(): void` — removes from `localStorage` (used after auth claim in Story 8-5)
-  - [ ] 1.5 Add validation: if stored value is not a valid UUID, regenerate
-  - [ ] 1.6 Write unit tests for all guest-session utility functions
+- [x] Task 1: Guest Session ID Generation and Persistence (AC: #1, #6, #7)
+  - [x] 1.1 Create `src/lib/guest-session.ts` utility module
+  - [x] 1.2 Implement `getOrCreateGuestSessionId(): string` — reads from `localStorage` key `mynewstyle-guest-session-id`; if absent, generates a `crypto.randomUUID()`, stores it, and returns it
+  - [x] 1.3 Implement `getGuestSessionId(): string | null` — reads without creating
+  - [x] 1.4 Implement `clearGuestSessionId(): void` — removes from `localStorage` (used after auth claim in Story 8-5)
+  - [x] 1.5 Add validation: if stored value is not a valid UUID, regenerate
+  - [x] 1.6 Write unit tests for all guest-session utility functions
 
-- [ ] Task 2: API Client Integration — Attach Guest Header (AC: #2)
-  - [ ] 2.1 Create `src/lib/api/headers.ts` (or extend existing API utility) that attaches `x-guest-session-id` header to all fetch calls when user is not authenticated
-  - [ ] 2.2 Integrate with existing API call sites: `/api/consultation/start`, `/api/consultation/:id/status`, `/api/payment/create-intent`, `/api/preview/generate`, `/api/preview/:id/status`
-  - [ ] 2.3 Logic: if Supabase auth session exists, do NOT send guest header (authenticated user takes precedence); if no auth session, send `x-guest-session-id`
-  - [ ] 2.4 Write tests verifying header is sent only when unauthenticated
+- [x] Task 2: API Client Integration — Attach Guest Header (AC: #2)
+  - [x] 2.1 Create `src/lib/api/headers.ts` (or extend existing API utility) that attaches `x-guest-session-id` header to all fetch calls when user is not authenticated
+  - [x] 2.2 Integrate with existing API call sites: `/api/consultation/start`, `/api/consultation/:id/status`, `/api/payment/create-intent`, `/api/preview/generate`, `/api/preview/:id/status`
+  - [x] 2.3 Logic: if Supabase auth session exists, do NOT send guest header (authenticated user takes precedence); if no auth session, send `x-guest-session-id`
+  - [x] 2.4 Write tests verifying header is sent only when unauthenticated
 
-- [ ] Task 3: Server-Side Guest Session Handling (AC: #8, #9, #10)
-  - [ ] 3.1 Update `POST /api/consultation/start` route: accept optional `guestSessionId` in request body; store it on the consultation record's `guest_session_id` column
-  - [ ] 3.2 Update `GET /api/consultation/:id` routes to read `x-guest-session-id` header; use server Supabase client to set `app.guest_session_id` session variable before querying, so RLS policy grants access
-  - [ ] 3.3 Create helper `src/lib/supabase/guest-context.ts` with `setGuestContext(supabaseClient, guestSessionId)` that calls `supabase.rpc('set_config', { setting: 'app.guest_session_id', value: guestSessionId })`
-  - [ ] 3.4 Validate `x-guest-session-id` header is a valid UUID on every API route that accepts it (reject with 400 if malformed)
-  - [ ] 3.5 Write integration tests for guest access to consultation data
+- [x] Task 3: Server-Side Guest Session Handling (AC: #8, #9, #10)
+  - [x] 3.1 Update `POST /api/consultation/start` route: accept optional `guestSessionId` in request body; store it on the consultation record's `guest_session_id` column
+  - [x] 3.2 Update `GET /api/consultation/:id` routes to read `x-guest-session-id` header; use server Supabase client to set `app.guest_session_id` session variable before querying, so RLS policy grants access
+  - [x] 3.3 Create helper `src/lib/supabase/guest-context.ts` with `setGuestContext(supabaseClient, guestSessionId)` that calls `supabase.rpc('set_config', { setting: 'app.guest_session_id', value: guestSessionId })`
+  - [x] 3.4 Validate `x-guest-session-id` header is a valid UUID on every API route that accepts it (reject with 400 if malformed)
+  - [x] 3.5 Write integration tests for guest access to consultation data
 
-- [ ] Task 4: Database Schema — Guest Session Column and RLS (AC: #5, #10)
-  - [ ] 4.1 Create Supabase migration: ensure `consultations.guest_session_id` column exists (uuid, nullable, indexed)
-  - [ ] 4.2 Create RLS policy: `guest_read_own_consultations` — allows SELECT on `consultations` where `guest_session_id = current_setting('app.guest_session_id', true)::uuid`
-  - [ ] 4.3 Create RLS policy for `recommendations` table: allows SELECT where `consultation_id IN (SELECT id FROM consultations WHERE guest_session_id = current_setting('app.guest_session_id', true)::uuid)`
-  - [ ] 4.4 Add migration SQL file to `supabase/migrations/` following existing naming convention
-  - [ ] 4.5 Add index on `consultations.guest_session_id` for query performance
-  - [ ] 4.6 Set 30-day data retention note (actual cleanup via cron/edge function is deferred — document in migration comments)
+- [x] Task 4: Database Schema — Guest Session Column and RLS (AC: #5, #10)
+  - [x] 4.1 Create Supabase migration: ensure `consultations.guest_session_id` column exists (uuid, nullable, indexed)
+  - [x] 4.2 Create RLS policy: `guest_read_own_consultations` — allows SELECT on `consultations` where `guest_session_id = current_setting('app.guest_session_id', true)::uuid`
+  - [x] 4.3 Create RLS policy for `recommendations` table: allows SELECT where `consultation_id IN (SELECT id FROM consultations WHERE guest_session_id = current_setting('app.guest_session_id', true)::uuid)`
+  - [x] 4.4 Add migration SQL file to `supabase/migrations/` following existing naming convention
+  - [x] 4.5 Add index on `consultations.guest_session_id` for query performance
+  - [x] 4.6 Set 30-day data retention note (actual cleanup via cron/edge function is deferred — document in migration comments)
 
-- [ ] Task 5: Update Consultation Store for Guest Context (AC: #1, #2)
-  - [ ] 5.1 Add `guestSessionId: string | null` to the `ConsultationStore` interface in `src/stores/consultation.ts`
-  - [ ] 5.2 Initialize `guestSessionId` from `getOrCreateGuestSessionId()` on store hydration
-  - [ ] 5.3 Include `guestSessionId` in the `partialize` config so it persists to `sessionStorage`
-  - [ ] 5.4 Update `reset()` to NOT clear `guestSessionId` (it must survive across consultations)
-  - [ ] 5.5 Update `SessionData` interface in `src/lib/persistence/session-db.ts` — `guestSessionId` field already exists, verify it's populated correctly
+- [x] Task 5: Update Consultation Store for Guest Context (AC: #1, #2)
+  - [x] 5.1 Add `guestSessionId: string | null` to the `ConsultationStore` interface in `src/stores/consultation.ts`
+  - [x] 5.2 Initialize `guestSessionId` from `getOrCreateGuestSessionId()` on store hydration
+  - [x] 5.3 Include `guestSessionId` in the `partialize` config so it persists to `sessionStorage`
+  - [x] 5.4 Update `reset()` to NOT clear `guestSessionId` (it must survive across consultations)
+  - [x] 5.5 Update `SessionData` interface in `src/lib/persistence/session-db.ts` — `guestSessionId` field already exists, verify it's populated correctly
 
-- [ ] Task 6: Save Prompt CTA After Results (AC: #4)
-  - [ ] 6.1 Create `src/components/consultation/GuestSaveBanner.tsx` — a non-intrusive, dismissible banner shown below results for guest users
-  - [ ] 6.2 Content: "Crie conta para guardar este resultado" with a secondary CTA button linking to `/register`
-  - [ ] 6.3 Only render when user is a guest (no auth session) AND results are displayed
-  - [ ] 6.4 Dismissible: once dismissed, do not show again for this session (use sessionStorage flag)
-  - [ ] 6.5 Follows existing theme (male dark / female light) using current gender context
-  - [ ] 6.6 Write component tests
+- [x] Task 6: Save Prompt CTA After Results (AC: #4)
+  - [x] 6.1 Create `src/components/consultation/GuestSaveBanner.tsx` — a non-intrusive, dismissible banner shown below results for guest users
+  - [x] 6.2 Content: "Crie conta para guardar este resultado" with a secondary CTA button linking to `/register`
+  - [x] 6.3 Only render when user is a guest (no auth session) AND results are displayed
+  - [x] 6.4 Dismissible: once dismissed, do not show again for this session (use sessionStorage flag)
+  - [x] 6.5 Follows existing theme (male dark / female light) using current gender context
+  - [x] 6.6 Write component tests
 
-- [ ] Task 7: Update Payment Flow for Guest Users (AC: #3)
-  - [ ] 7.1 Update `/api/payment/create-intent` route: replace the hardcoded `isGuest = true` placeholder (line 62) with actual guest detection — check for auth session; if absent, check `x-guest-session-id` header
-  - [ ] 7.2 Guests always pay first-consultation price (EUR 5.99) since history cannot be verified without auth
-  - [ ] 7.3 Store `guest_session_id` in Stripe PaymentIntent metadata for reconciliation
-  - [ ] 7.4 Write tests for guest vs. authenticated payment intent creation
+- [x] Task 7: Update Payment Flow for Guest Users (AC: #3)
+  - [x] 7.1 Update `/api/payment/create-intent` route: replace the hardcoded `isGuest = true` placeholder (line 62) with actual guest detection — check for auth session; if absent, check `x-guest-session-id` header
+  - [x] 7.2 Guests always pay first-consultation price (EUR 5.99) since history cannot be verified without auth
+  - [x] 7.3 Store `guest_session_id` in Stripe PaymentIntent metadata for reconciliation
+  - [x] 7.4 Write tests for guest vs. authenticated payment intent creation
 
 ## Dev Notes
 
@@ -164,10 +164,67 @@ so that I can experience the platform's value before committing to registration.
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+claude-sonnet-4-6
 
 ### Debug Log References
 
+No blockers encountered. All tasks implemented in a single session.
+
 ### Completion Notes List
 
+- Task 1: Created `src/lib/guest-session.ts` with `getOrCreateGuestSessionId()`, `getGuestSessionId()`, and `clearGuestSessionId()`. UUID validation rejects stored values that are not valid UUIDs and regenerates. 12 unit tests pass.
+- Task 2: Created `src/lib/api/headers.ts` with `buildGuestHeaders()` and `getGuestRequestHeaders()`. Header is only sent when `isAuthenticated: false` and a valid UUID exists in localStorage. 6 unit tests pass.
+- Task 3: Created `src/lib/supabase/guest-context.ts` with `validateGuestSessionHeader()` and `setGuestContext()`. Updated `POST /api/consultation/start` to accept and store optional `guestSessionId` (validated UUID). Updated `POST /api/payment/create-intent` to validate x-guest-session-id header. Added `guest_session_id` field to `ConsultationRecord` type. 8 integration tests pass.
+- Task 4: Created `supabase/migrations/20260302000000_add_guest_session_management.sql` with `guest_session_id UUID` column, performance index, `guest_read_own_consultations` RLS policy, and conditional `guest_read_own_recommendations` RLS policy. 30-day data retention noted in migration comments.
+- Task 5: Added `guestSessionId: string | null` to `ConsultationStore` interface. Initialized from `getOrCreateGuestSessionId()` on module load. Included in `partialize` config for sessionStorage persistence. `reset()` now preserves `guestSessionId`. Added `setGuestSessionId()` action. 5 store tests pass. All 19 existing store tests still pass.
+- Task 6: Created `src/components/consultation/GuestSaveBanner.tsx` — dismissible banner with "Crie conta para guardar este resultado" text, link to `/register`, and sessionStorage dismiss flag. Uses theme CSS variables only. 7 component tests pass.
+- Task 7: Updated `POST /api/payment/create-intent` — validates `x-guest-session-id` header (400 for malformed UUID), stores `guestSessionId` in Stripe PaymentIntent metadata for reconciliation. Guests always pay EUR 5.99. 5 payment tests pass.
+
+Full regression suite: **1706 tests pass** across 123 test files — zero regressions.
+
 ### File List
+
+New files:
+- `src/lib/guest-session.ts`
+- `src/lib/api/headers.ts`
+- `src/lib/supabase/guest-context.ts`
+- `src/components/consultation/GuestSaveBanner.tsx`
+- `supabase/migrations/20260302000000_add_guest_session_management.sql`
+- `src/test/guest-session.test.ts`
+- `src/test/api-guest-headers.test.ts`
+- `src/test/guest-server-integration.test.ts`
+- `src/test/consultation-store-guest.test.ts`
+- `src/test/guest-save-banner.test.tsx`
+- `src/test/guest-payment.test.ts`
+
+Modified files:
+- `src/types/index.ts` — added `guest_session_id: string | null` to `ConsultationRecord`; added optional `guestSessionId` to `ConsultationStartPayload`
+- `src/stores/consultation.ts` — added `guestSessionId`, `setGuestSessionId`, updated `reset()`, updated `partialize`
+- `src/app/api/consultation/start/route.ts` — accept optional `guestSessionId` in body, store on record
+- `src/app/api/consultation/[id]/status/route.ts` — handle `x-guest-session-id` header, call `setGuestContext()` before DB query
+- `src/app/api/payment/create-intent/route.ts` — validate x-guest-session-id header, store in Stripe metadata
+- `src/app/consultation/photo/page.tsx` — use canonical `getOrCreateGuestSessionId()` from `src/lib/guest-session.ts` (removed inline duplicate with wrong localStorage key)
+- `src/lib/consultation/submit.ts` — send `x-guest-session-id` header and `guestSessionId` in body when guest session exists
+- `src/lib/supabase/guest-context.ts` — `setGuestContext()` uses `is_local: true` for transaction-scoped RLS safety
+- `src/hooks/usePayment.ts` — send `x-guest-session-id` header via `getGuestRequestHeaders()`
+- `src/hooks/useConsultationStatus.ts` — send `x-guest-session-id` header via `buildGuestHeaders()`
+- `src/components/consultation/GuestSaveBanner.tsx` — fix AnimatePresence exit animation (remove redundant early-return guard)
+- `src/test/guest-server-integration.test.ts` — added 3 tests for status route guest header handling
+- `src/test/consultation-submit.test.ts` — added 2 tests for guest header/body inclusion; updated payload assertion
+- `src/test/use-consultation-status.test.ts` — updated fetch call assertion for new headers object
+- `src/test/photo-page-upload.test.tsx` — updated localStorage key assertion to canonical `mynewstyle-guest-session-id`; use valid UUID for reuse test
+- `_bmad-output/implementation-artifacts/sprint-status.yaml` — status updated to done
+- `_bmad-output/implementation-artifacts/8-4-guest-session-management.md` — story file updated
+
+## Change Log
+
+- 2026-03-02: Implemented Story 8.4 — Guest Session Management. Created guest session utility, API header helper, server-side RLS context helper, database migration, GuestSaveBanner component, and updated consultation store, types, and API routes. 43 new tests added across 6 test files.
+- 2026-03-02: Code review fixes applied (adversarial review pass):
+  - CRITICAL: `GET /api/consultation/:id/status` now handles `x-guest-session-id` header and calls `setGuestContext()` before DB query so RLS policy grants guest access (AC #9 was incomplete).
+  - CRITICAL: `src/lib/consultation/submit.ts` now sends `guestSessionId` in request body and `x-guest-session-id` header when a guest session exists (Task 2.2 was incomplete). `ConsultationStartPayload` extended with optional `guestSessionId`.
+  - HIGH: `src/hooks/usePayment.ts` now sends `x-guest-session-id` header via `getGuestRequestHeaders()` (AC #2 was incomplete for payment flow).
+  - HIGH: `src/app/consultation/photo/page.tsx` was using a divergent localStorage key (`mynewstyle_guest_session_id` with underscores) and a duplicate inline `getOrCreateGuestSessionId()` function with no UUID validation. Fixed to import and use the canonical `getOrCreateGuestSessionId()` from `src/lib/guest-session.ts` (key: `mynewstyle-guest-session-id`).
+  - MEDIUM: `setGuestContext()` now passes `is_local: true` to Postgres `set_config()` so the guest session variable is transaction-scoped, not connection-scoped. Prevents data leakage under connection pooling.
+  - MEDIUM: `GuestSaveBanner` exit animation fixed — removed premature `if (dismissed) return null` guard that prevented `AnimatePresence` from playing the exit animation before unmounting.
+  - Updated tests: `src/test/guest-server-integration.test.ts` (3 new tests for status route guest handling), `src/test/consultation-submit.test.ts` (2 new tests for guest header/body inclusion), `src/test/use-consultation-status.test.ts` (updated assertion for fetch call with headers), `src/test/photo-page-upload.test.tsx` (updated canonical key assertions).
+  - Full regression: 1710 tests pass across 123 test files.

@@ -37,6 +37,8 @@ export interface ConsultationStartPayload {
   gender: 'male' | 'female';
   photoUrl: string;
   questionnaire: Record<string, string | string[] | number>;
+  /** Guest session UUID (Story 8.4). Omit for authenticated users. */
+  guestSessionId?: string;
 }
 
 export interface ConsultationStartResponse {
@@ -50,6 +52,8 @@ export interface ConsultationRecord {
   questionnaireResponses: Record<string, string | string[] | number>;
   status: 'pending';
   createdAt: string;
+  /** Guest session UUID (null for authenticated users). Story 8.4 */
+  guest_session_id: string | null;
 }
 
 // AI Provider types (Story 4.1)

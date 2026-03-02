@@ -1,13 +1,17 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
+import {
+  validateGuestSessionHeader,
+  setGuestContext,
+} from '@/lib/supabase/guest-context';
 
 const ParamsSchema = z.object({
   id: z.string().uuid('Invalid consultation ID'),
 });
 
 export async function GET(
-  _request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const resolvedParams = await params;
@@ -20,8 +24,28 @@ export async function GET(
     );
   }
 
+  // Validate x-guest-session-id header if present (Story 8.4, Task 3.2 / AC #9)
+  const rawGuestHeader = request.headers.get('x-guest-session-id');
+  if (rawGuestHeader !== null) {
+    const validatedGuestId = validateGuestSessionHeader(rawGuestHeader);
+    if (!validatedGuestId) {
+      return NextResponse.json(
+        { error: 'x-guest-session-id must be a valid UUID' },
+        { status: 400 }
+      );
+    }
+  }
+
   const { id } = parseResult.data;
   const supabase = createServerSupabaseClient();
+
+  // Set PostgreSQL session variable so RLS policy grants guest access (Story 8.4, AC #10)
+  const guestSessionId = rawGuestHeader
+    ? validateGuestSessionHeader(rawGuestHeader)
+    : null;
+  if (guestSessionId) {
+    await setGuestContext(supabase, guestSessionId);
+  }
 
   const { data: consultation, error } = await supabase
     .from('consultations')

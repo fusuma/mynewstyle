@@ -15,25 +15,12 @@ import { PhotoUpload } from "@/components/consultation/PhotoUpload";
 import { useSessionRecovery } from "@/hooks/useSessionRecovery";
 import { saveSessionData, clearSessionData } from "@/lib/persistence/session-db";
 import { SessionRecoveryBanner } from "@/components/consultation/SessionRecoveryBanner";
+import { getOrCreateGuestSessionId } from "@/lib/guest-session";
 
 type PhotoMode = "camera" | "gallery";
 type CompressionState = "idle" | "compressing" | "done" | "error";
 type ValidationState = "pending" | "validating" | "valid" | "invalid" | "overridden";
 type UploadState = "idle" | "uploading" | "done" | "error";
-
-const GUEST_SESSION_STORAGE_KEY = "mynewstyle_guest_session_id";
-
-/**
- * Get or create a guest session ID persisted in localStorage.
- * Reused across page refreshes and for session recovery (Story 2.7).
- */
-function getOrCreateGuestSessionId(): string {
-  const existing = localStorage.getItem(GUEST_SESSION_STORAGE_KEY);
-  if (existing) return existing;
-  const id = crypto.randomUUID();
-  localStorage.setItem(GUEST_SESSION_STORAGE_KEY, id);
-  return id;
-}
 
 /**
  * Photo capture page route: /consultation/photo
@@ -250,11 +237,10 @@ export default function PhotoPage() {
     setValidationState("valid"); // Skip validation -- already validated before save
     setShowRecoveryBanner(false);
 
-    // Restore consultation context
-    if (recoveredSession.guestSessionId) {
-      // Ensure localStorage also has the session ID
-      localStorage.setItem(GUEST_SESSION_STORAGE_KEY, recoveredSession.guestSessionId);
-    }
+    // Restore consultation context.
+    // The canonical guest session ID is already in localStorage (guest-session.ts),
+    // so no manual write is needed here — getOrCreateGuestSessionId() in the upload
+    // flow will read the correct value from the canonical key.
     if (recoveredSession.consultationId) {
       consultationIdRef.current = recoveredSession.consultationId;
     }

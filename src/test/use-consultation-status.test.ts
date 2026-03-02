@@ -40,9 +40,11 @@ describe('useConsultationStatus polling hook', () => {
     await act(async () => {
       await Promise.resolve(); // allow microtasks to flush
     });
-    expect(global.fetch).toHaveBeenCalledWith(
-      `/api/consultation/${validId}/status`
-    );
+    // Verify fetch was called with the correct URL.
+    // The hook now passes a headers object (Story 8.4, AC #2) — so check args[0] directly.
+    const fetchCalls = (global.fetch as ReturnType<typeof vi.fn>).mock.calls;
+    expect(fetchCalls.length).toBeGreaterThanOrEqual(1);
+    expect(fetchCalls[0][0]).toBe(`/api/consultation/${validId}/status`);
   });
 
   it('polls again after 5 seconds interval', async () => {
