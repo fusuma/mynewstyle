@@ -5,6 +5,7 @@ import { toPng } from 'html-to-image';
 import { toast } from 'sonner';
 import type { FaceAnalysisOutput } from '@/lib/ai/schemas';
 import type { StyleRecommendation, GroomingTip } from '@/types/index';
+import { toDataUrl } from '@/lib/utils/image';
 
 interface UseBarberCardParams {
   faceAnalysis: FaceAnalysisOutput | null;
@@ -22,28 +23,6 @@ interface UseBarberCardReturn {
   isGenerating: boolean;
   /** Ref to attach to the hidden BarberCardRenderer container for capture */
   cardRef: React.RefObject<HTMLDivElement | null>;
-}
-
-/**
- * Converts an external image URL to a base64 data URL.
- * Required to avoid CORS failures when html-to-image captures external images
- * (e.g. AI preview images stored in Supabase Storage).
- * Returns the original URL if fetch fails — html-to-image will attempt its own inline.
- */
-async function toDataUrl(url: string): Promise<string> {
-  try {
-    const response = await fetch(url);
-    if (!response.ok) return url;
-    const blob = await response.blob();
-    return new Promise<string>((resolve) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result as string);
-      reader.onerror = () => resolve(url); // fallback to original on error
-      reader.readAsDataURL(blob);
-    });
-  } catch {
-    return url; // fallback: let html-to-image try on its own
-  }
 }
 
 /**

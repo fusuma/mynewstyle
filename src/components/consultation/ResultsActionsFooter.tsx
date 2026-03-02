@@ -8,7 +8,9 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useConsultationStore } from '@/stores/consultation';
 import { useBarberCard } from '@/hooks/useBarberCard';
+import { useShareCard } from '@/hooks/useShareCard';
 import { BarberCardRenderer } from '@/components/consultation/BarberCardRenderer';
+import { ShareCardStoryRenderer } from '@/components/share/ShareCardStoryRenderer';
 import type { Consultation } from '@/types/index';
 
 interface ResultsActionsFooterProps {
@@ -20,7 +22,7 @@ export function ResultsActionsFooter({ consultationId: _consultationId }: Result
   const reset = useConsultationStore((state) => state.reset);
   const shouldReduceMotion = useReducedMotion();
 
-  // Consultation data for barber card
+  // Consultation data for barber card and share card
   const faceAnalysis = useConsultationStore((state) => state.faceAnalysis);
   const photoPreview = useConsultationStore((state) => state.photoPreview);
   const consultationRaw = useConsultationStore((state) => state.consultation);
@@ -37,13 +39,27 @@ export function ResultsActionsFooter({ consultationId: _consultationId }: Result
   const previewStatus = previews.get(topRecommendationId);
   const previewUrl = previewStatus?.status === 'ready' ? previewStatus.previewUrl : undefined;
 
-  const { generateCard, isGenerating, cardRef } = useBarberCard({
+  // Barber card hook (secondary action — "Mostrar ao barbeiro")
+  const { generateCard, isGenerating: isGeneratingBarberCard, cardRef } = useBarberCard({
     faceAnalysis,
     recommendation: topRecommendation,
     photoPreview,
     previewUrl,
     gender,
     groomingTips,
+  });
+
+  // Share card hook (primary action — "Partilhar resultado")
+  const {
+    generateShareCard,
+    isGenerating: isGeneratingShareCard,
+    cardRef: shareCardRef,
+  } = useShareCard({
+    faceAnalysis,
+    recommendation: topRecommendation,
+    photoPreview,
+    previewUrl,
+    gender,
   });
 
   const animationProps = shouldReduceMotion
@@ -55,34 +71,7 @@ export function ResultsActionsFooter({ consultationId: _consultationId }: Result
       };
 
   const handleShare = async () => {
-    const shareData = {
-      title: 'Meu resultado mynewstyle',
-      text: 'Confira a minha consultoria de visagismo!',
-      url: window.location.href,
-    };
-
-    try {
-      if (navigator.share && navigator.canShare?.(shareData)) {
-        await navigator.share(shareData);
-      } else {
-        try {
-          await navigator.clipboard.writeText(window.location.href);
-          toast.success('Link copiado!');
-        } catch {
-          toast.error('Não foi possível copiar o link. Tente novamente.');
-        }
-      }
-    } catch (error) {
-      // User cancelled share dialog -- not an error
-      if ((error as DOMException)?.name !== 'AbortError') {
-        try {
-          await navigator.clipboard.writeText(window.location.href);
-          toast.success('Link copiado!');
-        } catch {
-          toast.error('Não foi possível copiar o link. Tente novamente.');
-        }
-      }
-    }
+    await generateShareCard('story');
   };
 
   const handleSave = () => {
@@ -119,6 +108,16 @@ export function ResultsActionsFooter({ consultationId: _consultationId }: Result
         groomingTips={groomingTips}
       />
 
+      {/* Hidden ShareCardStoryRenderer — off-screen capture target for share card */}
+      <ShareCardStoryRenderer
+        cardRef={shareCardRef}
+        faceAnalysis={faceAnalysis}
+        recommendation={topRecommendation}
+        photoPreview={photoPreview}
+        previewUrl={previewUrl}
+        gender={gender}
+      />
+
       <motion.div
         className={cn(
           // Mobile: sticky footer
@@ -132,27 +131,33 @@ export function ResultsActionsFooter({ consultationId: _consultationId }: Result
       >
         <div className="mx-auto max-w-2xl px-4 py-4 md:py-8">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-center">
-            {/* Primary: Share */}
+            {/* Primary: Share — generates branded share card image */}
             <Button
               variant="default"
               onClick={handleShare}
-              aria-label="Partilhar resultado"
+              disabled={isGeneratingShareCard}
+              aria-label={isGeneratingShareCard ? 'A gerar cartão…' : 'Partilhar resultado'}
+              aria-busy={isGeneratingShareCard}
               className="w-full md:w-auto"
             >
-              <Share2 aria-hidden="true" />
+              {isGeneratingShareCard ? (
+                <Loader2 className="animate-spin" aria-hidden="true" />
+              ) : (
+                <Share2 aria-hidden="true" />
+              )}
               Partilhar resultado
             </Button>
 
-            {/* Secondary: Mostrar ao barbeiro (AC: 1, 10) */}
+            {/* Secondary: Mostrar ao barbeiro */}
             <Button
               variant="secondary"
               onClick={generateCard}
-              disabled={isGenerating}
-              aria-label={isGenerating ? 'A gerar cartão…' : 'Mostrar ao barbeiro'}
-              aria-busy={isGenerating}
+              disabled={isGeneratingBarberCard}
+              aria-label={isGeneratingBarberCard ? 'A gerar cartão…' : 'Mostrar ao barbeiro'}
+              aria-busy={isGeneratingBarberCard}
               className="w-full md:w-auto"
             >
-              {isGenerating ? (
+              {isGeneratingBarberCard ? (
                 <Loader2 className="animate-spin" aria-hidden="true" />
               ) : (
                 <Scissors aria-hidden="true" />

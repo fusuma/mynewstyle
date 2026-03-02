@@ -67,6 +67,22 @@ vi.mock('html-to-image', () => ({
   toPng: vi.fn().mockResolvedValue('data:image/png;base64,mock'),
 }));
 
+// Mock image utility (used by useBarberCard and useShareCard)
+vi.mock('@/lib/utils/image', () => ({
+  toDataUrl: vi.fn().mockImplementation((url: string) => Promise.resolve(url)),
+}));
+
+// Mock useShareCard — "Partilhar resultado" now generates a share card image
+const mockGenerateShareCard = vi.fn().mockResolvedValue(undefined);
+const mockShareCardState = { isGenerating: false };
+vi.mock('@/hooks/useShareCard', () => ({
+  useShareCard: () => ({
+    generateShareCard: mockGenerateShareCard,
+    get isGenerating() { return mockShareCardState.isGenerating; },
+    cardRef: { current: null },
+  }),
+}));
+
 // Mock face-shape-labels (used by BarberCard)
 vi.mock('@/lib/consultation/face-shape-labels', () => ({
   FACE_SHAPE_LABELS: {
@@ -99,6 +115,7 @@ vi.mock('@/stores/consultation', () => ({
 describe('ResultsActionsFooter - button rendering', () => {
   beforeEach(() => {
     mockReducedMotion = false;
+    mockShareCardState.isGenerating = false;
     vi.clearAllMocks();
     vi.resetModules();
   });
@@ -153,145 +170,54 @@ describe('ResultsActionsFooter - button rendering', () => {
   });
 });
 
-describe('ResultsActionsFooter - share handler', () => {
+describe('ResultsActionsFooter - share handler (now generates share card image)', () => {
   beforeEach(() => {
     mockReducedMotion = false;
     vi.clearAllMocks();
     vi.resetModules();
+    mockShareCardState.isGenerating = false;
+    mockGenerateShareCard.mockResolvedValue(undefined);
   });
 
-  it('calls navigator.share when Web Share API is available and supported', async () => {
-    const mockShare = vi.fn().mockResolvedValue(undefined);
-    const mockCanShare = vi.fn().mockReturnValue(true);
-    Object.defineProperty(navigator, 'share', {
-      value: mockShare,
-      configurable: true,
-    });
-    Object.defineProperty(navigator, 'canShare', {
-      value: mockCanShare,
-      configurable: true,
-    });
-
+  it('clicking "Partilhar resultado" calls generateShareCard with "story" format', async () => {
     const { ResultsActionsFooter } = await import('@/components/consultation/ResultsActionsFooter');
     render(<ResultsActionsFooter consultationId="test-id-123" />);
     const shareButton = screen.getByRole('button', { name: /partilhar resultado/i });
     fireEvent.click(shareButton);
-    // Allow async operations
     await vi.waitFor(() => {
-      expect(mockShare).toHaveBeenCalledTimes(1);
+      expect(mockGenerateShareCard).toHaveBeenCalledWith('story');
     });
   });
 
-  it('falls back to clipboard when Web Share API is unavailable', async () => {
-    const mockWriteText = vi.fn().mockResolvedValue(undefined);
-    // Remove navigator.share
-    Object.defineProperty(navigator, 'share', {
-      value: undefined,
-      configurable: true,
-    });
-    Object.defineProperty(navigator, 'clipboard', {
-      value: { writeText: mockWriteText },
-      configurable: true,
-    });
-
+  it('"Partilhar resultado" button is not disabled when not generating', async () => {
+    mockShareCardState.isGenerating = false;
     const { ResultsActionsFooter } = await import('@/components/consultation/ResultsActionsFooter');
     render(<ResultsActionsFooter consultationId="test-id-123" />);
     const shareButton = screen.getByRole('button', { name: /partilhar resultado/i });
-    fireEvent.click(shareButton);
-
-    await vi.waitFor(() => {
-      expect(mockWriteText).toHaveBeenCalledTimes(1);
-    });
-    await vi.waitFor(() => {
-      expect(mockToast.success).toHaveBeenCalledWith('Link copiado!');
-    });
+    expect(shareButton).not.toBeDisabled();
+    expect(screen.queryByTestId('icon-loader')).not.toBeInTheDocument();
   });
 
-  it('handles AbortError (user cancelled share) gracefully without showing error', async () => {
-    const abortError = new DOMException('AbortError', 'AbortError');
-    const mockShare = vi.fn().mockRejectedValue(abortError);
-    const mockCanShare = vi.fn().mockReturnValue(true);
-    Object.defineProperty(navigator, 'share', {
-      value: mockShare,
-      configurable: true,
-    });
-    Object.defineProperty(navigator, 'canShare', {
-      value: mockCanShare,
-      configurable: true,
-    });
-
+  it('"Partilhar resultado" button shows Loader2 icon when isGenerating is true', async () => {
+    mockShareCardState.isGenerating = true;
     const { ResultsActionsFooter } = await import('@/components/consultation/ResultsActionsFooter');
     render(<ResultsActionsFooter consultationId="test-id-123" />);
-    const shareButton = screen.getByRole('button', { name: /partilhar resultado/i });
-    fireEvent.click(shareButton);
-
-    await vi.waitFor(() => {
-      expect(mockShare).toHaveBeenCalledTimes(1);
-    });
-    // Should NOT call toast.success on AbortError
-    expect(mockToast.success).not.toHaveBeenCalled();
+    expect(screen.getByTestId('icon-loader')).toBeInTheDocument();
   });
 
-  it('falls back to clipboard on non-AbortError share failures', async () => {
-    const networkError = new DOMException('Network error', 'NetworkError');
-    const mockShare = vi.fn().mockRejectedValue(networkError);
-    const mockCanShare = vi.fn().mockReturnValue(true);
-    const mockWriteText = vi.fn().mockResolvedValue(undefined);
-    Object.defineProperty(navigator, 'share', {
-      value: mockShare,
-      configurable: true,
-    });
-    Object.defineProperty(navigator, 'canShare', {
-      value: mockCanShare,
-      configurable: true,
-    });
-    Object.defineProperty(navigator, 'clipboard', {
-      value: { writeText: mockWriteText },
-      configurable: true,
-    });
-
+  it('"Partilhar resultado" button is disabled when isGenerating is true', async () => {
+    mockShareCardState.isGenerating = true;
     const { ResultsActionsFooter } = await import('@/components/consultation/ResultsActionsFooter');
     render(<ResultsActionsFooter consultationId="test-id-123" />);
-    const shareButton = screen.getByRole('button', { name: /partilhar resultado/i });
-    fireEvent.click(shareButton);
-
-    await vi.waitFor(() => {
-      expect(mockWriteText).toHaveBeenCalledTimes(1);
-    });
-    await vi.waitFor(() => {
-      expect(mockToast.success).toHaveBeenCalledWith('Link copiado!');
-    });
-  });
-
-  it('shows error toast when clipboard write fails during fallback', async () => {
-    const mockWriteText = vi.fn().mockRejectedValue(new Error('Clipboard denied'));
-    // Remove navigator.share to trigger clipboard fallback
-    Object.defineProperty(navigator, 'share', {
-      value: undefined,
-      configurable: true,
-    });
-    Object.defineProperty(navigator, 'clipboard', {
-      value: { writeText: mockWriteText },
-      configurable: true,
-    });
-
-    const { ResultsActionsFooter } = await import('@/components/consultation/ResultsActionsFooter');
-    render(<ResultsActionsFooter consultationId="test-id-123" />);
-    const shareButton = screen.getByRole('button', { name: /partilhar resultado/i });
-    fireEvent.click(shareButton);
-
-    await vi.waitFor(() => {
-      expect(mockToast.error).toHaveBeenCalledWith(
-        'Não foi possível copiar o link. Tente novamente.'
-      );
-    });
-    expect(mockToast.success).not.toHaveBeenCalled();
+    const shareButton = screen.getByRole('button', { name: /a gerar cartão/i });
+    expect(shareButton).toBeDisabled();
   });
 });
 
 describe('ResultsActionsFooter - save handler', () => {
   beforeEach(() => {
     mockReducedMotion = false;
+    mockShareCardState.isGenerating = false;
     vi.clearAllMocks();
     vi.resetModules();
   });
@@ -327,6 +253,7 @@ describe('ResultsActionsFooter - save handler', () => {
 describe('ResultsActionsFooter - new consultation handler', () => {
   beforeEach(() => {
     mockReducedMotion = false;
+    mockShareCardState.isGenerating = false;
     vi.clearAllMocks();
     vi.resetModules();
   });
@@ -351,6 +278,7 @@ describe('ResultsActionsFooter - new consultation handler', () => {
 describe('ResultsActionsFooter - back to home handler', () => {
   beforeEach(() => {
     mockReducedMotion = false;
+    mockShareCardState.isGenerating = false;
     vi.clearAllMocks();
     vi.resetModules();
   });
@@ -367,6 +295,7 @@ describe('ResultsActionsFooter - back to home handler', () => {
 describe('ResultsActionsFooter - sticky footer classes', () => {
   beforeEach(() => {
     mockReducedMotion = false;
+    mockShareCardState.isGenerating = false;
     vi.clearAllMocks();
     vi.resetModules();
   });
@@ -383,6 +312,7 @@ describe('ResultsActionsFooter - sticky footer classes', () => {
 describe('ResultsActionsFooter - accessibility', () => {
   beforeEach(() => {
     mockReducedMotion = false;
+    mockShareCardState.isGenerating = false;
     vi.clearAllMocks();
     vi.resetModules();
   });
@@ -418,6 +348,7 @@ describe('ResultsActionsFooter - accessibility', () => {
 
 describe('ResultsActionsFooter - reduced motion', () => {
   beforeEach(() => {
+    mockShareCardState.isGenerating = false;
     vi.clearAllMocks();
     vi.resetModules();
     lastMotionProps = {};
