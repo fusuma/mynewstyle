@@ -135,6 +135,14 @@ let mockPhotoPreview: string | null = 'data:image/jpeg;base64,test123';
 let mockGender: string | null = 'male';
 let mockConsultationData: typeof mockConsultation | null = mockConsultation;
 
+vi.mock('@/hooks/usePreviewGeneration', () => ({
+  usePreviewGeneration: () => ({
+    isAnyGenerating: false,
+    triggerPreview: vi.fn(),
+    getPreviewStatus: () => ({ status: 'idle' }),
+  }),
+}));
+
 vi.mock('@/stores/consultation', () => ({
   useConsultationStore: (selector: (state: Record<string, unknown>) => unknown) =>
     selector({
@@ -145,6 +153,7 @@ vi.mock('@/stores/consultation', () => ({
       gender: mockGender,
       consultation: mockConsultationData,
       setPaymentStatus: vi.fn(),
+      previews: new Map(),
     }),
 }));
 

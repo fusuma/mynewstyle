@@ -1,10 +1,16 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { motion, AnimatePresence, useReducedMotion, type Variants } from 'framer-motion';
 import { ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { StyleRecommendation } from '@/types/index';
+import { usePreviewGeneration } from '@/hooks/usePreviewGeneration';
+import { useConsultationStore } from '@/stores/consultation';
+import { PreviewLoadingOverlay } from '@/components/consultation/PreviewLoadingOverlay';
+import { PreviewStatusText } from '@/components/consultation/PreviewStatusText';
+import { PreviewUnavailable } from '@/components/consultation/PreviewUnavailable';
+import { PreviewError } from '@/components/consultation/PreviewError';
 
 // Difficulty label mapping (PT-BR)
 const DIFFICULTY_LABELS: Record<StyleRecommendation['difficultyLevel'], string> = {
@@ -35,7 +41,7 @@ interface AlternativeRecommendationCardProps {
   difficultyLevel: StyleRecommendation['difficultyLevel'];
   /** Stagger delay in seconds for entrance animation */
   delay?: number;
-  /** Optional callback for Epic 7 preview generation */
+  /** Optional callback for preview generation (legacy — now uses internal hook) */
   onPreviewRequest?: (styleName: string) => void;
 }
 
@@ -43,13 +49,12 @@ interface AlternativeRecommendationCardProps {
  * AlternativeRecommendationCard — Displays recommendation #2 or #3
  * with smaller visual weight than the hero card.
  *
- * - Mobile (< 768px): collapsible, default collapsed
- * - Desktop (>= 768px): always expanded, no toggle visible
+ * Story 7.4 updates:
+ * - Wired onPreviewRequest to actual preview generation (Task 5.1)
+ * - Shows PreviewLoadingOverlay when generating (Task 5.2)
+ * - Disables button when another preview is generating (Task 5.3)
  *
- * Responsive behavior is handled entirely via Tailwind CSS classes (md:hidden / md:block)
- * — no window.innerWidth or resize listeners used.
- *
- * AC: 2, 3, 4, 6, 7 (Story 6.3)
+ * AC: 2, 3, 4, 6, 7 (Story 6.3), AC: 1, 6 (Story 7.4)
  */
 export function AlternativeRecommendationCard({
   rank,
@@ -62,11 +67,23 @@ export function AlternativeRecommendationCard({
 }: AlternativeRecommendationCardProps) {
   const shouldReduceMotion = useReducedMotion();
   const [isExpanded, setIsExpanded] = useState(false);
+  const photoPreview = useConsultationStore((s) => s.photoPreview);
+
+  const { isAnyGenerating, triggerPreview, getPreviewStatus } = usePreviewGeneration();
+
+  // Use styleName as the recommendationId key
+  const recommendationId = styleName;
+  const previewStatus = getPreviewStatus(recommendationId);
 
   const matchPercent = Math.round(matchScore * 100);
   const difficultyLabel = DIFFICULTY_LABELS[difficultyLevel];
   const difficultyBadgeClass = DIFFICULTY_BADGE_CLASSES[difficultyLevel];
   const ordinalLabel = ORDINAL_LABELS[rank];
+
+  const isGenerating = previewStatus.status === 'generating';
+  const isReady = previewStatus.status === 'ready';
+  const isFailed = previewStatus.status === 'failed';
+  const isUnavailable = previewStatus.status === 'unavailable';
 
   // Entrance animation — respects prefers-reduced-motion (AC: 7)
   const cardVariants: Variants = shouldReduceMotion
@@ -95,12 +112,18 @@ export function AlternativeRecommendationCard({
     setIsExpanded((prev) => !prev);
   };
 
-  const handleVerComoFico = () => {
+  const handleVerComoFico = useCallback(() => {
+    if (isAnyGenerating) return;
+    // Call legacy callback if provided (for external integration)
     if (onPreviewRequest) {
       onPreviewRequest(styleName);
     }
-    // Placeholder: Epic 7 will connect this
-  };
+    void triggerPreview(recommendationId, styleName);
+  }, [isAnyGenerating, onPreviewRequest, styleName, triggerPreview, recommendationId]);
+
+  const handleRetry = useCallback(() => {
+    void triggerPreview(recommendationId, styleName);
+  }, [triggerPreview, recommendationId, styleName]);
 
   return (
     <motion.div
@@ -132,8 +155,6 @@ export function AlternativeRecommendationCard({
 
         {/*
          * Collapsible toggle — visible on mobile only (hidden on md+).
-         * Tailwind md:hidden ensures this never renders on desktop
-         * without needing window.innerWidth or resize listeners. (AC: 4)
          */}
         <button
           onClick={handleToggle}
@@ -156,14 +177,11 @@ export function AlternativeRecommendationCard({
          * Expandable content section:
          * - Mobile: AnimatePresence controls show/hide based on isExpanded state
          * - Desktop (md+): Always shown via the `md:block` override class.
-         *   The hidden/show state is managed by CSS, not JS, on desktop.
          */}
         <div
           data-testid="expandable-wrapper"
           className={cn(
-            // Mobile: hidden by default, shown when expanded
             isExpanded ? 'block' : 'hidden',
-            // Desktop: always visible regardless of isExpanded state
             'md:block'
           )}
         >
@@ -195,15 +213,65 @@ export function AlternativeRecommendationCard({
                 </span>
               </div>
 
-              {/* Ver como fico button — secondary style (border + text, not filled) */}
-              <button
-                type="button"
-                onClick={handleVerComoFico}
-                aria-label="Ver como fico — visualizar este corte no meu rosto"
-                className="mt-4 w-full min-h-[48px] rounded-lg border border-border bg-transparent px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted/50"
-              >
-                Ver como fico
-              </button>
+              {/* Preview area */}
+              {isGenerating && (
+                <div className="mt-4 space-y-2">
+                  {photoPreview && (
+                    <PreviewLoadingOverlay
+                      photoSrc={photoPreview}
+                      className="h-48 w-full"
+                    />
+                  )}
+                  {/* PreviewStatusText always shown while generating (AC: 5, 10) — even when photo unavailable */}
+                  <PreviewStatusText />
+                </div>
+              )}
+
+              {isReady && previewStatus.previewUrl && (
+                <div className="mt-4">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={previewStatus.previewUrl}
+                    alt={`Preview do estilo ${styleName}`}
+                    className="w-full rounded-xl object-cover"
+                  />
+                </div>
+              )}
+
+              {isFailed && (
+                <div className="mt-4">
+                  <PreviewError onRetry={handleRetry} />
+                </div>
+              )}
+
+              {isUnavailable && (
+                <div className="mt-4">
+                  <PreviewUnavailable />
+                </div>
+              )}
+
+              {/* Ver como fico button — disabled when another preview is generating */}
+              {!isReady && !isUnavailable && (
+                <button
+                  type="button"
+                  onClick={handleVerComoFico}
+                  disabled={isAnyGenerating}
+                  aria-label={
+                    isAnyGenerating
+                      ? 'Aguarde a geracao atual terminar'
+                      : 'Ver como fico — visualizar este corte no meu rosto'
+                  }
+                  aria-disabled={isAnyGenerating}
+                  className={cn(
+                    'mt-4 w-full min-h-[48px] rounded-lg border border-border bg-transparent px-4 py-2 text-sm font-medium text-foreground transition-colors',
+                    isAnyGenerating
+                      ? 'opacity-50 cursor-not-allowed'
+                      : 'hover:bg-muted/50'
+                  )}
+                >
+                  {isGenerating ? 'A gerar...' : 'Ver como fico'}
+                </button>
+              )}
             </motion.div>
           </AnimatePresence>
         </div>

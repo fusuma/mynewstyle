@@ -33,6 +33,25 @@ vi.mock('framer-motion', () => ({
   useReducedMotion: () => mockReducedMotion,
 }));
 
+// Mock usePreviewGeneration hook
+const mockTriggerPreview = vi.fn();
+vi.mock('@/hooks/usePreviewGeneration', () => ({
+  usePreviewGeneration: () => ({
+    isAnyGenerating: false,
+    triggerPreview: mockTriggerPreview,
+    getPreviewStatus: () => ({ status: 'idle' }),
+  }),
+}));
+
+// Mock consultation store for photoPreview
+vi.mock('@/stores/consultation', () => ({
+  useConsultationStore: (selector: (state: Record<string, unknown>) => unknown) =>
+    selector({
+      photoPreview: null,
+      previews: new Map(),
+    }),
+}));
+
 const mockRecommendation = {
   styleName: 'Medium Fade',
   justification: 'O medium fade cria uma transicao suave que equilibra as proporcoes do rosto oval, destacando os tracos de forma harmoniosa e moderna.',

@@ -1,6 +1,6 @@
 # Story 7.4: Preview Loading UX
 
-Status: ready-for-dev
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -25,57 +25,57 @@ so that **I feel confident something is happening and stay engaged during the 15
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Create PreviewLoadingOverlay component (AC: 1, 2, 3, 4, 7, 9)
-  - [ ] 1.1 Build component that accepts user's photo and shows it with overlay animations
-  - [ ] 1.2 Implement CSS gradient sweep animation (top-down "curtain of light") using Framer Motion
-  - [ ] 1.3 Implement floating sparkle particles using Framer Motion (random positions in hair zone)
-  - [ ] 1.4 Implement pulsing blur effect on the photo using Tailwind + Framer Motion
-  - [ ] 1.5 Implement reduced-motion fallback (static shimmer or simple spinner)
-  - [ ] 1.6 Use design system tokens (bg-primary, text-primary-foreground) for theme adaptation
+- [x] Task 1: Create PreviewLoadingOverlay component (AC: 1, 2, 3, 4, 7, 9)
+  - [x] 1.1 Build component that accepts user's photo and shows it with overlay animations
+  - [x] 1.2 Implement CSS gradient sweep animation (top-down "curtain of light") using Framer Motion
+  - [x] 1.3 Implement floating sparkle particles using Framer Motion (random positions in hair zone)
+  - [x] 1.4 Implement pulsing blur effect on the photo using Tailwind + Framer Motion
+  - [x] 1.5 Implement reduced-motion fallback (static shimmer or simple spinner)
+  - [x] 1.6 Use design system tokens (bg-primary, text-primary-foreground) for theme adaptation
 
-- [ ] Task 2: Create PreviewStatusText component (AC: 5, 10)
-  - [ ] 2.1 Build cycling text component with 3 messages, rotating every ~4 seconds
-  - [ ] 2.2 Use crossfade animation between messages (Framer Motion AnimatePresence)
-  - [ ] 2.3 Add `aria-live="polite"` region so screen readers announce text changes
-  - [ ] 2.4 Reduced-motion: static text with no crossfade, just immediate swap
+- [x] Task 2: Create PreviewStatusText component (AC: 5, 10)
+  - [x] 2.1 Build cycling text component with 3 messages, rotating every ~4 seconds
+  - [x] 2.2 Use crossfade animation between messages (Framer Motion AnimatePresence)
+  - [x] 2.3 Add `aria-live="polite"` region so screen readers announce text changes
+  - [x] 2.4 Reduced-motion: static text with no crossfade, just immediate swap
 
-- [ ] Task 3: Create usePreviewGeneration hook (AC: 6, 8)
-  - [ ] 3.1 Build hook that manages preview generation state per recommendation
-  - [ ] 3.2 Implement sequential queue: only one preview generates at a time
-  - [ ] 3.3 Track generation state: 'idle' | 'generating' | 'ready' | 'failed' | 'unavailable'
-  - [ ] 3.4 Implement polling logic: poll GET /api/preview/:recommendationId/status every 5 seconds
-  - [ ] 3.5 Implement 90-second timeout: if no response, mark as 'failed'
-  - [ ] 3.6 Expose `isAnyGenerating` flag to disable other "Ver como fico" buttons
-  - [ ] 3.7 Store preview states in consultation store (extend `previews` Map)
+- [x] Task 3: Create usePreviewGeneration hook (AC: 6, 8)
+  - [x] 3.1 Build hook that manages preview generation state per recommendation
+  - [x] 3.2 Implement sequential queue: only one preview generates at a time
+  - [x] 3.3 Track generation state: 'idle' | 'generating' | 'ready' | 'failed' | 'unavailable'
+  - [x] 3.4 Implement polling logic: poll GET /api/preview/:recommendationId/status every 5 seconds
+  - [x] 3.5 Implement 90-second timeout: if no response, mark as 'failed'
+  - [x] 3.6 Expose `isAnyGenerating` flag to disable other "Ver como fico" buttons
+  - [x] 3.7 Store preview states in consultation store (extend `previews` Map)
 
-- [ ] Task 4: Integrate into HeroRecommendationCard (AC: 1, 6)
-  - [ ] 4.1 Replace placeholder `handleVerComoFico` with actual preview generation trigger
-  - [ ] 4.2 Show PreviewLoadingOverlay when generation is in progress
-  - [ ] 4.3 Disable button when another preview is generating (`isAnyGenerating`)
-  - [ ] 4.4 Show disabled state visually (opacity, cursor-not-allowed)
+- [x] Task 4: Integrate into HeroRecommendationCard (AC: 1, 6)
+  - [x] 4.1 Replace placeholder `handleVerComoFico` with actual preview generation trigger
+  - [x] 4.2 Show PreviewLoadingOverlay when generation is in progress
+  - [x] 4.3 Disable button when another preview is generating (`isAnyGenerating`)
+  - [x] 4.4 Show disabled state visually (opacity, cursor-not-allowed)
 
-- [ ] Task 5: Integrate into AlternativeRecommendationCard (AC: 1, 6)
-  - [ ] 5.1 Wire up existing `onPreviewRequest` callback to actual preview generation
-  - [ ] 5.2 Show PreviewLoadingOverlay when generation is in progress
-  - [ ] 5.3 Disable button when another preview is generating (`isAnyGenerating`)
+- [x] Task 5: Integrate into AlternativeRecommendationCard (AC: 1, 6)
+  - [x] 5.1 Wire up existing `onPreviewRequest` callback to actual preview generation
+  - [x] 5.2 Show PreviewLoadingOverlay when generation is in progress
+  - [x] 5.3 Disable button when another preview is generating (`isAnyGenerating`)
 
-- [ ] Task 6: Update consultation store for preview states (AC: 6, 8)
-  - [ ] 6.1 Define PreviewStatus type: { status, previewUrl?, error?, startedAt? }
-  - [ ] 6.2 Replace `previews: Map<string, unknown>` with properly typed `Map<string, PreviewStatus>`
-  - [ ] 6.3 Add actions: `startPreview(recommendationId)`, `updatePreviewStatus(recommendationId, status)`, `setPreviewUrl(recommendationId, url)`
-  - [ ] 6.4 Add selector: `isAnyPreviewGenerating` computed from previews Map
+- [x] Task 6: Update consultation store for preview states (AC: 6, 8)
+  - [x] 6.1 Define PreviewStatus type: { status, previewUrl?, error?, startedAt? }
+  - [x] 6.2 Replace `previews: Map<string, unknown>` with properly typed `Map<string, PreviewStatus>`
+  - [x] 6.3 Add actions: `startPreview(recommendationId)`, `updatePreviewStatus(recommendationId, status)`, `setPreviewUrl(recommendationId, url)`
+  - [x] 6.4 Add selector: `isAnyPreviewGenerating` computed from previews Map
 
-- [ ] Task 7: Error/unavailable states (AC: 8)
-  - [ ] 7.1 Create PreviewUnavailable component: "Visualizacao indisponivel para este estilo"
-  - [ ] 7.2 Create PreviewError component: "Algo correu mal. Tentar de novo?" with retry button
-  - [ ] 7.3 Wire retry button to re-trigger preview generation
+- [x] Task 7: Error/unavailable states (AC: 8)
+  - [x] 7.1 Create PreviewUnavailable component: "Visualizacao indisponivel para este estilo"
+  - [x] 7.2 Create PreviewError component: "Algo correu mal. Tentar de novo?" with retry button
+  - [x] 7.3 Wire retry button to re-trigger preview generation
 
-- [ ] Task 8: Write tests
-  - [ ] 8.1 Unit tests for usePreviewGeneration hook (state transitions, timeout, queue)
-  - [ ] 8.2 Unit tests for PreviewLoadingOverlay (renders photo, animations, reduced-motion)
-  - [ ] 8.3 Unit tests for PreviewStatusText (cycling, aria-live)
-  - [ ] 8.4 Integration test: HeroRecommendationCard triggers preview and shows loading
-  - [ ] 8.5 Integration test: sequential queue prevents parallel generation
+- [x] Task 8: Write tests
+  - [x] 8.1 Unit tests for usePreviewGeneration hook (state transitions, timeout, queue)
+  - [x] 8.2 Unit tests for PreviewLoadingOverlay (renders photo, animations, reduced-motion)
+  - [x] 8.3 Unit tests for PreviewStatusText (cycling, aria-live)
+  - [x] 8.4 Integration test: HeroRecommendationCard triggers preview and shows loading
+  - [x] 8.5 Integration test: sequential queue prevents parallel generation
 
 ## Dev Notes
 
@@ -206,10 +206,48 @@ The existing `ProcessingScreen.tsx` (`src/components/consultation/ProcessingScre
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+claude-sonnet-4-6
 
 ### Debug Log References
 
+- No blocking issues encountered. The `useReducedMotion` mock pattern from existing tests was reused successfully.
+- Two pre-existing tests (`hero-recommendation-card.test.tsx`, `results-page-hero-card.test.tsx`) required updates: the old toast-based placeholder was replaced by `usePreviewGeneration` — these tests were updated to mock the hook and store correctly.
+- The `alternative-recommendation-card.test.tsx` similarly needed `usePreviewGeneration` and `useConsultationStore` mocks added.
+
 ### Completion Notes List
 
+- Implemented `PreviewStatus` type in `src/types/index.ts` (status, previewUrl?, error?, startedAt?)
+- Updated `src/stores/consultation.ts`: replaced `Map<string, unknown>` with `Map<string, PreviewStatus>`, added `startPreview`, `updatePreviewStatus`, `setPreviewUrl` actions and `isAnyPreviewGenerating` selector
+- Created `src/hooks/usePreviewGeneration.ts`: manages generation state, polling (5s interval), 90s timeout, sequential queue via `isAnyGenerating` flag, mock mode via `NEXT_PUBLIC_PREVIEW_MOCK`
+- Created `src/components/consultation/PreviewLoadingOverlay.tsx`: photo with pulsing blur, gradient sweep on hair zone, 7 sparkle particles, reduced-motion fallback with static shimmer
+- Created `src/components/consultation/PreviewStatusText.tsx`: cycling PT-BR messages every 4s with AnimatePresence crossfade, aria-live="polite", reduced-motion static mode
+- Created `src/components/consultation/PreviewUnavailable.tsx`: shows "Visualizacao indisponivel para este estilo"
+- Created `src/components/consultation/PreviewError.tsx`: shows "Algo correu mal. Tentar de novo?" with retry button
+- Updated `src/components/consultation/HeroRecommendationCard.tsx`: replaced toast placeholder with `usePreviewGeneration` hook, integrated overlay/status/error/unavailable states, button disabled with opacity-50/cursor-not-allowed when `isAnyGenerating`
+- Updated `src/components/consultation/AlternativeRecommendationCard.tsx`: same preview integration pattern
+- Wrote 39 new tests across 4 test files covering all ACs
+- All 1441 tests pass (99 test files), zero ESLint errors
+
 ### File List
+
+- `src/types/index.ts` — Added `PreviewStatus` interface
+- `src/stores/consultation.ts` — Updated `previews` Map type, added preview actions and selector
+- `src/hooks/usePreviewGeneration.ts` — New hook (Task 3)
+- `src/components/consultation/PreviewLoadingOverlay.tsx` — New component (Task 1)
+- `src/components/consultation/PreviewStatusText.tsx` — New component (Task 2)
+- `src/components/consultation/PreviewUnavailable.tsx` — New component (Task 7.1)
+- `src/components/consultation/PreviewError.tsx` — New component (Task 7.2)
+- `src/components/consultation/HeroRecommendationCard.tsx` — Updated (Task 4)
+- `src/components/consultation/AlternativeRecommendationCard.tsx` — Updated (Task 5)
+- `src/test/use-preview-generation.test.ts` — New test file (Task 8.1)
+- `src/test/preview-loading-overlay.test.tsx` — New test file (Task 8.2)
+- `src/test/preview-status-text.test.tsx` — New test file (Task 8.3)
+- `src/test/hero-recommendation-card-preview.test.tsx` — New test file (Task 8.4, 8.5)
+- `src/test/hero-recommendation-card.test.tsx` — Updated (mock hook + store)
+- `src/test/alternative-recommendation-card.test.tsx` — Updated (mock hook + store)
+- `src/test/results-page-hero-card.test.tsx` — Updated (mock hook + store)
+
+## Change Log
+
+- 2026-03-02: Story 7.4 implemented — Preview Loading UX. Added PreviewStatus type, updated consultation store, created usePreviewGeneration hook with polling/timeout/queue, created 4 new UI components (PreviewLoadingOverlay, PreviewStatusText, PreviewUnavailable, PreviewError), integrated into HeroRecommendationCard and AlternativeRecommendationCard, wrote 39 tests. All 1441 tests passing.
+- 2026-03-02: Code review fixes — (1) Fixed AC8 violation: 90-second timeout now sets status `'unavailable'` (shows "Visualizacao indisponivel") instead of `'failed'` (shows retry error). (2) Removed stale `gender` prop from `hero-recommendation-card.test.tsx` — theme is CSS-variable-based since Story 7.4 removed the prop. (3) `PreviewStatusText` now renders even when `photoPreview` is null during generating state (both HeroRecommendationCard and AlternativeRecommendationCard), ensuring AC5/AC10 compliance regardless of photo availability. Updated timeout test assertion to match `'unavailable'` status. All 1440 tests passing.

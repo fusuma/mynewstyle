@@ -3,6 +3,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import type { FaceAnalysisOutput } from '@/lib/ai/schemas';
+import type { PreviewStatus } from '@/types/index';
 
 export interface QuestionnaireResponses {
   [questionId: string]: string | string[] | number;
@@ -19,7 +20,7 @@ export interface ConsultationStore {
   consultationId: string | null;
   faceAnalysis: FaceAnalysisOutput | null;
   consultation: unknown | null;
-  previews: Map<string, unknown>;
+  previews: Map<string, PreviewStatus>;
 
   // Payment (future stories)
   paymentStatus: 'none' | 'pending' | 'paid' | 'failed' | 'refunded';
@@ -35,6 +36,14 @@ export interface ConsultationStore {
   setFaceAnalysis: (analysis: FaceAnalysisOutput) => void;
   setPaymentStatus: (status: 'none' | 'pending' | 'paid' | 'failed' | 'refunded') => void;
   reset: () => void;
+
+  // Preview actions (Story 7.4)
+  startPreview: (recommendationId: string) => void;
+  updatePreviewStatus: (recommendationId: string, status: Partial<PreviewStatus>) => void;
+  setPreviewUrl: (recommendationId: string, url: string) => void;
+
+  // Preview selectors (Story 7.4)
+  isAnyPreviewGenerating: () => boolean;
 }
 
 const initialState = {
@@ -45,14 +54,14 @@ const initialState = {
   consultationId: null as string | null,
   faceAnalysis: null as FaceAnalysisOutput | null,
   consultation: null as unknown | null,
-  previews: new Map<string, unknown>(),
+  previews: new Map<string, PreviewStatus>(),
   paymentStatus: 'none' as const,
   isReturningUser: false,
 };
 
 export const useConsultationStore = create<ConsultationStore>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       ...initialState,
 
       setGender: (gender) => set({ gender }),
@@ -69,7 +78,46 @@ export const useConsultationStore = create<ConsultationStore>()(
       setConsultationId: (id) => set({ consultationId: id }),
       setFaceAnalysis: (analysis) => set({ faceAnalysis: analysis }),
       setPaymentStatus: (status) => set({ paymentStatus: status }),
-      reset: () => set({ ...initialState, previews: new Map<string, unknown>() }),
+      reset: () => set({ ...initialState, previews: new Map<string, PreviewStatus>() }),
+
+      // Preview actions (Story 7.4, Task 6)
+      startPreview: (recommendationId) =>
+        set((state) => {
+          const newPreviews = new Map(state.previews);
+          newPreviews.set(recommendationId, {
+            status: 'generating',
+            startedAt: new Date().toISOString(),
+          });
+          return { previews: newPreviews };
+        }),
+
+      updatePreviewStatus: (recommendationId, statusUpdate) =>
+        set((state) => {
+          const newPreviews = new Map(state.previews);
+          const existing = newPreviews.get(recommendationId) ?? { status: 'idle' };
+          newPreviews.set(recommendationId, { ...existing, ...statusUpdate });
+          return { previews: newPreviews };
+        }),
+
+      setPreviewUrl: (recommendationId, url) =>
+        set((state) => {
+          const newPreviews = new Map(state.previews);
+          const existing = newPreviews.get(recommendationId) ?? { status: 'ready' };
+          newPreviews.set(recommendationId, {
+            ...existing,
+            status: 'ready',
+            previewUrl: url,
+          });
+          return { previews: newPreviews };
+        }),
+
+      isAnyPreviewGenerating: () => {
+        const { previews } = get();
+        for (const [, status] of previews) {
+          if (status.status === 'generating') return true;
+        }
+        return false;
+      },
     }),
     {
       name: 'mynewstyle-consultation',

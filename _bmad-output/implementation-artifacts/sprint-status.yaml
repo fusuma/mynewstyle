@@ -110,7 +110,7 @@ development_status:
   7-1-kie-ai-integration: done
   7-2-kie-ai-webhook-handler: done
   7-3-face-similarity-check: done
-  7-4-preview-loading-ux: ready-for-dev
+  7-4-preview-loading-ux: done
   7-5-preview-display-and-before-after: ready-for-dev
   7-6-preview-fallback-gemini-pro-direct: ready-for-dev
   7-7-barber-reference-card: ready-for-dev

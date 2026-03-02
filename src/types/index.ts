@@ -109,6 +109,14 @@ export interface AICallLog {
   timestamp: string;
 }
 
+// Preview status type (Story 7.4)
+export interface PreviewStatus {
+  status: 'idle' | 'generating' | 'ready' | 'failed' | 'unavailable';
+  previewUrl?: string;
+  error?: string;
+  startedAt?: string; // ISO timestamp
+}
+
 export interface PreviewGenerationParams {
   taskId: string;
   model: 'nano-banana-2';
