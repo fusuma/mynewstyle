@@ -6,7 +6,7 @@ import { getAIConfig } from './config';
 // Re-export types
 export type { AIProvider } from './provider';
 export { AIRouter, isRetryable } from './provider';
-export { logAICall, getAICallLogs, clearAICallLogs, calculateCost } from './logger';
+export { logAICall, getAICallLogs, clearAICallLogs, calculateCost, persistAICallLog } from './logger';
 export { getAIConfig } from './config';
 export { GeminiProvider } from './gemini';
 export { OpenAIProvider } from './openai';

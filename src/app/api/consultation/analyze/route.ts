@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { getAIRouter, validateFaceAnalysis, logValidationFailure } from '@/lib/ai';
+import { getAIRouter, validateFaceAnalysis, logValidationFailure, getAICallLogs, persistAICallLog } from '@/lib/ai';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 
 // Max base64 size: ~4MB input photo (base64 is ~33% larger than binary, so 4MB binary → ~5.4MB base64)
@@ -61,6 +61,10 @@ export async function POST(request: NextRequest) {
   try {
     const router = getAIRouter();
 
+    // Snapshot log count BEFORE AI calls to correctly attribute logs to this request
+    // (same logsBefore/logsAfter pattern as generate route - prevents cross-request contamination)
+    const logsBefore = getAICallLogs().length;
+
     // First attempt (no temperature override)
     const rawResult = await router.execute((p) => p.analyzeFace(photoBuffer));
     let validated = validateFaceAnalysis(rawResult);
@@ -93,10 +97,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 5. Store validated result in DB
+    // 5. Persist AI call cost to ai_calls table (best-effort) and accumulate Step 1 cost
+    // Use logsBefore/logsAfter slice pattern to correctly attribute logs to this request,
+    // handling retries (both initial + retry calls are persisted) and preventing cross-request
+    // contamination in warm serverless invocations.
+    const logsAfter = getAICallLogs();
+    const newLogs = logsAfter.slice(logsBefore);
+    const step1CostCents = newLogs.reduce((sum, log) => sum + log.costCents, 0);
+    for (const log of newLogs) {
+      await persistAICallLog(supabase, consultationId, log);
+    }
+
+    // 6. Store validated result in DB (including Step 1 AI cost)
     const { error: updateError } = await supabase
       .from('consultations')
-      .update({ face_analysis: validated.data, status: 'complete' })
+      .update({ face_analysis: validated.data, status: 'complete', ai_cost_cents: Math.round(step1CostCents) })
       .eq('id', consultationId);
 
     if (updateError) {

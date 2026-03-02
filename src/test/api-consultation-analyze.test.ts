@@ -7,6 +7,8 @@ vi.mock('@/lib/ai', () => ({
   getAIRouter: vi.fn(),
   validateFaceAnalysis: vi.fn(),
   logValidationFailure: vi.fn(),
+  getAICallLogs: vi.fn().mockReturnValue([]),
+  persistAICallLog: vi.fn().mockResolvedValue(undefined),
 }));
 
 // Mock Supabase server client
@@ -15,7 +17,7 @@ vi.mock('@/lib/supabase/server', () => ({
 }));
 
 // Import after mocks
-import { getAIRouter, validateFaceAnalysis, logValidationFailure } from '@/lib/ai';
+import { getAIRouter, validateFaceAnalysis, logValidationFailure, getAICallLogs, persistAICallLog } from '@/lib/ai';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 
 // Valid FaceAnalysis object (matches FaceAnalysisSchema)
@@ -308,11 +310,123 @@ describe('POST /api/consultation/analyze', () => {
 
     // Verify update was called with status: 'analyzing' (first update call)
     expect(mockSupabase._mockUpdate).toHaveBeenCalledWith({ status: 'analyzing' });
-    // Verify update was also called with final state (face_analysis + status: 'complete')
-    expect(mockSupabase._mockUpdate).toHaveBeenCalledWith({
-      face_analysis: validFaceAnalysis,
-      status: 'complete',
-    });
+    // Verify update was also called with final state (face_analysis + status: 'complete' + ai_cost_cents)
+    expect(mockSupabase._mockUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        face_analysis: validFaceAnalysis,
+        status: 'complete',
+        ai_cost_cents: expect.any(Number),
+      })
+    );
+  });
+
+  it('persists AI call log and sets correct ai_cost_cents when getAICallLogs returns a log entry', async () => {
+    const mockSupabase = createMockSupabase();
+    (createServerSupabaseClient as ReturnType<typeof vi.fn>).mockReturnValue(mockSupabase);
+
+    const mockRouter = {
+      execute: vi.fn().mockResolvedValue(validFaceAnalysis),
+    };
+    (getAIRouter as ReturnType<typeof vi.fn>).mockReturnValue(mockRouter);
+    (validateFaceAnalysis as ReturnType<typeof vi.fn>)
+      .mockReturnValue({ valid: true, data: validFaceAnalysis });
+
+    const mockLog = {
+      id: 'log-uuid-1',
+      provider: 'gemini' as const,
+      model: 'gemini-2.5-flash',
+      task: 'face-analysis' as const,
+      inputTokens: 1000,
+      outputTokens: 500,
+      costCents: 5,
+      latencyMs: 1200,
+      success: true,
+      timestamp: new Date().toISOString(),
+    };
+
+    // Simulate logsBefore=0 (empty before call), then 1 new log after AI call
+    (getAICallLogs as ReturnType<typeof vi.fn>)
+      .mockReturnValueOnce([]) // logsBefore snapshot: empty store
+      .mockReturnValue([mockLog]); // logsAfter: one new log was added by the AI call
+
+    const request = createRequest(validPayload);
+    await POST(request);
+
+    // persistAICallLog should be called with the new log entry
+    expect(persistAICallLog).toHaveBeenCalledWith(
+      mockSupabase,
+      validPayload.consultationId,
+      mockLog
+    );
+
+    // ai_cost_cents should be Math.round(5) = 5
+    expect(mockSupabase._mockUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        face_analysis: validFaceAnalysis,
+        status: 'complete',
+        ai_cost_cents: 5,
+      })
+    );
+  });
+
+  it('persists both initial and retry AI call logs when retry occurs', async () => {
+    const mockSupabase = createMockSupabase();
+    (createServerSupabaseClient as ReturnType<typeof vi.fn>).mockReturnValue(mockSupabase);
+
+    const mockRouter = {
+      execute: vi.fn().mockResolvedValue(validFaceAnalysis),
+    };
+    (getAIRouter as ReturnType<typeof vi.fn>).mockReturnValue(mockRouter);
+    // First call fails validation, second succeeds
+    (validateFaceAnalysis as ReturnType<typeof vi.fn>)
+      .mockReturnValueOnce({ valid: false, reason: 'schema_invalid', details: [] })
+      .mockReturnValueOnce({ valid: true, data: validFaceAnalysis });
+
+    const mockLog1 = {
+      id: 'log-uuid-1',
+      provider: 'gemini' as const,
+      model: 'gemini-2.5-flash',
+      task: 'face-analysis' as const,
+      inputTokens: 1000,
+      outputTokens: 500,
+      costCents: 3,
+      latencyMs: 1000,
+      success: false,
+      timestamp: new Date().toISOString(),
+    };
+    const mockLog2 = {
+      id: 'log-uuid-2',
+      provider: 'gemini' as const,
+      model: 'gemini-2.5-flash',
+      task: 'face-analysis' as const,
+      inputTokens: 900,
+      outputTokens: 450,
+      costCents: 2,
+      latencyMs: 900,
+      success: true,
+      timestamp: new Date().toISOString(),
+    };
+
+    // First call: logsBefore=0, after=1 log; then logsAfter=2 logs
+    (getAICallLogs as ReturnType<typeof vi.fn>)
+      .mockReturnValueOnce([]) // logsBefore snapshot: 0 logs
+      .mockReturnValue([mockLog1, mockLog2]); // logsAfter: both logs added
+
+    const request = createRequest(validPayload);
+    const response = await POST(request);
+
+    expect(response.status).toBe(200);
+    // Both logs should be persisted
+    expect(persistAICallLog).toHaveBeenCalledTimes(2);
+    expect(persistAICallLog).toHaveBeenCalledWith(mockSupabase, validPayload.consultationId, mockLog1);
+    expect(persistAICallLog).toHaveBeenCalledWith(mockSupabase, validPayload.consultationId, mockLog2);
+
+    // ai_cost_cents should sum both: Math.round(3 + 2) = 5
+    expect(mockSupabase._mockUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        ai_cost_cents: 5,
+      })
+    );
   });
 
   it('returns 400 when photoBase64 exceeds maximum allowed size', async () => {

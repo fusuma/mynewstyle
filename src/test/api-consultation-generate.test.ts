@@ -9,6 +9,7 @@ vi.mock('@/lib/ai', () => ({
   logValidationFailure: vi.fn(),
   getAICallLogs: vi.fn().mockReturnValue([]),
   clearAICallLogs: vi.fn(),
+  persistAICallLog: vi.fn().mockResolvedValue(undefined),
 }));
 
 // Mock Supabase server client
@@ -17,7 +18,7 @@ vi.mock('@/lib/supabase/server', () => ({
 }));
 
 // Import after mocks
-import { getAIRouter, validateConsultation, logValidationFailure, getAICallLogs } from '@/lib/ai';
+import { getAIRouter, validateConsultation, logValidationFailure, getAICallLogs, persistAICallLog } from '@/lib/ai';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 
 // Valid ConsultationOutput matching ConsultationSchema

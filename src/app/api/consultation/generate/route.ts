@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { getAIRouter, validateConsultation, logValidationFailure, getAICallLogs } from '@/lib/ai';
+import { getAIRouter, validateConsultation, logValidationFailure, getAICallLogs, persistAICallLog } from '@/lib/ai';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import type { FaceAnalysis, QuestionnaireData } from '@/types';
 import type { ConsultationOutput, AIProvider } from '@/lib/ai';
@@ -130,11 +130,15 @@ export async function POST(request: NextRequest) {
 
     // Compute cumulative Step 2 AI cost from all AI calls made during this request
     const logsAfter = getAICallLogs();
-    const step2CostCents = logsAfter
-      .slice(logsBefore)
-      .reduce((sum, log) => sum + log.costCents, 0);
+    const newLogs = logsAfter.slice(logsBefore);
+    const step2CostCents = newLogs.reduce((sum, log) => sum + log.costCents, 0);
     const existingCostCents = (consultation.ai_cost_cents as number) ?? 0;
     const totalCostCents = existingCostCents + Math.round(step2CostCents);
+
+    // Persist each new AI call log to ai_calls table (best-effort, non-fatal)
+    for (const log of newLogs) {
+      await persistAICallLog(supabase, consultationId, log);
+    }
 
     // Both attempts failed validation
     if (!validated.valid) {

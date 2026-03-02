@@ -79,7 +79,7 @@ development_status:
   4-4-instant-face-shape-reveal: done
   4-5-consultation-generation: done
   4-6-ai-output-validation-and-quality-gate: done
-  4-7-ai-cost-tracking: backlog
+  4-7-ai-cost-tracking: done
   4-8-deterministic-results: backlog
   epic-4-retrospective: optional
 

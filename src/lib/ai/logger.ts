@@ -1,3 +1,4 @@
+import type { SupabaseClient } from '@supabase/supabase-js';
 import type { AICallLog } from '@/types';
 
 // In-memory AI call log store (database persistence in Story 4.7)
@@ -52,4 +53,33 @@ export function getAICallLogs(): AICallLog[] {
  */
 export function clearAICallLogs(): void {
   aiCallLogs = [];
+}
+
+/**
+ * Persist an AI call log entry to the ai_calls Supabase table.
+ * This is a best-effort operation — errors are logged but not thrown.
+ * Database persistence for Story 4.7.
+ */
+export async function persistAICallLog(
+  supabase: SupabaseClient,
+  consultationId: string,
+  log: AICallLog
+): Promise<void> {
+  const { error } = await supabase.from('ai_calls').insert({
+    id: log.id,
+    consultation_id: consultationId,
+    provider: log.provider,
+    model: log.model,
+    task: log.task,
+    input_tokens: log.inputTokens,
+    output_tokens: log.outputTokens,
+    cost_cents: log.costCents,
+    latency_ms: log.latencyMs,
+    success: log.success,
+    error: log.error ?? null,
+    timestamp: log.timestamp,
+  });
+  if (error) {
+    console.error('[AI Cost Tracking] Failed to persist AI call:', error);
+  }
 }
