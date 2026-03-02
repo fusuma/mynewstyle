@@ -62,8 +62,8 @@ development_status:
   epic-2-retrospective: optional
 
   # E3: Questionnaire Flow (Sprint 2)
-  epic-3: backlog
-  3-1-questionnaire-engine: backlog
+  epic-3: in-progress
+  3-1-questionnaire-engine: done
   3-2-male-questionnaire-content: backlog
   3-3-female-questionnaire-content: backlog
   3-4-question-card-components: backlog
