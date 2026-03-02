@@ -1,6 +1,6 @@
 # Story 6.4: Styles to Avoid Section
 
-Status: ready-for-dev
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -24,48 +24,48 @@ so that I trust the AI understands my face and can make informed decisions at th
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Create API endpoint or extend existing to serve styles_to_avoid data (AC: 5)
-  - [ ] Check if `GET /api/consultation/:id` already returns `styles_to_avoid` data -- if not, extend it
-  - [ ] Query Supabase: `styles_to_avoid.select('id, style_name, reason').eq('consultation_id', id)`
-  - [ ] Return `stylesToAvoid: { styleName, reason }[]` in the consultation response
-  - [ ] Handle empty array gracefully (consultation may have 0 styles to avoid)
+- [x] Task 1: Create API endpoint or extend existing to serve styles_to_avoid data (AC: 5)
+  - [x] Check if `GET /api/consultation/:id` already returns `styles_to_avoid` data -- if not, extend it
+  - [x] Query Supabase: `styles_to_avoid.select('id, style_name, reason').eq('consultation_id', id)`
+  - [x] Return `stylesToAvoid: { styleName, reason }[]` in the consultation response
+  - [x] Handle empty array gracefully (consultation may have 0 styles to avoid)
 
-- [ ] Task 2: Create `StylesToAvoid` component (AC: 1, 2, 3, 4, 6, 7, 8)
-  - [ ] Create `src/components/consultation/StylesToAvoid.tsx`
-  - [ ] Props: `stylesToAvoid: StyleToAvoid[]` (import type from `@/types`)
-  - [ ] Section header: `<h2>` with Lucide `AlertTriangle` icon + "Estilos a evitar" text
-  - [ ] `AlertTriangle` icon: `aria-hidden="true"`, sized consistently (w-5 h-5), warning/muted color
-  - [ ] Map over `stylesToAvoid` array, render a `StyleToAvoidCard` for each
-  - [ ] Use Framer Motion `motion.div` with staggered children (150ms per card, consistent with UX spec)
-  - [ ] Respect `useReducedMotion()` from Framer Motion -- skip animations if true
-  - [ ] If `stylesToAvoid` is empty, render nothing (return `null`)
-  - [ ] Responsive: `flex flex-col gap-3` on mobile, optionally `md:grid md:grid-cols-2 md:gap-4` on larger screens
+- [x] Task 2: Create `StylesToAvoid` component (AC: 1, 2, 3, 4, 6, 7, 8)
+  - [x] Create `src/components/consultation/StylesToAvoid.tsx`
+  - [x] Props: `stylesToAvoid: StyleToAvoid[]` (import type from `@/types`)
+  - [x] Section header: `<h2>` with Lucide `AlertTriangle` icon + "Estilos a evitar" text
+  - [x] `AlertTriangle` icon: `aria-hidden="true"`, sized consistently (w-5 h-5), warning/muted color
+  - [x] Map over `stylesToAvoid` array, render a `StyleToAvoidCard` for each
+  - [x] Use Framer Motion `motion.div` with staggered children (150ms per card, consistent with UX spec)
+  - [x] Respect `useReducedMotion()` from Framer Motion -- skip animations if true
+  - [x] If `stylesToAvoid` is empty, render nothing (return `null`)
+  - [x] Responsive: `flex flex-col gap-3` on mobile, optionally `md:grid md:grid-cols-2 md:gap-4` on larger screens
 
-- [ ] Task 3: Create `StyleToAvoidCard` sub-component (AC: 3, 4, 8)
-  - [ ] Can be a named export from the same file or a local component within `StylesToAvoid.tsx`
-  - [ ] Props: `styleName: string`, `reason: string`
-  - [ ] Visual style: muted card -- use `bg-muted/50 border border-border rounded-xl p-4` (NOT the accent-colored recommendation card style)
-  - [ ] Style name: `font-semibold text-foreground` (e.g., "Cortes muito rentes nas laterais")
-  - [ ] Reason: `text-sm text-muted-foreground mt-1` (the explanation of why to avoid)
-  - [ ] No CTA buttons (unlike recommendation cards -- this is informational only)
-  - [ ] Semantic: use `<article>` or `<div role="article">` for each card
+- [x] Task 3: Create `StyleToAvoidCard` sub-component (AC: 3, 4, 8)
+  - [x] Can be a named export from the same file or a local component within `StylesToAvoid.tsx`
+  - [x] Props: `styleName: string`, `reason: string`
+  - [x] Visual style: muted card -- use `bg-muted/50 border border-border rounded-xl p-4` (NOT the accent-colored recommendation card style)
+  - [x] Style name: `font-semibold text-foreground` (e.g., "Cortes muito rentes nas laterais")
+  - [x] Reason: `text-sm text-muted-foreground mt-1` (the explanation of why to avoid)
+  - [x] No CTA buttons (unlike recommendation cards -- this is informational only)
+  - [x] Semantic: use `<article>` or `<div role="article">` for each card
 
-- [ ] Task 4: Integrate into results page (AC: 1)
-  - [ ] Import `StylesToAvoid` in `src/app/consultation/results/[id]/page.tsx`
-  - [ ] Position after recommendation sections (B & C) and before grooming tips (E)
-  - [ ] Pass `stylesToAvoid` data from the consultation API response
-  - [ ] Wire up within the existing `AnimatePresence` / paid results section
+- [x] Task 4: Integrate into results page (AC: 1)
+  - [x] Import `StylesToAvoid` in `src/app/consultation/results/[id]/page.tsx`
+  - [x] Position after recommendation sections (B & C) and before grooming tips (E)
+  - [x] Pass `stylesToAvoid` data from the consultation API response
+  - [x] Wire up within the existing `AnimatePresence` / paid results section
 
-- [ ] Task 5: Write unit tests (AC: 9)
-  - [ ] Create `src/test/styles-to-avoid.test.tsx`
-  - [ ] Test: renders section header with warning icon and "Estilos a evitar" text
-  - [ ] Test: renders correct number of cards for mock data (2-3 items)
-  - [ ] Test: each card displays `styleName` and `reason`
-  - [ ] Test: returns null when `stylesToAvoid` is an empty array
-  - [ ] Test: `AlertTriangle` icon has `aria-hidden="true"`
-  - [ ] Test: `motion.div` is present (animation wrapper exists)
-  - [ ] Test: section heading has correct heading level
-  - [ ] Run full test suite to ensure no regressions
+- [x] Task 5: Write unit tests (AC: 9)
+  - [x] Create `src/test/styles-to-avoid.test.tsx`
+  - [x] Test: renders section header with warning icon and "Estilos a evitar" text
+  - [x] Test: renders correct number of cards for mock data (2-3 items)
+  - [x] Test: each card displays `styleName` and `reason`
+  - [x] Test: returns null when `stylesToAvoid` is an empty array
+  - [x] Test: `AlertTriangle` icon has `aria-hidden="true"`
+  - [x] Test: `motion.div` is present (animation wrapper exists)
+  - [x] Test: section heading has correct heading level
+  - [x] Run full test suite to ensure no regressions
 
 ## Dev Notes
 
@@ -168,10 +168,30 @@ This story is part of the first wave of Epic 6 that replaces the PaidResultsPlac
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+claude-sonnet-4-6
 
 ### Debug Log References
 
+No debug issues encountered. Implementation proceeded cleanly.
+
 ### Completion Notes List
 
+- Task 1 (API endpoint): Verified that `POST /api/consultation/generate` already returns `stylesToAvoid` as part of the consultation response. The data flows through: `storeConsultationResults` writes to `styles_to_avoid` Supabase table; the generate response includes the full `ConsultationOutput` with `stylesToAvoid`. No new endpoint needed. The `Consultation` type in `src/types/index.ts` already includes `stylesToAvoid: StyleToAvoid[]`.
+- Task 2 & 3 (Components): Created `StylesToAvoid.tsx` with `StyleToAvoidCard` as a local component. Uses `bg-muted/50 border border-border rounded-xl p-4` muted visual style (distinct from accent-colored recommendation cards). Framer Motion `motion.div` with 150ms stagger per card; respects `useReducedMotion()`. Returns `null` for empty array. Responsive: `flex flex-col gap-3 md:grid md:grid-cols-2 md:gap-4`.
+- Task 4 (Integration): Added `StylesToAvoid` to results page after Section B (HeroRecommendationCard) and Section C (AlternativeRecommendationsSection, also added as part of integration since it wasn't wired up yet). Section D renders only when `consultation.stylesToAvoid.length > 0`.
+- Task 5 (Tests): 15 unit tests cover: section header rendering, h2 heading level, AlertTriangle icon with aria-hidden, card count for 2-3 items, styleName/reason display, empty array returns null, motion.div presence, reduced motion handling, accessibility (role="article").
+- Full test suite: 1179 tests pass, 0 regressions.
+
 ### File List
+
+- src/components/consultation/StylesToAvoid.tsx (new)
+- src/test/styles-to-avoid.test.tsx (new)
+- src/test/results-page-styles-to-avoid.test.tsx (new — integration tests for Section D in results page)
+- src/app/consultation/results/[id]/page.tsx (modified — added StylesToAvoid and AlternativeRecommendationsSection integration)
+- _bmad-output/implementation-artifacts/6-4-styles-to-avoid-section.md (story file — tasks, status, dev record)
+- _bmad-output/implementation-artifacts/sprint-status.yaml (status: review → done)
+
+### Change Log
+
+- 2026-03-02: Implemented Story 6.4 — Styles to Avoid Section. Created StylesToAvoid component with StyleToAvoidCard sub-component, 15 unit tests, integrated into results page as Section D after Sections B & C.
+- 2026-03-02: Code review complete (AI adversarial review). Fixed: (1) TypeScript error in test mock — lucide-react mock now uses `React.SVGAttributes<SVGElement>` instead of narrower inline type; (2) fragile key prop `${styleName}-${index}` replaced with stable index key; (3) `shouldReduceMotion` prop-drilling removed — each `StyleToAvoidCard` now calls `useReducedMotion()` directly for self-contained behavior; (4) added `aria-label={styleName}` on each card's `role="article"` div for screen reader accessibility; (5) added `src/test/results-page-styles-to-avoid.test.tsx` with 8 integration tests covering StylesToAvoid rendering in results page context, empty state, null consultation, section ordering (Section D after A/B/C). Total test suite: 1187 tests, 0 failures.

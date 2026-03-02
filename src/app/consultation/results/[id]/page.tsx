@@ -8,6 +8,8 @@ import { Paywall } from '@/components/consultation/Paywall';
 import { RefundBanner } from '@/components/consultation/RefundBanner';
 import { FaceShapeAnalysisSection } from '@/components/results/FaceShapeAnalysisSection';
 import { HeroRecommendationCard } from '@/components/consultation/HeroRecommendationCard';
+import { AlternativeRecommendationsSection } from '@/components/consultation/AlternativeRecommendationsSection';
+import { StylesToAvoid } from '@/components/consultation/StylesToAvoid';
 import { usePayment } from '@/hooks/usePayment';
 import { useConsultationStatus } from '@/hooks/useConsultationStatus';
 import type { Consultation } from '@/types/index';
@@ -134,10 +136,30 @@ export default function ResultsPage() {
           {consultation && consultation.recommendations && consultation.recommendations.length > 0 && (
             <div className="w-full px-4 py-4">
               <div className="mx-auto max-w-lg">
+                {/* Section B: Hero Recommendation Card (Story 6.2) */}
                 <HeroRecommendationCard
                   recommendation={consultation.recommendations[0]}
                   delay={0.15}
                 />
+              </div>
+            </div>
+          )}
+          {consultation && consultation.recommendations && consultation.recommendations.length > 1 && (
+            <div className="w-full px-4 py-4">
+              <div className="mx-auto max-w-lg">
+                {/* Section C: Alternative Recommendation Cards (Story 6.3) */}
+                <AlternativeRecommendationsSection
+                  recommendations={consultation.recommendations.slice(1)}
+                  baseDelay={0.3}
+                />
+              </div>
+            </div>
+          )}
+          {consultation && consultation.stylesToAvoid && consultation.stylesToAvoid.length > 0 && (
+            <div className="w-full px-4 py-4">
+              <div className="mx-auto max-w-lg">
+                {/* Section D: Styles to Avoid (Story 6.4) */}
+                <StylesToAvoid stylesToAvoid={consultation.stylesToAvoid} />
               </div>
             </div>
           )}
