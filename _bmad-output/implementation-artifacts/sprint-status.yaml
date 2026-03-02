@@ -117,7 +117,7 @@ development_status:
   epic-7-retrospective: optional
 
   # E8: Auth & User Profile (Sprint 4-5)
-  epic-8: in-progress
+  epic-8: done
   8-1-supabase-auth-setup: done
   8-2-registration-page: done
   8-3-login-page: done
