@@ -19,10 +19,10 @@ vi.mock('next/server', async (importOriginal) => {
 
 // Mock Supabase server client for route tests
 vi.mock('@/lib/supabase/server', () => ({
-  createServerSupabaseClient: vi.fn(),
+  createServiceRoleClient: vi.fn(),
 }));
 
-import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { createServiceRoleClient } from '@/lib/supabase/server';
 
 const mockAICallLog: AICallLog = {
   id: 'test-uuid-123',
@@ -45,7 +45,7 @@ describe('persistAICallLog', () => {
   it('inserts a row into ai_calls with correct snake_case field mapping', async () => {
     const mockInsert = vi.fn().mockResolvedValue({ error: null });
     const mockFrom = vi.fn().mockReturnValue({ insert: mockInsert });
-    const mockSupabase = { from: mockFrom } as ReturnType<typeof createServerSupabaseClient>;
+    const mockSupabase = { from: mockFrom } as ReturnType<typeof createServiceRoleClient>;
 
     await persistAICallLog(mockSupabase, 'consultation-uuid-456', mockAICallLog);
 
@@ -70,7 +70,7 @@ describe('persistAICallLog', () => {
     const dbError = { message: 'DB insert failed', code: '23503' };
     const mockInsert = vi.fn().mockResolvedValue({ error: dbError });
     const mockFrom = vi.fn().mockReturnValue({ insert: mockInsert });
-    const mockSupabase = { from: mockFrom } as ReturnType<typeof createServerSupabaseClient>;
+    const mockSupabase = { from: mockFrom } as ReturnType<typeof createServiceRoleClient>;
 
     const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
@@ -89,7 +89,7 @@ describe('persistAICallLog', () => {
     const logWithoutError: AICallLog = { ...mockAICallLog, error: undefined };
     const mockInsert = vi.fn().mockResolvedValue({ error: null });
     const mockFrom = vi.fn().mockReturnValue({ insert: mockInsert });
-    const mockSupabase = { from: mockFrom } as ReturnType<typeof createServerSupabaseClient>;
+    const mockSupabase = { from: mockFrom } as ReturnType<typeof createServiceRoleClient>;
 
     await persistAICallLog(mockSupabase, 'consultation-id', logWithoutError);
 
@@ -102,7 +102,7 @@ describe('persistAICallLog', () => {
     const logWithError: AICallLog = { ...mockAICallLog, error: 'Provider timeout' };
     const mockInsert = vi.fn().mockResolvedValue({ error: null });
     const mockFrom = vi.fn().mockReturnValue({ insert: mockInsert });
-    const mockSupabase = { from: mockFrom } as ReturnType<typeof createServerSupabaseClient>;
+    const mockSupabase = { from: mockFrom } as ReturnType<typeof createServiceRoleClient>;
 
     await persistAICallLog(mockSupabase, 'consultation-id', logWithError);
 
@@ -136,19 +136,32 @@ describe('GET /api/admin/ai-cost-summary', () => {
 
   /**
    * Helper to create a mock Supabase client for the ai-cost-summary route.
-   * The route makes 4 queries:
+   * The enhanced route (Story 10.2) makes 5 queries:
    *   1. consultations: select ai_cost_cents where status='complete'
-   *   2. ai_calls: select cost_cents where task='face-analysis' AND success=true
-   *   3. ai_calls: select cost_cents where task='consultation' AND success=true
-   *   4. consultations: select id (count) where status='complete'
+   *   2. ai_calls: select cost_cents,latency_ms,success,provider where task='face-analysis'
+   *   3. ai_calls: select cost_cents,latency_ms,success,provider where task='consultation'
+   *   4. ai_calls: select cost_cents,latency_ms,success,provider where task='preview'
+   *   5. consultations: select id (count) where status='complete'
    */
   function createMockSupabaseForCostSummary({
     completedConsultations = [] as { ai_cost_cents: number | null }[],
-    faceAnalysisLogs = [] as { cost_cents: number }[],
-    consultationLogs = [] as { cost_cents: number }[],
+    faceAnalysisLogs = [] as { cost_cents: number; latency_ms?: number; success?: boolean; provider?: string }[],
+    consultationLogs = [] as { cost_cents: number; latency_ms?: number; success?: boolean; provider?: string }[],
     totalCount = 0,
   } = {}) {
-    // Use a more precise approach with separate mock per from() call
+    // Normalize legacy test data to include new fields (defaults for backward compat)
+    const normalizeLogs = (logs: { cost_cents: number; latency_ms?: number; success?: boolean; provider?: string }[]) =>
+      logs.map((l) => ({ cost_cents: l.cost_cents, latency_ms: l.latency_ms ?? 0, success: l.success ?? true, provider: l.provider ?? 'gemini' }));
+
+    const faceAnalysisData = normalizeLogs(faceAnalysisLogs);
+    const consultationData = normalizeLogs(consultationLogs);
+
+    // Helper: make awaitable that also supports .gte() chaining
+    function makeChainable<T>(result: T) {
+      const p = Promise.resolve(result);
+      return Object.assign(p, { gte: vi.fn().mockReturnValue(p) });
+    }
+
     let fromCallCount = 0;
     const mockFrom = vi.fn().mockImplementation((_table: string) => {  // eslint-disable-line @typescript-eslint/no-unused-vars
       fromCallCount++;
@@ -156,22 +169,24 @@ describe('GET /api/admin/ai-cost-summary', () => {
 
       if (currentCall === 1) {
         // First from('consultations'): select ai_cost_cents
-        const eqFn = vi.fn().mockResolvedValue({ data: completedConsultations, error: null });
-        return { select: vi.fn().mockReturnValue({ eq: eqFn }) };
+        const eqResult = makeChainable({ data: completedConsultations, error: null });
+        return { select: vi.fn().mockReturnValue({ eq: vi.fn().mockReturnValue(eqResult) }) };
       } else if (currentCall === 2) {
-        // Second from('ai_calls'): face-analysis cost
-        const innerEq = vi.fn().mockResolvedValue({ data: faceAnalysisLogs, error: null });
-        const outerEq = vi.fn().mockReturnValue({ eq: innerEq });
-        return { select: vi.fn().mockReturnValue({ eq: outerEq }) };
+        // Second from('ai_calls'): face-analysis
+        const eqResult = makeChainable({ data: faceAnalysisData, error: null });
+        return { select: vi.fn().mockReturnValue({ eq: vi.fn().mockReturnValue(eqResult) }) };
       } else if (currentCall === 3) {
-        // Third from('ai_calls'): consultation cost
-        const innerEq = vi.fn().mockResolvedValue({ data: consultationLogs, error: null });
-        const outerEq = vi.fn().mockReturnValue({ eq: innerEq });
-        return { select: vi.fn().mockReturnValue({ eq: outerEq }) };
+        // Third from('ai_calls'): consultation
+        const eqResult = makeChainable({ data: consultationData, error: null });
+        return { select: vi.fn().mockReturnValue({ eq: vi.fn().mockReturnValue(eqResult) }) };
+      } else if (currentCall === 4) {
+        // Fourth from('ai_calls'): preview (empty for backward-compat tests)
+        const eqResult = makeChainable({ data: [], error: null });
+        return { select: vi.fn().mockReturnValue({ eq: vi.fn().mockReturnValue(eqResult) }) };
       } else {
-        // Fourth from('consultations'): count
-        const eqFn = vi.fn().mockResolvedValue({ count: totalCount, error: null });
-        return { select: vi.fn().mockReturnValue({ eq: eqFn }) };
+        // Fifth from('consultations'): count
+        const eqResult = makeChainable({ count: totalCount, error: null });
+        return { select: vi.fn().mockReturnValue({ eq: vi.fn().mockReturnValue(eqResult) }) };
       }
     });
 
@@ -220,7 +235,7 @@ describe('GET /api/admin/ai-cost-summary', () => {
       consultationLogs: [{ cost_cents: 15 }, { cost_cents: 15 }],
       totalCount: 2,
     });
-    (createServerSupabaseClient as ReturnType<typeof vi.fn>).mockReturnValue(mockSupabase);
+    (createServiceRoleClient as ReturnType<typeof vi.fn>).mockReturnValue(mockSupabase);
 
     const { GET } = await import('@/app/api/admin/ai-cost-summary/route');
     const response = await GET(createAuthorizedRequest());
@@ -241,7 +256,7 @@ describe('GET /api/admin/ai-cost-summary', () => {
       consultationLogs: [],
       totalCount: 2,
     });
-    (createServerSupabaseClient as ReturnType<typeof vi.fn>).mockReturnValue(mockSupabase);
+    (createServiceRoleClient as ReturnType<typeof vi.fn>).mockReturnValue(mockSupabase);
 
     const { GET } = await import('@/app/api/admin/ai-cost-summary/route');
     const response = await GET(createAuthorizedRequest());
@@ -258,7 +273,7 @@ describe('GET /api/admin/ai-cost-summary', () => {
       consultationLogs: [],
       totalCount: 2,
     });
-    (createServerSupabaseClient as ReturnType<typeof vi.fn>).mockReturnValue(mockSupabase);
+    (createServiceRoleClient as ReturnType<typeof vi.fn>).mockReturnValue(mockSupabase);
 
     const { GET } = await import('@/app/api/admin/ai-cost-summary/route');
     const response = await GET(createAuthorizedRequest());
@@ -275,7 +290,7 @@ describe('GET /api/admin/ai-cost-summary', () => {
       consultationLogs: [],
       totalCount: 2,
     });
-    (createServerSupabaseClient as ReturnType<typeof vi.fn>).mockReturnValue(mockSupabase);
+    (createServiceRoleClient as ReturnType<typeof vi.fn>).mockReturnValue(mockSupabase);
 
     const { GET } = await import('@/app/api/admin/ai-cost-summary/route');
     const response = await GET(createAuthorizedRequest());
@@ -292,7 +307,7 @@ describe('GET /api/admin/ai-cost-summary', () => {
       consultationLogs: [],
       totalCount: 0,
     });
-    (createServerSupabaseClient as ReturnType<typeof vi.fn>).mockReturnValue(mockSupabase);
+    (createServiceRoleClient as ReturnType<typeof vi.fn>).mockReturnValue(mockSupabase);
 
     const { GET } = await import('@/app/api/admin/ai-cost-summary/route');
     const response = await GET(createAuthorizedRequest());
@@ -312,7 +327,7 @@ describe('GET /api/admin/ai-cost-summary', () => {
       consultationLogs: [{ cost_cents: 10 }, { cost_cents: 20 }], // avg = 15
       totalCount: 1,
     });
-    (createServerSupabaseClient as ReturnType<typeof vi.fn>).mockReturnValue(mockSupabase);
+    (createServiceRoleClient as ReturnType<typeof vi.fn>).mockReturnValue(mockSupabase);
 
     const { GET } = await import('@/app/api/admin/ai-cost-summary/route');
     const response = await GET(createAuthorizedRequest());
