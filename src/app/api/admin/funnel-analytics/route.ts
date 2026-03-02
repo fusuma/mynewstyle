@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { isAuthorized } from '@/lib/admin/auth';
+import { isAnalyticsTableMissingError } from '@/lib/admin/supabase-errors';
 
 /**
  * Valid values for the gender filter query param.
@@ -23,16 +24,6 @@ interface FunnelCountRow {
   unique_sessions: number;
   previous_step_sessions: number | null;
   dropoff_rate: number | null;
-}
-
-/**
- * Determines whether an RPC error indicates the analytics_events table is missing.
- * Returns true for PostgreSQL error code 42P01 (undefined_table) or message matching.
- */
-function isTableMissingError(error: { message?: string; code?: string }): boolean {
-  if (error.code === '42P01') return true;
-  if (error.message && error.message.includes('analytics_events')) return true;
-  return false;
 }
 
 /**
@@ -82,6 +73,26 @@ export async function GET(request: NextRequest) {
     const fromDate = fromParam ? new Date(fromParam) : defaultFrom;
     const toDate = toParam ? new Date(toParam) : now;
 
+    // Validate that parsed dates are valid (invalid strings produce NaN timestamps)
+    if (isNaN(fromDate.getTime())) {
+      return NextResponse.json(
+        { error: 'Invalid "from" date parameter. Expected ISO date string (e.g. 2026-01-01).' },
+        { status: 400 }
+      );
+    }
+    if (isNaN(toDate.getTime())) {
+      return NextResponse.json(
+        { error: 'Invalid "to" date parameter. Expected ISO date string (e.g. 2026-01-31).' },
+        { status: 400 }
+      );
+    }
+    if (fromDate > toDate) {
+      return NextResponse.json(
+        { error: '"from" date must not be after "to" date.' },
+        { status: 400 }
+      );
+    }
+
     // Parse period (informational — stored in response but doesn't change query logic)
     const periodParam = searchParams.get('period');
     const period =
@@ -101,11 +112,11 @@ export async function GET(request: NextRequest) {
 
     if (error) {
       // Graceful degradation: if analytics_events table doesn't exist yet
-      if (isTableMissingError(error as { message?: string; code?: string })) {
+      if (isAnalyticsTableMissingError(error as { message?: string; code?: string })) {
         return NextResponse.json(
           {
             error: 'analytics_events table not available',
-            hint: 'Complete story 10-1 first to create the analytics_events table.',
+            hint: 'Complete story 10-1 first',
           },
           { status: 503 }
         );

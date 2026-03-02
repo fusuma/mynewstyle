@@ -50,15 +50,27 @@ DECLARE
   device_sessions uuid[];
 BEGIN
   -- Collect sessions that match the gender filter.
-  -- We look for sessions that have a gender_selected event with the matching gender.
+  -- Primary source: sessions that have a gender_selected event with the matching gender
+  --   (event_data->>'gender' field, AC #2 / Task 1.5).
+  -- Fallback source: sessions linked to a consultation where consultations.gender matches
+  --   (covers returning users or deep-linked users who may skip the gender_selected event,
+  --    joined via analytics_events.session_id = consultations.guest_session_id, AC #2 / Task 1.5).
   IF gender_filter IS NOT NULL THEN
     SELECT ARRAY(
-      SELECT DISTINCT session_id
-      FROM analytics_events
-      WHERE event_type = 'gender_selected'
-        AND event_data->>'gender' = gender_filter
-        AND created_at >= from_date
-        AND created_at <= to_date
+      SELECT DISTINCT ae_g.session_id
+      FROM analytics_events ae_g
+      WHERE ae_g.event_type = 'gender_selected'
+        AND ae_g.event_data->>'gender' = gender_filter
+        AND ae_g.created_at >= from_date
+        AND ae_g.created_at <= to_date
+      UNION
+      -- Fallback: sessions whose linked consultation has the matching gender
+      SELECT DISTINCT ae_c.session_id
+      FROM analytics_events ae_c
+      INNER JOIN consultations c ON c.guest_session_id = ae_c.session_id
+      WHERE c.gender = gender_filter
+        AND ae_c.created_at >= from_date
+        AND ae_c.created_at <= to_date
     ) INTO gender_sessions;
   END IF;
 
@@ -239,3 +251,10 @@ BEGIN
   RETURN result;
 END;
 $$;
+
+-- Security: revoke execute on funnel functions from anon and authenticated roles.
+-- These functions are admin-only analytics — they should only be called via the
+-- Next.js admin API routes (which enforce ADMIN_SECRET auth), never directly
+-- through the Supabase PostgREST endpoint by clients.
+REVOKE EXECUTE ON FUNCTION funnel_counts(timestamptz, timestamptz, text, text) FROM anon, authenticated;
+REVOKE EXECUTE ON FUNCTION funnel_weekly_summary(date) FROM anon, authenticated;

@@ -195,24 +195,44 @@ describe('GET /api/admin/funnel-analytics', () => {
     }));
   });
 
-  it('ignores invalid gender filter values', async () => {
+  it('ignores invalid gender filter values (maps to null)', async () => {
     const mockRpc = vi.fn().mockResolvedValue({ data: mockFunnelData, error: null });
     (createServiceRoleClient as ReturnType<typeof vi.fn>).mockReturnValue({ rpc: mockRpc });
 
     const { GET } = await import('@/app/api/admin/funnel-analytics/route');
     const res = await GET(createAuthorizedRequest({ gender: 'unknown' }));
-    const data = await res.json();
 
-    // Should either ignore or return 400 — the invalid filter must not crash
-    expect([200, 400]).toContain(res.status);
-    if (res.status === 200) {
-      // gender_filter should be null (invalid value ignored)
-      expect(mockRpc).toHaveBeenCalledWith('funnel_counts', expect.objectContaining({
-        gender_filter: null,
-      }));
-    } else {
-      expect(data).toHaveProperty('error');
-    }
+    // Invalid gender values are silently mapped to null (no error thrown)
+    expect(res.status).toBe(200);
+    expect(mockRpc).toHaveBeenCalledWith('funnel_counts', expect.objectContaining({
+      gender_filter: null,
+    }));
+  });
+
+  it('returns 400 when "from" date param is not a valid ISO date', async () => {
+    const { GET } = await import('@/app/api/admin/funnel-analytics/route');
+    const res = await GET(createAuthorizedRequest({ from: 'not-a-date' }));
+    expect(res.status).toBe(400);
+    const data = await res.json();
+    expect(data).toHaveProperty('error');
+    expect(data.error).toMatch(/from/i);
+  });
+
+  it('returns 400 when "to" date param is not a valid ISO date', async () => {
+    const { GET } = await import('@/app/api/admin/funnel-analytics/route');
+    const res = await GET(createAuthorizedRequest({ to: 'not-a-date' }));
+    expect(res.status).toBe(400);
+    const data = await res.json();
+    expect(data).toHaveProperty('error');
+    expect(data.error).toMatch(/to/i);
+  });
+
+  it('returns 400 when "from" date is after "to" date', async () => {
+    const { GET } = await import('@/app/api/admin/funnel-analytics/route');
+    const res = await GET(createAuthorizedRequest({ from: '2026-03-01', to: '2026-01-01' }));
+    expect(res.status).toBe(400);
+    const data = await res.json();
+    expect(data).toHaveProperty('error');
   });
 
   it('includes gender and device filters in the response filters object', async () => {

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { isAuthorized } from '@/lib/admin/auth';
+import { isAnalyticsTableMissingError } from '@/lib/admin/supabase-errors';
 
 /**
  * Shape of a single funnel step returned by the weekly summary RPC.
@@ -34,15 +35,6 @@ interface WeeklySummaryRaw {
     previous_sessions: number;
     delta_percent: number | null;
   }>;
-}
-
-/**
- * Determines whether an RPC error indicates the analytics_events table is missing.
- */
-function isTableMissingError(error: { message?: string; code?: string }): boolean {
-  if (error.code === '42P01') return true;
-  if (error.message && error.message.includes('analytics_events')) return true;
-  return false;
 }
 
 /**
@@ -119,11 +111,11 @@ export async function GET(request: NextRequest) {
 
     if (error) {
       // Graceful degradation: analytics_events table not yet created
-      if (isTableMissingError(error as { message?: string; code?: string })) {
+      if (isAnalyticsTableMissingError(error as { message?: string; code?: string })) {
         return NextResponse.json(
           {
             error: 'analytics_events table not available',
-            hint: 'Complete story 10-1 first to create the analytics_events table.',
+            hint: 'Complete story 10-1 first',
           },
           { status: 503 }
         );

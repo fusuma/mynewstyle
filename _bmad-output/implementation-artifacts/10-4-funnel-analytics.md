@@ -1,6 +1,6 @@
 # Story 10.4: Funnel Analytics
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -146,19 +146,24 @@ No blocking issues encountered. All tasks completed in a single pass.
 - Implemented `funnel_weekly_summary` SQL function that internally calls `funnel_counts` for two 7-day windows and builds a delta comparison JSONB object.
 - Performance indexes added on `event_type` and `(session_id, event_type)` (AC #8).
 - `funnel_counts` landing step matches both `landing_visited` and `page_view` with `event_data->>'page' = 'landing'` (AC #1).
-- Gender filter implemented by first collecting matching session IDs from `gender_selected` events, then filtering all funnel steps (AC #2, #5).
+- Gender filter implemented by collecting matching session IDs from `gender_selected` events (AC #2) with fallback join to `consultations.gender` via `analytics_events.session_id = consultations.guest_session_id` (AC #2, Task 1.5 — covers returning users who skip the gender_selected step).
 - Device filter via `device_info->>'deviceType'` (AC #2, #4).
 - Drop-off rate uses `ROUND(1.0 - (current/previous), 6)` with NULL guard for division by zero (AC #1).
 - Both API routes use the shared `isAuthorized()` from `@/lib/admin/auth` (AC #4, #5).
-- Both routes return 503 with `{ error: "analytics_events table not available", hint: "Complete story 10-1 first" }` for PostgreSQL 42P01 or message-matching errors (AC #6).
-- 34 unit tests written and passing: 19 for funnel-analytics route and 15 for weekly-summary route.
-- Full test suite (2145 tests) passes with zero regressions.
+- Both routes return 503 with `{ error: "analytics_events table not available", hint: "Complete story 10-1 first" }` exactly per AC #6 for PostgreSQL 42P01 or scoped message-matching errors.
+- `isTableMissingError` extracted to shared `@/lib/admin/supabase-errors.ts` as `isAnalyticsTableMissingError` with tighter message check (requires both "does not exist" and "analytics_events" to avoid false positives).
+- `funnel_counts` and `funnel_weekly_summary` SQL functions have REVOKE EXECUTE for anon/authenticated roles (security: prevents direct PostgREST invocation bypassing admin auth).
+- Input validation for `from`/`to` date params: returns 400 for invalid ISO strings or inverted date ranges.
+- Migration file renamed to valid timestamp `20260302230000` (was `20260302700000` with invalid hour=70).
+- 37 unit tests written and passing: 22 for funnel-analytics route and 15 for weekly-summary route (3 new tests added in code review for date validation).
+- Full test suite (2148 tests) passes with zero regressions.
 
 ### File List
 
-- supabase/migrations/20260302700000_add_funnel_analytics_views.sql
+- supabase/migrations/20260302230000_add_funnel_analytics_views.sql
 - src/app/api/admin/funnel-analytics/route.ts
 - src/app/api/admin/funnel-analytics/weekly-summary/route.ts
+- src/lib/admin/supabase-errors.ts
 - src/test/funnel-analytics-api.test.ts
 - src/test/funnel-weekly-summary-api.test.ts
 - _bmad-output/implementation-artifacts/10-4-funnel-analytics.md
@@ -167,3 +172,4 @@ No blocking issues encountered. All tasks completed in a single pass.
 ### Change Log
 
 - 2026-03-02: Implemented Story 10.4 Funnel Analytics — created SQL migration with `funnel_counts` and `funnel_weekly_summary` PostgreSQL functions, two admin API routes, and 34 unit tests covering auth, happy path, filter application, and graceful error handling for missing table.
+- 2026-03-02: Code review fixes — (1) added consultations.gender fallback to gender filter in SQL (AC #2/Task 1.5 completion), (2) added REVOKE EXECUTE on SQL functions to prevent anon/authenticated PostgREST access, (3) extracted `isAnalyticsTableMissingError` to shared `@/lib/admin/supabase-errors.ts` with tighter match logic, (4) added `from`/`to` date input validation returning 400 for invalid inputs, (5) fixed AC#6 hint message to exactly match spec, (6) fixed flaky invalid-filter test assertion, (7) renamed migration file from invalid timestamp 20260302700000 to 20260302230000. Test count: 37 (was 34). Full suite: 2148 tests passing.
