@@ -59,6 +59,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   // Create Supabase client (uses cookies for SSR)
   const supabase = await createClient();
 
+  // Capture consent timestamp at the moment of registration (LGPD Story 11.2).
+  // This records exactly when the user accepted the privacy policy.
+  const lgpdConsentGivenAt = new Date().toISOString();
+
   // Register user via Supabase Auth
   const { data, error } = await supabase.auth.signUp({
     email,
@@ -67,6 +71,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       data: {
         full_name: name,
         display_name: name,
+        /** LGPD: ISO timestamp of informed consent to data processing. Story 11.2. */
+        lgpd_consent_given_at: lgpdConsentGivenAt,
       },
     },
   });

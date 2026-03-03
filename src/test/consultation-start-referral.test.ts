@@ -14,6 +14,8 @@ const validPayload = {
   gender: 'male',
   photoUrl: 'data:image/jpeg;base64,/9j/4AAQ',
   questionnaire: { q1: 'answer1' },
+  // Story 11.2: LGPD consent timestamp is now required
+  photoConsentGivenAt: new Date().toISOString(),
 };
 
 describe('POST /api/consultation/start — referral code (AC #4)', () => {

@@ -70,6 +70,8 @@ export interface ConsultationStartPayload {
   guestSessionId?: string;
   /** Referral code from localStorage (Story 9.5). Omit if not attributed. */
   referralCode?: string;
+  /** LGPD: ISO timestamp when user gave explicit consent for photo processing (Story 11.2). */
+  photoConsentGivenAt: string;
 }
 
 export interface ConsultationStartResponse {
@@ -99,6 +101,8 @@ export interface ConsultationRecord {
   rating?: number | null;
   /** Decomposed rating details. Story 10.5 */
   rating_details?: RatingDetails | null;
+  /** LGPD: ISO timestamp when user gave explicit photo processing consent. Story 11.2 */
+  photo_consent_given_at: string | null;
 }
 
 // AI Provider types (Story 4.1)

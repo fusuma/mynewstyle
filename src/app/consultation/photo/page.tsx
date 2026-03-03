@@ -16,6 +16,7 @@ import { useSessionRecovery } from "@/hooks/useSessionRecovery";
 import { saveSessionData, clearSessionData } from "@/lib/persistence/session-db";
 import { SessionRecoveryBanner } from "@/components/consultation/SessionRecoveryBanner";
 import { getOrCreateGuestSessionId } from "@/lib/guest-session";
+import { useConsultationStore } from "@/stores/consultation";
 
 type PhotoMode = "camera" | "gallery";
 type CompressionState = "idle" | "compressing" | "done" | "error";
@@ -43,6 +44,11 @@ type UploadState = "idle" | "uploading" | "done" | "error";
  * If found, shows recovery banner allowing user to continue or retake.
  * On photo confirm, saves session data to IndexedDB (fire-and-forget).
  * On successful upload + navigation, clears IndexedDB.
+ *
+ * LGPD Consent (Story 11.2):
+ * Consent checkbox is shown before camera/gallery becomes active.
+ * The capture button and gallery upload are blocked until consent is given.
+ * Consent state lives at this page level and is passed as props to children.
  */
 export default function PhotoPage() {
   const [capturedPhoto, setCapturedPhoto] = useState<Blob | null>(null);
@@ -63,6 +69,21 @@ export default function PhotoPage() {
   // Session recovery state (Story 2.7)
   const { recoveredSession, isChecking, clearRecovery } = useSessionRecovery();
   const [showRecoveryBanner, setShowRecoveryBanner] = useState(false);
+
+  // LGPD consent state (Story 11.2) — lives at page level, passed as props to children
+  const [consentChecked, setConsentChecked] = useState(false);
+  const setPhotoConsentGivenAt = useConsultationStore((s) => s.setPhotoConsentGivenAt);
+
+  // When consent is checked, capture the timestamp and persist it to the Zustand store.
+  // This allows the questionnaire page to include photoConsentGivenAt when submitting the consultation.
+  const handleConsentChange = useCallback((checked: boolean) => {
+    setConsentChecked(checked);
+    if (checked) {
+      setPhotoConsentGivenAt(new Date().toISOString());
+    } else {
+      setPhotoConsentGivenAt(null);
+    }
+  }, [setPhotoConsentGivenAt]);
 
   // Show recovery banner when a session is found
   useEffect(() => {
@@ -112,6 +133,9 @@ export default function PhotoPage() {
     setValidationState("pending");
     setUploadState("idle");
     setUploadResult(null);
+    // NOTE: consentChecked is intentionally NOT reset on retry.
+    // Per LGPD recommendation, require consent again only on session recovery,
+    // not on simple retakes within the same session.
   }, []);
 
   const handleRetryCompression = useCallback(() => {
@@ -236,6 +260,8 @@ export default function PhotoPage() {
     setCompressionState("done");
     setValidationState("valid"); // Skip validation -- already validated before save
     setShowRecoveryBanner(false);
+    // NOTE: consent is NOT restored from session recovery per LGPD recommendation.
+    // The user must re-confirm consent after recovery.
 
     // Restore consultation context.
     // The canonical guest session ID is already in localStorage (guest-session.ts),
@@ -363,13 +389,63 @@ export default function PhotoPage() {
     }
   }
 
+  // --- Consent checkbox (Task 2.2: persistent above capture/gallery screens) ---
+  const consentCheckboxUI = (
+    <div className="w-full px-4 pb-2 pt-4">
+      <label className="flex cursor-pointer items-start gap-3 text-left">
+        <input
+          data-testid="photo-consent-checkbox"
+          type="checkbox"
+          checked={consentChecked}
+          onChange={(e) => handleConsentChange(e.target.checked)}
+          className="mt-0.5 h-4 w-4 shrink-0 rounded border-border text-accent accent-accent focus:ring-accent"
+          aria-label="Consinto o processamento da minha foto para analise de visagismo"
+        />
+        <span className="text-sm text-muted-foreground">
+          Consinto o processamento da minha foto para analise de visagismo
+        </span>
+      </label>
+      {/* Task 2.5: Muted hint when unchecked */}
+      {!consentChecked && (
+        <p className="mt-1 pl-7 text-xs text-muted-foreground/70">
+          Marque a caixa acima para continuar
+        </p>
+      )}
+    </div>
+  );
+
   if (mode === "gallery") {
     return (
-      <GalleryUpload onUpload={handleCompressAndStore} onSwitchToCamera={handleSwitchToCamera} />
+      <div className="flex min-h-screen flex-col bg-background">
+        {/* Task 2.2: Consent checkbox above gallery upload, persistent */}
+        <div className="flex flex-col items-center">
+          <div className="w-full max-w-sm">
+            {consentCheckboxUI}
+          </div>
+        </div>
+        <GalleryUpload
+          onUpload={handleCompressAndStore}
+          onSwitchToCamera={handleSwitchToCamera}
+          consentChecked={consentChecked}
+          onConsentChange={handleConsentChange}
+        />
+      </div>
     );
   }
 
   return (
-    <PhotoCapture onCapture={handleCompressAndStore} onSwitchToGallery={handleSwitchToGallery} />
+    <div className="flex min-h-screen flex-col bg-background">
+      {/* Task 2.2: Consent checkbox above camera capture, persistent */}
+      <div className="flex flex-col items-center">
+        <div className="w-full max-w-sm">
+          {consentCheckboxUI}
+        </div>
+      </div>
+      <PhotoCapture
+        onCapture={handleCompressAndStore}
+        onSwitchToGallery={handleSwitchToGallery}
+        consentChecked={consentChecked}
+      />
+    </div>
   );
 }

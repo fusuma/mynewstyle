@@ -22,6 +22,11 @@ type CaptureState =
 interface PhotoCaptureProps {
   onCapture?: (blob: Blob) => void;
   onSwitchToGallery?: () => void;
+  /**
+   * When false, the capture button is disabled until the user checks the
+   * LGPD consent checkbox on the parent photo page. Story 11.2.
+   */
+  consentChecked?: boolean;
 }
 
 /**
@@ -49,7 +54,7 @@ function getErrorMessage(error: CameraError): string {
  * Handles camera lifecycle, WebView detection, permission prompts,
  * face oval overlay, guidance tips, and photo capture.
  */
-export function PhotoCapture({ onCapture, onSwitchToGallery }: PhotoCaptureProps) {
+export function PhotoCapture({ onCapture, onSwitchToGallery, consentChecked = true }: PhotoCaptureProps) {
   const prefersReducedMotion = useReducedMotion();
   const {
     stream,
@@ -234,10 +239,10 @@ export function PhotoCapture({ onCapture, onSwitchToGallery }: PhotoCaptureProps
         {/* Guidance tips */}
         <CameraGuidanceTips />
 
-        {/* Capture button */}
+        {/* Capture button — disabled until LGPD consent is given (Story 11.2) */}
         <motion.button
           onClick={handleCapture}
-          disabled={isLoading || !stream}
+          disabled={isLoading || !stream || !consentChecked}
           className="flex h-16 w-16 items-center justify-center rounded-full border-4 border-foreground bg-foreground/10 text-foreground transition-colors hover:bg-foreground/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 md:h-[72px] md:w-[72px]"
           aria-label="Capturar foto"
           type="button"

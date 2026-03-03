@@ -196,7 +196,7 @@ describe("Photo Page Integration", () => {
     // Gallery upload should be ready for file selection
     // (Full end-to-end tested in gallery-upload.test.tsx)
     expect(
-      screen.getByLabelText(/Confirmo que esta foto é minha/)
+      screen.getByLabelText(/Consinto o processamento da minha foto para analise de visagismo/)
     ).toBeInTheDocument();
   });
 
@@ -241,7 +241,7 @@ describe("Photo Page Integration", () => {
 
     // Check consent
     const checkbox = screen.getByLabelText(
-      /Confirmo que esta foto é minha/
+      /Consinto o processamento da minha foto para analise de visagismo/
     );
     fireEvent.click(checkbox);
 

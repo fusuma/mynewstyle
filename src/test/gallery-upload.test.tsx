@@ -63,7 +63,7 @@ describe("GalleryUpload", () => {
     it("renders consent checkbox", () => {
       render(<GalleryUpload onUpload={vi.fn()} />);
       expect(
-        screen.getByLabelText(/Confirmo que esta foto é minha/)
+        screen.getByLabelText(/Consinto o processamento da minha foto para analise de visagismo/)
       ).toBeInTheDocument();
     });
 
@@ -233,7 +233,7 @@ describe("GalleryUpload", () => {
 
       // Check consent first
       const checkbox = screen.getByLabelText(
-        /Confirmo que esta foto é minha/
+        /Consinto o processamento da minha foto para analise de visagismo/
       );
       fireEvent.click(checkbox);
 
@@ -274,7 +274,7 @@ describe("GalleryUpload", () => {
 
       // Now check consent
       const checkbox = screen.getByLabelText(
-        /Confirmo que esta foto é minha/
+        /Consinto o processamento da minha foto para analise de visagismo/
       );
       fireEvent.click(checkbox);
 
@@ -303,7 +303,7 @@ describe("GalleryUpload", () => {
 
       // Check consent
       const checkbox = screen.getByLabelText(
-        /Confirmo que esta foto é minha/
+        /Consinto o processamento da minha foto para analise de visagismo/
       );
       fireEvent.click(checkbox);
 
@@ -424,7 +424,7 @@ describe("GalleryUpload", () => {
 
       // Check consent first
       const checkbox = screen.getByLabelText(
-        /Confirmo que esta foto é minha/
+        /Consinto o processamento da minha foto para analise de visagismo/
       );
       fireEvent.click(checkbox);
 
@@ -476,7 +476,7 @@ describe("GalleryUpload", () => {
       render(<GalleryUpload onUpload={vi.fn()} />);
       const checkbox = screen.getByRole("checkbox");
       expect(checkbox).toHaveAccessibleName(
-        /Confirmo que esta foto é minha/
+        /Consinto o processamento da minha foto para analise de visagismo/
       );
     });
 
@@ -543,7 +543,7 @@ describe("GalleryUpload", () => {
 
       // Check consent first
       const checkbox = screen.getByLabelText(
-        /Confirmo que esta foto é minha/
+        /Consinto o processamento da minha foto para analise de visagismo/
       );
       fireEvent.click(checkbox);
 

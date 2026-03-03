@@ -113,9 +113,11 @@ async function uploadInGalleryMode() {
     ).toBeInTheDocument();
   });
 
-  // Check consent
-  const checkbox = screen.getByLabelText(/Confirmo que esta foto é minha/);
-  fireEvent.click(checkbox);
+  // Ensure consent is checked (idempotent: only click if not already checked)
+  const checkbox = screen.getByLabelText(/Consinto o processamento da minha foto para analise de visagismo/) as HTMLInputElement;
+  if (!checkbox.checked) {
+    fireEvent.click(checkbox);
+  }
 
   // Select a file
   const input = document.querySelector(

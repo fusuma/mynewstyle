@@ -10,6 +10,16 @@ import { correctExifOrientation } from "@/lib/photo/exif";
 interface GalleryUploadProps {
   onUpload: (blob: Blob) => void;
   onSwitchToCamera?: () => void;
+  /**
+   * Controlled consent state from parent. When provided, the component uses
+   * the parent's consent value instead of internal state (Story 11.2).
+   */
+  consentChecked?: boolean;
+  /**
+   * Called when the user toggles the consent checkbox in prop-controlled mode.
+   * Required if consentChecked is provided.
+   */
+  onConsentChange?: (checked: boolean) => void;
 }
 
 /**
@@ -33,16 +43,23 @@ function formatFileSize(bytes: number): string {
 export function GalleryUpload({
   onUpload,
   onSwitchToCamera,
+  consentChecked: consentCheckedProp,
+  onConsentChange,
 }: GalleryUploadProps) {
   const prefersReducedMotion = useReducedMotion();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [isDragOver, setIsDragOver] = useState(false);
-  const [consentChecked, setConsentChecked] = useState(false);
+  // Internal consent state — used only when consentCheckedProp is not provided (uncontrolled mode)
+  const [consentCheckedInternal, setConsentCheckedInternal] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [consentReminder, setConsentReminder] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
+  // Resolve consent state: prefer prop (controlled) over internal state (uncontrolled)
+  const isControlled = consentCheckedProp !== undefined;
+  const consentChecked = isControlled ? consentCheckedProp : consentCheckedInternal;
 
   const openFilePicker = useCallback(() => {
     fileInputRef.current?.click();
@@ -101,18 +118,26 @@ export function GalleryUpload({
 
   /**
    * Handle consent checkbox change.
+   * In controlled mode: delegates to onConsentChange prop.
+   * In uncontrolled mode: updates internal state.
    * If a file is pending and consent is now given, process it.
    */
   const handleConsentChange = useCallback(
     async (checked: boolean) => {
-      setConsentChecked(checked);
+      if (isControlled) {
+        // Notify parent of the change
+        onConsentChange?.(checked);
+      } else {
+        // Manage internal state
+        setConsentCheckedInternal(checked);
+      }
 
       if (checked && selectedFile) {
         setConsentReminder(false);
         await processFile(selectedFile);
       }
     },
-    [selectedFile, processFile]
+    [isControlled, onConsentChange, selectedFile, processFile]
   );
 
   /**
@@ -277,19 +302,21 @@ export function GalleryUpload({
           </div>
         )}
 
-        {/* Consent checkbox */}
-        <label className="flex items-start gap-3 text-left">
-          <input
-            type="checkbox"
-            checked={consentChecked}
-            onChange={(e) => handleConsentChange(e.target.checked)}
-            className="mt-0.5 h-4 w-4 shrink-0 rounded border-border text-accent accent-accent focus:ring-accent"
-            aria-label="Confirmo que esta foto é minha e consinto no seu processamento"
-          />
-          <span className="text-sm text-muted-foreground">
-            Confirmo que esta foto é minha e consinto no seu processamento
-          </span>
-        </label>
+        {/* Consent checkbox — hidden in controlled mode (parent shows it). Rendered in standalone mode. */}
+        {!isControlled && (
+          <label className="flex items-start gap-3 text-left">
+            <input
+              type="checkbox"
+              checked={consentChecked}
+              onChange={(e) => handleConsentChange(e.target.checked)}
+              className="mt-0.5 h-4 w-4 shrink-0 rounded border-border text-accent accent-accent focus:ring-accent"
+              aria-label="Consinto o processamento da minha foto para analise de visagismo"
+            />
+            <span className="text-sm text-muted-foreground">
+              Consinto o processamento da minha foto para analise de visagismo
+            </span>
+          </label>
+        )}
 
         {/* Upload button */}
         <Button

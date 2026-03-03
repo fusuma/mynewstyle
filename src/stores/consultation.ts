@@ -35,6 +35,9 @@ export interface ConsultationStore {
   // Rating (Story 10.5) — session flag to prevent re-prompting
   ratingSubmitted: boolean;
 
+  // LGPD photo consent (Story 11.2) — ISO timestamp captured at consent time
+  photoConsentGivenAt: string | null;
+
   // Actions
   setGender: (gender: 'male' | 'female') => void;
   setPhoto: (photo: Blob) => void;
@@ -47,6 +50,7 @@ export interface ConsultationStore {
   setPaymentStatus: (status: 'none' | 'pending' | 'paid' | 'failed' | 'refunded') => void;
   setGuestSessionId: (id: string) => void;
   setRatingSubmitted: (submitted: boolean) => void;
+  setPhotoConsentGivenAt: (timestamp: string | null) => void;
   reset: () => void;
 
   // Preview actions (Story 7.4)
@@ -75,6 +79,7 @@ const initialState = {
   paymentStatus: 'none' as const,
   isReturningUser: false,
   ratingSubmitted: false,
+  photoConsentGivenAt: null as string | null,
   // guestSessionId intentionally NOT in initialState so reset() doesn't clear it
 };
 
@@ -106,6 +111,7 @@ export const useConsultationStore = create<ConsultationStore>()(
       setPaymentStatus: (status) => set({ paymentStatus: status }),
       setGuestSessionId: (id) => set({ guestSessionId: id }),
       setRatingSubmitted: (submitted) => set({ ratingSubmitted: submitted }),
+      setPhotoConsentGivenAt: (timestamp) => set({ photoConsentGivenAt: timestamp }),
 
       reset: () => {
         // Preserve guestSessionId — it must survive across consultations
@@ -168,6 +174,7 @@ export const useConsultationStore = create<ConsultationStore>()(
         isReturningUser: state.isReturningUser,
         guestSessionId: state.guestSessionId,
         ratingSubmitted: state.ratingSubmitted, // Story 10.5: prevent re-prompting after navigation
+        photoConsentGivenAt: state.photoConsentGivenAt, // Story 11.2: LGPD photo consent timestamp
         // EXCLUDE: photo (Blob -- cannot serialize to JSON, handled by IndexedDB in Story 2.7)
         // EXCLUDE: faceAnalysis, consultation, previews (future stories, re-fetched from API)
       }),

@@ -13,6 +13,14 @@ const ConsultationStartSchema = z.object({
     z.union([z.string(), z.array(z.string()), z.number()])
   ),
   /**
+   * LGPD: ISO 8601 timestamp when user gave explicit consent for biometric photo processing.
+   * Required under LGPD Art. 11 for sensitive biometric data. Story 11.2.
+   * Accepts both UTC (Z) and offset (+00:00) forms.
+   */
+  photoConsentGivenAt: z
+    .string()
+    .datetime({ offset: true, message: 'photoConsentGivenAt must be a valid ISO 8601 datetime' }),
+  /**
    * Optional guest session UUID (Story 8.4).
    * When provided, must be a valid UUID v4. Stored on the consultation record
    * so RLS policies and API routes can grant guest access.
@@ -53,7 +61,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { gender, photoUrl, questionnaire, guestSessionId, referralCode } = result.data;
+    const { gender, photoUrl, questionnaire, photoConsentGivenAt, guestSessionId, referralCode } = result.data;
     const consultationId = crypto.randomUUID();
 
     const record: ConsultationRecord = {
@@ -65,6 +73,7 @@ export async function POST(request: NextRequest) {
       createdAt: new Date().toISOString(),
       guest_session_id: guestSessionId ?? null,
       referral_code: referralCode ?? null,
+      photo_consent_given_at: photoConsentGivenAt,
     };
 
     consultations.set(consultationId, record);

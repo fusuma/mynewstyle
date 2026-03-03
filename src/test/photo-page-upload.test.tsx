@@ -99,8 +99,11 @@ async function uploadInGalleryMode() {
     expect(screen.getByText('Escolher foto da galeria')).toBeInTheDocument();
   });
 
-  const checkbox = screen.getByLabelText(/Confirmo que esta foto é minha/);
-  fireEvent.click(checkbox);
+  // Ensure consent is checked (idempotent: only click if not already checked)
+  const checkbox = screen.getByLabelText(/Consinto o processamento da minha foto para analise de visagismo/) as HTMLInputElement;
+  if (!checkbox.checked) {
+    fireEvent.click(checkbox);
+  }
 
   const input = document.querySelector('input[type="file"]') as HTMLInputElement;
   const file = new File([new Uint8Array(1024)], 'photo.jpg', {

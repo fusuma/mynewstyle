@@ -12,6 +12,8 @@ const validPayload: ConsultationStartPayload = {
     q2: ['option1', 'option2'],
     q3: 3,
   },
+  // Story 11.2: LGPD consent timestamp is now required
+  photoConsentGivenAt: new Date().toISOString(),
 };
 
 const fastRetry = { retryDelayMs: 0 };

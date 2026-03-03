@@ -86,6 +86,7 @@ describe('QuestionnairePage - submission flow', () => {
     mockStoreState = {
       gender: 'male',
       photoPreview: 'data:image/jpeg;base64,testphoto',
+      photoConsentGivenAt: '2026-03-03T00:00:00.000Z',
       questionnaire: null,
       consultationId: null,
       setQuestionnaireComplete: mockSetQuestionnaireComplete,
@@ -120,6 +121,7 @@ describe('QuestionnairePage - submission flow', () => {
       gender: 'male',
       photoUrl: 'data:image/jpeg;base64,testphoto',
       questionnaire: testResponses,
+      photoConsentGivenAt: expect.any(String),
     });
   });
 

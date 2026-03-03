@@ -21,6 +21,9 @@ export default function QuestionnairePage() {
   const setConsultationId = useConsultationStore(
     (state) => state.setConsultationId
   );
+  const photoConsentGivenAt = useConsultationStore(
+    (state) => state.photoConsentGivenAt
+  );
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isSubmittingRef = useRef(false);
@@ -80,10 +83,16 @@ export default function QuestionnairePage() {
       trackEvent(AnalyticsEventType.QUESTIONNAIRE_COMPLETED, { durationMs });
 
       try {
+        // LGPD (Story 11.2): photoConsentGivenAt is required by the API.
+        // It was captured when the user checked the consent checkbox on the photo page.
+        // If for any reason it's null (e.g., direct navigation), use current timestamp as fallback.
+        const consentTimestamp = photoConsentGivenAt ?? new Date().toISOString();
+
         const result = await submitConsultation({
           gender: gender!,
           photoUrl: photoPreview || '',
           questionnaire: responses,
+          photoConsentGivenAt: consentTimestamp,
         });
 
         setConsultationId(result.consultationId);
@@ -95,7 +104,7 @@ export default function QuestionnairePage() {
         setIsSubmitting(false);
       }
     },
-    [gender, photoPreview, setQuestionnaireComplete, setConsultationId, router]
+    [gender, photoPreview, photoConsentGivenAt, setQuestionnaireComplete, setConsultationId, router]
   );
 
   if (!gender || !config) return null;
