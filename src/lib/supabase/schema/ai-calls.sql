@@ -19,3 +19,11 @@ CREATE TABLE IF NOT EXISTS ai_calls (
 CREATE INDEX IF NOT EXISTS idx_ai_calls_consultation_id ON ai_calls(consultation_id);
 CREATE INDEX IF NOT EXISTS idx_ai_calls_task ON ai_calls(task);
 CREATE INDEX IF NOT EXISTS idx_ai_calls_timestamp ON ai_calls(timestamp);
+
+-- RLS: ai_calls is accessed only via SECURITY DEFINER functions (service role).
+-- Enable RLS and REVOKE public access to prevent direct PostgREST access
+-- from anon or authenticated roles (SOSLeiria pattern).
+ALTER TABLE ai_calls ENABLE ROW LEVEL SECURITY;
+
+-- Revoke all public access (service role bypasses RLS)
+REVOKE ALL ON ai_calls FROM anon, authenticated;
