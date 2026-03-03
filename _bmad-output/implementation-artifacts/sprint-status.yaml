@@ -145,12 +145,12 @@ development_status:
   epic-10-retrospective: optional
 
   # E11: LGPD Compliance (Sprint 3 parallel)
-  epic-11: backlog
-  11-1-privacy-policy-lgpd-compliant: backlog
-  11-2-consent-flow: backlog
-  11-3-right-to-deletion: backlog
-  11-4-data-export-right-to-access: backlog
-  11-5-rls-audit-in-ci-cd: backlog
+  epic-11: in-progress
+  11-1-privacy-policy-lgpd-compliant: done
+  11-2-consent-flow: ready-for-dev
+  11-3-right-to-deletion: ready-for-dev
+  11-4-data-export-right-to-access: ready-for-dev
+  11-5-rls-audit-in-ci-cd: ready-for-dev
   epic-11-retrospective: optional
 
   # E12: Future Add-ons - Post-MVP

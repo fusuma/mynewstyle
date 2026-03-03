@@ -91,9 +91,8 @@ describe("PrivacidadePage", () => {
 
   it("contains data retention information", () => {
     render(<PrivacidadePage />);
-    expect(
-      screen.getByText(/90 dias/i)
-    ).toBeInTheDocument();
+    const matches = screen.getAllByText(/90 dias/i);
+    expect(matches.length).toBeGreaterThanOrEqual(1);
   });
 
   it("uses semantic heading hierarchy (h1 > h2)", () => {
