@@ -149,7 +149,7 @@ development_status:
   11-1-privacy-policy-lgpd-compliant: done
   11-2-consent-flow: done
   11-3-right-to-deletion: done
-  11-4-data-export-right-to-access: ready-for-dev
+  11-4-data-export-right-to-access: done
   11-5-rls-audit-in-ci-cd: ready-for-dev
   epic-11-retrospective: optional
 

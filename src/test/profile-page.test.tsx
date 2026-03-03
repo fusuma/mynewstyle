@@ -56,6 +56,13 @@ vi.mock('lucide-react', () => ({
   Trash2: ({ className }: React.SVGAttributes<SVGElement>) => (
     <svg data-testid="icon-trash2" className={className} />
   ),
+  // Icons used by DataExportButton (Story 11.4)
+  Download: ({ className }: React.SVGAttributes<SVGElement>) => (
+    <svg data-testid="icon-download" className={className} />
+  ),
+  Loader2: ({ className }: React.SVGAttributes<SVGElement>) => (
+    <svg data-testid="icon-loader2" className={className} />
+  ),
 }));
 
 // Mock face-shape-labels

@@ -8,6 +8,7 @@ import { ConsultationHistoryTab } from './ConsultationHistoryTab';
 import { FavoritesTab } from './FavoritesTab';
 import { ReferralLinkCard } from './ReferralLinkCard';
 import { DeleteAccountButton } from './DeleteAccountButton';
+import { DataExportButton } from './DataExportButton';
 import type { UserProfile } from '@/types';
 
 interface ProfilePageProps {
@@ -111,13 +112,18 @@ export function ProfilePage({ userProfile }: ProfilePageProps) {
           <ReferralLinkCard />
         </div>
 
-        {/* Story 11-3: Account settings / danger zone (AC #1) */}
+        {/* Story 11-3 + 11-4: Account settings / danger zone */}
         <div className="px-4 pb-8">
           <div className="w-full max-w-[1200px] mx-auto">
             <div className="border-t border-border pt-6">
               <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-4">
                 Definicoes da conta
               </h2>
+              {/* Story 11-4: Data export button (LGPD right to access) */}
+              <div className="mb-3">
+                <DataExportButton />
+              </div>
+              {/* Story 11-3: Delete account button (LGPD right to deletion) */}
               <DeleteAccountButton />
             </div>
           </div>

@@ -27,6 +27,7 @@ export enum AnalyticsEventType {
   BARBER_CARD_GENERATED = 'barber_card_generated',
   SHARE_GENERATED = 'share_generated',
   RESULTS_RATED = 'results_rated',
+  DATA_EXPORT_REQUESTED = 'data_export_requested',
 }
 
 /**
@@ -50,7 +51,8 @@ export type AnalyticsEventPayload =
   | { type: 'preview_completed'; durationMs: number; qualityGate: 'pass' | 'fail' }
   | { type: 'barber_card_generated' }
   | { type: 'share_generated'; format: string }
-  | { type: 'results_rated'; rating: number };
+  | { type: 'results_rated'; rating: number }
+  | { type: 'data_export_requested'; userId: string };
 
 /**
  * Device information captured on each analytics event.

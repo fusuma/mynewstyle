@@ -6,7 +6,7 @@ import {
 } from '@/lib/analytics/types';
 
 describe('AnalyticsEventType enum', () => {
-  it('has all 16 required event types', () => {
+  it('has all 17 required event types', () => {
     const expectedTypes = [
       'gender_selected',
       'photo_captured',
@@ -24,10 +24,11 @@ describe('AnalyticsEventType enum', () => {
       'barber_card_generated',
       'share_generated',
       'results_rated',
+      'data_export_requested',
     ];
 
     const enumValues = Object.values(AnalyticsEventType);
-    expect(enumValues).toHaveLength(16);
+    expect(enumValues).toHaveLength(17);
     for (const expected of expectedTypes) {
       expect(enumValues).toContain(expected);
     }
@@ -95,6 +96,10 @@ describe('AnalyticsEventType enum', () => {
 
   it('has results_rated event type', () => {
     expect(AnalyticsEventType.RESULTS_RATED).toBe('results_rated');
+  });
+
+  it('has data_export_requested event type', () => {
+    expect(AnalyticsEventType.DATA_EXPORT_REQUESTED).toBe('data_export_requested');
   });
 });
 
