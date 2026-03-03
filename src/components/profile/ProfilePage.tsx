@@ -7,6 +7,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { ConsultationHistoryTab } from './ConsultationHistoryTab';
 import { FavoritesTab } from './FavoritesTab';
 import { ReferralLinkCard } from './ReferralLinkCard';
+import { DeleteAccountButton } from './DeleteAccountButton';
 import type { UserProfile } from '@/types';
 
 interface ProfilePageProps {
@@ -108,6 +109,18 @@ export function ProfilePage({ userProfile }: ProfilePageProps) {
         {/* Story 9-5: Referral link card below the tabs (AC #6) */}
         <div className="px-4 py-6">
           <ReferralLinkCard />
+        </div>
+
+        {/* Story 11-3: Account settings / danger zone (AC #1) */}
+        <div className="px-4 pb-8">
+          <div className="w-full max-w-[1200px] mx-auto">
+            <div className="border-t border-border pt-6">
+              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-4">
+                Definicoes da conta
+              </h2>
+              <DeleteAccountButton />
+            </div>
+          </div>
         </div>
       </main>
     </div>

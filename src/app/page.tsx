@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { HeroSection } from "@/components/landing/HeroSection";
 import { HowItWorksSection } from "@/components/landing/HowItWorksSection";
 import { TrustPrivacySection } from "@/components/landing/TrustPrivacySection";
 import { InteractiveDemoSection } from "@/components/landing/InteractiveDemoSection";
 import { Footer } from "@/components/layout/Footer";
+import { AccountDeletedNotifier } from "@/components/landing/AccountDeletedNotifier";
 
 export const metadata: Metadata = {
   title: "MyNewStyle - Consultoria de Visagismo com IA",
@@ -42,6 +44,10 @@ export default function Home() {
         <InteractiveDemoSection />
       </main>
       <Footer />
+      {/* Story 11-3: Show success toast after account deletion redirect (AC #5) */}
+      <Suspense fallback={null}>
+        <AccountDeletedNotifier />
+      </Suspense>
     </>
   );
 }

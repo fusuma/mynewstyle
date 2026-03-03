@@ -52,6 +52,10 @@ vi.mock('lucide-react', () => ({
   AlertCircle: ({ className }: React.SVGAttributes<SVGElement>) => (
     <svg data-testid="icon-alert-circle" className={className} />
   ),
+  // Icons used by DeleteAccountButton (Story 11.3)
+  Trash2: ({ className }: React.SVGAttributes<SVGElement>) => (
+    <svg data-testid="icon-trash2" className={className} />
+  ),
 }));
 
 // Mock face-shape-labels
