@@ -319,9 +319,9 @@ describe('face-similarity barrel exports', () => {
     expect(typeof faceSimilarityModule.compareFaces).toBe('function');
   });
 
-  it('exports from @/lib/ai main barrel', async () => {
-    const aiModule = await import('@/lib/ai');
-    expect(aiModule.compareFaces).toBeDefined();
+  it('exports from direct face-similarity import (not barrel to avoid build errors)', async () => {
+    const faceSimilarityModule = await import('@/lib/ai/face-similarity');
+    expect(faceSimilarityModule.compareFaces).toBeDefined();
   });
 });
 

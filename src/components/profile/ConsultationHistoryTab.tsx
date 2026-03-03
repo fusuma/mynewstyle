@@ -68,7 +68,7 @@ export function ConsultationHistoryTab() {
     return (
       <div className="flex flex-col items-center justify-center py-16 px-4 text-center gap-4">
         <p className="text-sm text-destructive">{errorMessage}</p>
-        <Button variant="outline" onClick={fetchConsultations}>
+        <Button variant="outline" onClick={() => fetchConsultations()}>
           Tentar novamente
         </Button>
       </div>

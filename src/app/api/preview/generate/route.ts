@@ -4,7 +4,8 @@ import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { logAICall, persistAICallLog, KIE_COST_PER_IMAGE_CENTS, GEMINI_PRO_IMAGE_COST_PER_IMAGE_CENTS, GEMINI_PRO_IMAGE_OUTPUT_TOKENS } from '@/lib/ai';
 import { buildPreviewPrompt } from '@/lib/ai/prompts/preview';
 import { PreviewRouter, BothProvidersFailedError } from '@/lib/ai/preview-router';
-import { compareFaces, logQualityGate } from '@/lib/ai/face-similarity';
+// Dynamic import to avoid build-time TextEncoder errors from canvas/tensorflow
+const getFaceSimilarity = () => import('@/lib/ai/face-similarity');
 import type { PreviewGenerationParams } from '@/types';
 
 const GeneratePreviewRequestSchema = z.object({
@@ -162,6 +163,7 @@ export async function POST(request: NextRequest) {
       const originalPhotoBuffer = Buffer.from(await photoData.arrayBuffer());
 
       // Run face similarity quality gate (AC #5 — same threshold as Kie.ai path)
+      const { compareFaces, logQualityGate } = await getFaceSimilarity();
       const similarity = await compareFaces(originalPhotoBuffer, result.imageBuffer);
 
       logQualityGate({

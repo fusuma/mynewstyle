@@ -35,7 +35,9 @@ export { validateFaceAnalysis, validateConsultation, logValidationFailure } from
 export type { ValidationResult, ValidationFailureContext } from './validation';
 
 // Face similarity exports (Story 7.3)
-export { compareFaces, logQualityGate, FACE_SIMILARITY_THRESHOLD } from './face-similarity';
+// NOTE: face-similarity uses canvas/@vladmandic/face-api which require native Node.js
+// modules that fail during Next.js build-time page data collection. Import directly
+// from '@/lib/ai/face-similarity' where needed, using dynamic imports for route handlers.
 export type { FaceSimilarityResult, QualityGateLogEntry } from './face-similarity';
 
 // Re-export AI types from types package

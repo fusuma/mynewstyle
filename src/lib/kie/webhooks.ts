@@ -12,7 +12,9 @@
 
 import { createHmac, timingSafeEqual } from 'crypto';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
-import { compareFaces, logQualityGate, FACE_SIMILARITY_THRESHOLD } from '@/lib/ai/face-similarity';
+// Dynamic import to avoid build-time TextEncoder errors from canvas/tensorflow
+// These are loaded at request time only, not during Next.js page data collection
+const getFaceSimilarity = () => import('@/lib/ai/face-similarity');
 import { logAICall, persistAICallLog } from '@/lib/ai/logger';
 
 // ---------------------------------------------------------------------------
@@ -379,6 +381,7 @@ export async function processKieCallback(taskId: string): Promise<KieWebhookResu
       const originalPhotoBuffer = Buffer.from(await originalPhotoBlob.arrayBuffer());
 
       try {
+        const { compareFaces, logQualityGate, FACE_SIMILARITY_THRESHOLD } = await getFaceSimilarity();
         const similarityResult = await compareFaces(originalPhotoBuffer, imageBuffer);
         const latencyMs = Date.now() - qualityGateStart;
 

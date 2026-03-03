@@ -66,7 +66,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
   // Map DB rows to FavoriteItem shape
   const favorites: FavoriteItem[] = (data ?? []).map((row) => {
-    const rec = row.recommendations as {
+    const rec = row.recommendations as unknown as {
       id: string;
       style_name: string;
       match_score: number;

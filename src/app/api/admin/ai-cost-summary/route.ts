@@ -106,10 +106,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
 
-    const completedWithCost = consultationCost?.filter((c) => c.ai_cost_cents != null) ?? [];
+    const completedWithCost = consultationCost?.filter((c: { ai_cost_cents: number | null }) => c.ai_cost_cents != null) ?? [];
     const avgCostCentsPerConsultation =
       completedWithCost.length > 0
-        ? completedWithCost.reduce((sum, c) => sum + (c.ai_cost_cents ?? 0), 0) /
+        ? completedWithCost.reduce((sum: number, c: { ai_cost_cents: number | null }) => sum + (c.ai_cost_cents ?? 0), 0) /
           completedWithCost.length
         : 0;
 
