@@ -240,4 +240,44 @@ describe('QuestionnairePage - submission flow', () => {
     // The store data should not be cleared on failure
     // (no reset call should have been made)
   });
+
+  // Story 11.2 LGPD compliance: redirect to photo page when consent is missing
+  it('redirects to /consultation/photo when photoConsentGivenAt is null (direct navigation)', async () => {
+    // Simulate user navigating directly to questionnaire without going through consent flow
+    mockStoreState = {
+      ...mockStoreState,
+      photoConsentGivenAt: null,
+    };
+
+    render(<QuestionnairePage />);
+
+    await act(async () => {
+      await capturedOnComplete!(testResponses);
+    });
+
+    // Should redirect to photo page to require consent
+    expect(mockReplace).toHaveBeenCalledWith('/consultation/photo');
+    // Should NOT call submitConsultation
+    expect(mockSubmitConsultation).not.toHaveBeenCalled();
+  });
+
+  it('passes the exact stored photoConsentGivenAt timestamp to submitConsultation', async () => {
+    const consentTimestamp = '2026-03-03T10:30:00.000Z';
+    mockStoreState = {
+      ...mockStoreState,
+      photoConsentGivenAt: consentTimestamp,
+    };
+    mockSubmitConsultation.mockResolvedValueOnce({ consultationId: 'consent-ts-test' });
+    render(<QuestionnairePage />);
+
+    await act(async () => {
+      await capturedOnComplete!(testResponses);
+    });
+
+    expect(mockSubmitConsultation).toHaveBeenCalledWith(
+      expect.objectContaining({
+        photoConsentGivenAt: consentTimestamp,
+      })
+    );
+  });
 });

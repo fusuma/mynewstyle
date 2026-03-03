@@ -134,7 +134,7 @@ describe("Photo Page Compression Integration", () => {
 
     // Check consent
     const checkbox = screen.getByLabelText(
-      /Consinto o processamento da minha foto para analise de visagismo/
+      /Consinto o processamento da minha foto para análise de visagismo/
     );
     fireEvent.click(checkbox);
 
@@ -182,7 +182,7 @@ describe("Photo Page Compression Integration", () => {
 
     // Check consent and upload file
     fireEvent.click(
-      screen.getByLabelText(/Consinto o processamento da minha foto para analise de visagismo/)
+      screen.getByLabelText(/Consinto o processamento da minha foto para análise de visagismo/)
     );
 
     const input = document.querySelector(
@@ -241,7 +241,7 @@ describe("Photo Page Compression Integration", () => {
 
     // Check consent and upload file
     fireEvent.click(
-      screen.getByLabelText(/Consinto o processamento da minha foto para analise de visagismo/)
+      screen.getByLabelText(/Consinto o processamento da minha foto para análise de visagismo/)
     );
 
     const input = document.querySelector(
@@ -290,7 +290,7 @@ describe("Photo Page Compression Integration", () => {
 
     // Check consent and upload file
     fireEvent.click(
-      screen.getByLabelText(/Consinto o processamento da minha foto para analise de visagismo/)
+      screen.getByLabelText(/Consinto o processamento da minha foto para análise de visagismo/)
     );
 
     const input = document.querySelector(
@@ -336,7 +336,7 @@ describe("Photo Page Compression Integration", () => {
 
     // Check consent and upload file
     fireEvent.click(
-      screen.getByLabelText(/Consinto o processamento da minha foto para analise de visagismo/)
+      screen.getByLabelText(/Consinto o processamento da minha foto para análise de visagismo/)
     );
 
     const input = document.querySelector(
@@ -382,7 +382,7 @@ describe("Photo Page Compression Integration", () => {
 
     // Check consent and upload file
     fireEvent.click(
-      screen.getByLabelText(/Consinto o processamento da minha foto para analise de visagismo/)
+      screen.getByLabelText(/Consinto o processamento da minha foto para análise de visagismo/)
     );
 
     const input = document.querySelector(
@@ -437,7 +437,7 @@ describe("Photo Page Compression Integration", () => {
     });
 
     fireEvent.click(
-      screen.getByLabelText(/Consinto o processamento da minha foto para analise de visagismo/)
+      screen.getByLabelText(/Consinto o processamento da minha foto para análise de visagismo/)
     );
 
     const input = document.querySelector(
@@ -482,7 +482,7 @@ describe("Photo Page Compression Integration", () => {
     });
 
     fireEvent.click(
-      screen.getByLabelText(/Consinto o processamento da minha foto para analise de visagismo/)
+      screen.getByLabelText(/Consinto o processamento da minha foto para análise de visagismo/)
     );
 
     const input = document.querySelector(

@@ -107,7 +107,7 @@ async function uploadInGalleryMode() {
   });
 
   // Ensure consent is checked (idempotent: only click if not already checked)
-  const checkbox = screen.getByLabelText(/Consinto o processamento da minha foto para analise de visagismo/) as HTMLInputElement;
+  const checkbox = screen.getByLabelText(/Consinto o processamento da minha foto para análise de visagismo/) as HTMLInputElement;
   if (!checkbox.checked) {
     fireEvent.click(checkbox);
   }

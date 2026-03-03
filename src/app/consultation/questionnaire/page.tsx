@@ -85,14 +85,21 @@ export default function QuestionnairePage() {
       try {
         // LGPD (Story 11.2): photoConsentGivenAt is required by the API.
         // It was captured when the user checked the consent checkbox on the photo page.
-        // If for any reason it's null (e.g., direct navigation), use current timestamp as fallback.
-        const consentTimestamp = photoConsentGivenAt ?? new Date().toISOString();
+        // If null, the user reached this page without going through the consent flow
+        // (e.g., direct navigation). Redirect back to the photo page to require consent.
+        if (!photoConsentGivenAt) {
+          console.warn('[QuestionnairePage] photoConsentGivenAt is null — redirecting to photo page for consent');
+          router.replace('/consultation/photo');
+          isSubmittingRef.current = false;
+          setIsSubmitting(false);
+          return;
+        }
 
         const result = await submitConsultation({
           gender: gender!,
           photoUrl: photoPreview || '',
           questionnaire: responses,
-          photoConsentGivenAt: consentTimestamp,
+          photoConsentGivenAt: photoConsentGivenAt,
         });
 
         setConsultationId(result.consultationId);

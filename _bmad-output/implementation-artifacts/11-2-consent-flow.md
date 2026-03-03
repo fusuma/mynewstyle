@@ -1,6 +1,6 @@
 # Story 11.2: Consent Flow
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -12,7 +12,7 @@ so that my biometric data is handled in compliance with LGPD and I have a clear 
 
 ## Acceptance Criteria
 
-1. **Photo upload screen consent checkbox:** The photo page (`/consultation/photo`) displays a consent checkbox with the text "Consinto o processamento da minha foto para analise de visagismo" before the user can proceed with camera capture or gallery upload. The user cannot trigger photo capture (camera mode) or upload (gallery mode) without checking this checkbox.
+1. **Photo upload screen consent checkbox:** The photo page (`/consultation/photo`) displays a consent checkbox with the text "Consinto o processamento da minha foto para análise de visagismo" before the user can proceed with camera capture or gallery upload. The user cannot trigger photo capture (camera mode) or upload (gallery mode) without checking this checkbox.
 
 2. **Registration consent checkbox for data processing:** The registration page (`/register`) already has an LGPD consent checkbox (`lgpdConsent` field). This story ensures the consent timestamp is stored in the database when the user registers, and updates the registration API to persist this timestamp.
 
@@ -37,7 +37,7 @@ so that my biometric data is handled in compliance with LGPD and I have a clear 
 
 - [x] Task 3: Update GalleryUpload consent integration (AC: #1, #4)
   - [x] 3.1 GalleryUpload already has its own internal `consentChecked` state and checkbox. Refactor to accept `consentChecked` and `onConsentChange` as props from the parent photo page, removing the duplicate internal state
-  - [x] 3.2 Ensure the consent checkbox text matches the LGPD-required wording: "Consinto o processamento da minha foto para analise de visagismo"
+  - [x] 3.2 Ensure the consent checkbox text matches the LGPD-required wording: "Consinto o processamento da minha foto para análise de visagismo"
   - [x] 3.3 Keep the existing consent reminder behavior ("Por favor, confirme...") when upload is attempted without consent
 
 - [x] Task 4: Store photo consent timestamp on consultation start (AC: #3, #4)
@@ -81,7 +81,7 @@ so that my biometric data is handled in compliance with LGPD and I have a clear 
 1. **DO NOT remove GalleryUpload's existing consent UX.** Refactor it to use props instead of internal state. The checkbox, reminder text, and blocking behavior must remain identical.
 2. **DO NOT break session recovery (Story 2.7).** The session recovery flow in the photo page restores state and skips validation. Consent state must either be persisted in the recovery data or re-required on recovery. Recommendation: require consent again on recovery (safest for LGPD compliance).
 3. **DO NOT change the registration form's existing LGPD checkbox behavior.** Only add timestamp persistence. The checkbox text, validation, and UX must remain unchanged.
-4. **Consent checkbox text for photo upload must be in Portuguese:** "Consinto o processamento da minha foto para analise de visagismo" (as specified in architecture doc Section 7.2).
+4. **Consent checkbox text for photo upload must be in Portuguese:** "Consinto o processamento da minha foto para análise de visagismo" (as specified in architecture doc Section 7.2).
 5. **The consultation start API currently uses in-memory storage** (Map). The `photo_consent_given_at` field should be stored on the `ConsultationRecord` type and the in-memory map. When Supabase integration lands, this will map to the DB column.
 
 ### Project Structure Notes
@@ -165,7 +165,23 @@ claude-sonnet-4-6
 - Task 4.3 deviated from original plan: instead of modifying the `performUpload` flow, consent timestamp is captured at `handleConsentChange` time and stored in the Zustand store. The questionnaire page reads it from the store and passes it to `submitConsultation`. This is cleaner as it keeps consent state co-located with other consultation data.
 - Task 5 stored consent timestamp in Supabase auth user metadata (`data.lgpd_consent_given_at`). The DB column is added via migration but trigger-based propagation to `profiles` table is deferred to when Supabase production deployment occurs.
 - Session recovery (Story 2.7) intentionally does NOT restore `consentChecked` state — per LGPD recommendation, users must re-confirm consent after recovery.
-- All 2271 tests pass after implementation (174 test files).
+- All 2271 tests pass after initial implementation (174 test files).
+
+### Code Review Notes (claude-sonnet-4-6 — 2026-03-03)
+
+**Issues found and fixed during adversarial code review:**
+
+1. **[HIGH - FIXED] Missing accent in LGPD consent text**: Implementation used "analise" (missing accent) instead of "análise" with the Portuguese accent required by architecture spec Section 7.2 and epics. Fixed in `PhotoCapture.tsx`, `GalleryUpload.tsx`, `photo/page.tsx`, and all test files referencing the text.
+
+2. **[HIGH - FIXED] PhotoCapture defaulted consentChecked to `true`**: `consentChecked = true` in PhotoCapture's prop signature allowed capture without consent when prop was omitted. Changed default to `false` (safe/blocking). Existing capture test updated to explicitly pass `consentChecked={true}`. New tests added verifying disabled/enabled behavior.
+
+3. **[MEDIUM - FIXED] Silent consent bypass in questionnaire page**: `photoConsentGivenAt ?? new Date().toISOString()` silently fabricated a consent timestamp on direct navigation, bypassing the LGPD consent gate. Replaced with explicit null-check that redirects to `/consultation/photo` and prevents submission. New test added covering this path.
+
+4. **[MEDIUM - FIXED] Missing test for capture button disabled state**: No test verified the capture button was `disabled` when `consentChecked=false` in camera-active state. Added two new tests to `camera-capture.test.tsx` for disabled and enabled states.
+
+5. **[LOW - FIXED] Story file consent text missing accent**: ACs and Dev Notes in the story file also had "analise" without accent. Corrected to match architecture spec.
+
+**Post-review test count: 2276 (5 new tests added, all 174 files pass)**
 
 ### File List
 
@@ -175,7 +191,23 @@ claude-sonnet-4-6
 - `src/test/api-consultation-start-consent.test.ts`
 - `src/test/registration-api-consent.test.ts`
 
-**Modified files:**
+**Modified files (code review additions):**
+- `src/components/consultation/PhotoCapture.tsx` — fixed consentChecked default (false), accent in consent text
+- `src/components/consultation/GalleryUpload.tsx` — fixed accent in consent text
+- `src/app/consultation/photo/page.tsx` — fixed accent in consent text
+- `src/app/consultation/questionnaire/page.tsx` — replaced silent fallback with redirect to /consultation/photo
+- `src/test/camera-capture.test.tsx` — added consentChecked tests, fixed existing test
+- `src/test/questionnaire-completion.test.tsx` — added null-consent redirect test, exact timestamp test
+- `src/test/gallery-upload.test.tsx` — updated consent text in test assertions
+- `src/test/photo-page-consent.test.tsx` — updated consent text in test assertions
+- `src/test/photo-page-review.test.tsx` — updated consent text in test assertions
+- `src/test/photo-page-validation.test.tsx` — updated consent text in test assertions
+- `src/test/photo-page-recovery.test.tsx` — updated consent text in test assertions
+- `src/test/photo-page-upload.test.tsx` — updated consent text in test assertions
+- `src/test/photo-page-integration.test.tsx` — updated consent text in test assertions
+- `src/test/photo-page-compression.test.tsx` — updated consent text in test assertions
+
+**Modified files (original implementation):**
 - `src/types/index.ts`
 - `src/app/api/consultation/start/route.ts`
 - `src/app/api/auth/register/route.ts`
@@ -202,3 +234,4 @@ claude-sonnet-4-6
 | Date | Version | Description | Author |
 |------|---------|-------------|--------|
 | 2026-03-03 | 1.0 | Initial implementation of LGPD consent flow | claude-sonnet-4-6 |
+| 2026-03-03 | 1.1 | Code review fixes: accent in consent text (análise), PhotoCapture default consentChecked=false, questionnaire null-consent redirect, 5 new tests | claude-sonnet-4-6 |

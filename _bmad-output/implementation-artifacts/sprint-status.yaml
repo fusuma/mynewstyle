@@ -147,7 +147,7 @@ development_status:
   # E11: LGPD Compliance (Sprint 3 parallel)
   epic-11: in-progress
   11-1-privacy-policy-lgpd-compliant: done
-  11-2-consent-flow: review
+  11-2-consent-flow: done
   11-3-right-to-deletion: ready-for-dev
   11-4-data-export-right-to-access: ready-for-dev
   11-5-rls-audit-in-ci-cd: ready-for-dev

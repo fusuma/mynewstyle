@@ -54,7 +54,7 @@ function getErrorMessage(error: CameraError): string {
  * Handles camera lifecycle, WebView detection, permission prompts,
  * face oval overlay, guidance tips, and photo capture.
  */
-export function PhotoCapture({ onCapture, onSwitchToGallery, consentChecked = true }: PhotoCaptureProps) {
+export function PhotoCapture({ onCapture, onSwitchToGallery, consentChecked = false }: PhotoCaptureProps) {
   const prefersReducedMotion = useReducedMotion();
   const {
     stream,

@@ -399,10 +399,10 @@ export default function PhotoPage() {
           checked={consentChecked}
           onChange={(e) => handleConsentChange(e.target.checked)}
           className="mt-0.5 h-4 w-4 shrink-0 rounded border-border text-accent accent-accent focus:ring-accent"
-          aria-label="Consinto o processamento da minha foto para analise de visagismo"
+          aria-label="Consinto o processamento da minha foto para análise de visagismo"
         />
         <span className="text-sm text-muted-foreground">
-          Consinto o processamento da minha foto para analise de visagismo
+          Consinto o processamento da minha foto para análise de visagismo
         </span>
       </label>
       {/* Task 2.5: Muted hint when unchecked */}

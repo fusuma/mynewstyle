@@ -141,7 +141,7 @@ describe("Photo Page - Consent Checkbox", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText(/Consinto o processamento da minha foto para analise de visagismo/i)
+        screen.getByText(/Consinto o processamento da minha foto para análise de visagismo/i)
       ).toBeInTheDocument();
     });
   });
